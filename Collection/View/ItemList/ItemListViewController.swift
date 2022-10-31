@@ -58,8 +58,12 @@ class ItemListViewController: UIViewController {
 
     // MARK: - Actions
 
-    @IBAction func addButtonTapped() {
+    @IBAction func addFileButtonTapped() {
         showDocumentPicker()
+    }
+
+    @IBAction func pasteButtonTapped() {
+        paste(itemProviders: UIPasteboard.general.itemProviders)
     }
 
     // MARK: - Private Methods
@@ -169,5 +173,46 @@ extension ItemListViewController: NSFetchedResultsControllerDelegate {
 
         let shouldAnimate = collectionView.numberOfSections != 0
         dataSource.apply(newSnapshot, animatingDifferences: shouldAnimate)
+    }
+}
+
+// MARK: - UIPasteConfigurationSupporting
+
+extension ItemListViewController {
+    override func paste(itemProviders: [NSItemProvider]) {
+        guard
+            let provider = itemProviders.first,
+            provider.hasItemConformingToTypeIdentifier(UTType.data.identifier)
+        else {
+            // TODO: show failure alert
+            return
+        }
+
+        let currentTime = DateFormatter.hyphenatedDateTimeFormatter.string(from: Date())
+        let name = "Pasted \(currentTime)"
+
+        if provider.hasItemConformingToTypeIdentifier(UTType.plainText.identifier) {
+            let text = UIPasteboard.general.string
+            storageProvider.addItem(
+                name: name,
+                contentType: UTType.plainText.identifier,
+                note: text
+            )
+            return
+        }
+
+        let type = provider.registeredTypeIdentifiers[0]
+        provider.loadDataRepresentation(forTypeIdentifier: type) {[weak self] data, error in
+            if let error = error {
+                print("#\(#function): Error loading plain text data from pasteboard, \(error)")
+                return
+            }
+
+            self?.storageProvider.addItem(
+                name: name,
+                contentType: type,
+                itemData: data
+            )
+        }
     }
 }

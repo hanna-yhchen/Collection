@@ -28,7 +28,15 @@
                                 <state key="normal" title="Button"/>
                                 <buttonConfiguration key="configuration" style="plain" title="Add File"/>
                                 <connections>
-                                    <action selector="addButtonTapped" destination="BYZ-38-t0r" eventType="touchUpInside" id="cDs-jv-q2p"/>
+                                    <action selector="addFileButtonTapped" destination="BYZ-38-t0r" eventType="touchUpInside" id="cDs-jv-q2p"/>
+                                </connections>
+                            </button>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="ToU-Q0-zn1">
+                                <rect key="frame" x="331" y="768" width="67" height="35"/>
+                                <state key="normal" title="Button"/>
+                                <buttonConfiguration key="configuration" style="plain" title="Paste"/>
+                                <connections>
+                                    <action selector="pasteButtonTapped" destination="BYZ-38-t0r" eventType="touchUpInside" id="1aQ-9T-yrn"/>
                                 </connections>
                             </button>
                         </subviews>
@@ -37,6 +45,8 @@
                         <constraints>
                             <constraint firstItem="0n1-d6-dPk" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" id="949-KG-swU"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="0n1-d6-dPk" secondAttribute="trailing" id="BEz-7d-ahb"/>
+                            <constraint firstItem="a5d-ID-WgL" firstAttribute="top" secondItem="ToU-Q0-zn1" secondAttribute="bottom" constant="8" id="HZh-HQ-Yd1"/>
+                            <constraint firstItem="ToU-Q0-zn1" firstAttribute="trailing" secondItem="a5d-ID-WgL" secondAttribute="trailing" id="dJd-kS-see"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="a5d-ID-WgL" secondAttribute="bottom" constant="16" id="nu8-l3-PK8"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="0n1-d6-dPk" secondAttribute="bottom" id="sCF-7J-TBM"/>
                             <constraint firstItem="0n1-d6-dPk" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" id="vjy-Pu-Kuq"/>

@@ -12,7 +12,6 @@ extension StorageProvider {
         name: String,
         contentType: String,
         note: String? = nil,
-        duration: Int64 = 0,
         itemData: Data? = nil,
         thumbnailData: Data? = nil
     ) {
@@ -22,7 +21,6 @@ extension StorageProvider {
             item.name = name
             item.contentType = contentType
             item.note = note
-            item.duration = duration
 
             let thumbnail = Thumbnail(context: context)
             thumbnail.data = thumbnailData
