@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B52203EB290F9A9A00F2224B /* StorageProvider+Item.swift in Sources */ = {isa = PBXBuildFile; fileRef = B52203EA290F9A9A00F2224B /* StorageProvider+Item.swift */; };
 		B5E50DFA290BDF16006A7B22 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5E50DF9290BDF16006A7B22 /* AppDelegate.swift */; };
 		B5E50DFC290BDF16006A7B22 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5E50DFB290BDF16006A7B22 /* SceneDelegate.swift */; };
 		B5E50DFE290BDF16006A7B22 /* ItemListViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5E50DFD290BDF16006A7B22 /* ItemListViewController.swift */; };
@@ -19,6 +20,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		B52203EA290F9A9A00F2224B /* StorageProvider+Item.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "StorageProvider+Item.swift"; sourceTree = "<group>"; };
 		B5E50DF6290BDF16006A7B22 /* Collection.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Collection.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B5E50DF9290BDF16006A7B22 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		B5E50DFB290BDF16006A7B22 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -111,6 +113,7 @@
 			children = (
 				B5E50E19290F7A31006A7B22 /* CoreDataHelper.swift */,
 				B5E50E17290F72F2006A7B22 /* StorageProvider.swift */,
+				B52203EA290F9A9A00F2224B /* StorageProvider+Item.swift */,
 				B5E50E02290BDF16006A7B22 /* Collection.xcdatamodeld */,
 			);
 			path = Storage;
@@ -214,6 +217,7 @@
 				B5E50DFC290BDF16006A7B22 /* SceneDelegate.swift in Sources */,
 				B5E50E04290BDF16006A7B22 /* Collection.xcdatamodeld in Sources */,
 				B5E50E18290F72F2006A7B22 /* StorageProvider.swift in Sources */,
+				B52203EB290F9A9A00F2224B /* StorageProvider+Item.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
