@@ -14,6 +14,8 @@
 		B5E50E04290BDF16006A7B22 /* Collection.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = B5E50E02290BDF16006A7B22 /* Collection.xcdatamodeld */; };
 		B5E50E06290BDF17006A7B22 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B5E50E05290BDF17006A7B22 /* Assets.xcassets */; };
 		B5E50E09290BDF17006A7B22 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = B5E50E07290BDF17006A7B22 /* LaunchScreen.storyboard */; };
+		B5E50E18290F72F2006A7B22 /* StorageProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5E50E17290F72F2006A7B22 /* StorageProvider.swift */; };
+		B5E50E1A290F7A31006A7B22 /* CoreDataHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5E50E19290F7A31006A7B22 /* CoreDataHelper.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -26,6 +28,8 @@
 		B5E50E05290BDF17006A7B22 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B5E50E08290BDF17006A7B22 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		B5E50E0A290BDF17006A7B22 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		B5E50E17290F72F2006A7B22 /* StorageProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageProvider.swift; sourceTree = "<group>"; };
+		B5E50E19290F7A31006A7B22 /* CoreDataHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataHelper.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -105,6 +109,8 @@
 		B5E50E16290F6F07006A7B22 /* Storage */ = {
 			isa = PBXGroup;
 			children = (
+				B5E50E19290F7A31006A7B22 /* CoreDataHelper.swift */,
+				B5E50E17290F72F2006A7B22 /* StorageProvider.swift */,
 				B5E50E02290BDF16006A7B22 /* Collection.xcdatamodeld */,
 			);
 			path = Storage;
@@ -202,10 +208,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B5E50E1A290F7A31006A7B22 /* CoreDataHelper.swift in Sources */,
 				B5E50DFE290BDF16006A7B22 /* ItemListViewController.swift in Sources */,
 				B5E50DFA290BDF16006A7B22 /* AppDelegate.swift in Sources */,
 				B5E50DFC290BDF16006A7B22 /* SceneDelegate.swift in Sources */,
 				B5E50E04290BDF16006A7B22 /* Collection.xcdatamodeld in Sources */,
+				B5E50E18290F72F2006A7B22 /* StorageProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

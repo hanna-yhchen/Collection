@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="20086" systemVersion="21G115" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithCloudKit="YES" userDefinedModelVersionIdentifier="">
+    <entity name="Board" representedClassName="Board" syncable="YES" codeGenerationType="class">
+        <attribute name="creationDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="itemCount" optional="YES" attributeType="Integer 64" derived="YES" derivationExpression="items.@count" usesScalarValueType="YES"/>
+        <attribute name="name" optional="YES" attributeType="String"/>
+        <attribute name="sortOrder" optional="YES" attributeType="String"/>
+        <attribute name="updateDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <relationship name="items" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Item" inverseName="board" inverseEntity="Item"/>
+    </entity>
+    <entity name="Item" representedClassName="Item" syncable="YES" codeGenerationType="class">
+        <attribute name="contentType" optional="YES" attributeType="String"/>
+        <attribute name="creationDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="duration" optional="YES" attributeType="Integer 64" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="name" optional="YES" attributeType="String"/>
+        <attribute name="notes" optional="YES" attributeType="String"/>
+        <attribute name="sortOrder" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="updateDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <relationship name="board" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Board" inverseName="items" inverseEntity="Board"/>
+        <relationship name="itemData" optional="YES" maxCount="1" deletionRule="Cascade" destinationEntity="ItemData" inverseName="item" inverseEntity="ItemData"/>
+        <relationship name="tags" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Tag" inverseName="items" inverseEntity="Tag"/>
+        <relationship name="thumbnail" optional="YES" maxCount="1" deletionRule="Cascade" destinationEntity="Thumbnail" inverseName="item" inverseEntity="Thumbnail"/>
+    </entity>
+    <entity name="ItemData" representedClassName="ItemData" syncable="YES" codeGenerationType="class">
+        <attribute name="data" optional="YES" attributeType="Binary" allowsExternalBinaryDataStorage="YES"/>
+        <relationship name="item" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Item" inverseName="itemData" inverseEntity="Item"/>
+    </entity>
+    <entity name="Tag" representedClassName="Tag" syncable="YES" codeGenerationType="class">
+        <attribute name="hexColor" optional="YES" attributeType="String"/>
+        <attribute name="itemCount" optional="YES" attributeType="Integer 64" derived="YES" derivationExpression="items.@count" usesScalarValueType="YES"/>
+        <attribute name="name" optional="YES" attributeType="String"/>
+        <attribute name="sortOrder" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <relationship name="items" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Item" inverseName="tags" inverseEntity="Item"/>
+    </entity>
+    <entity name="Thumbnail" representedClassName="Thumbnail" syncable="YES" codeGenerationType="class">
+        <attribute name="data" optional="YES" attributeType="Binary"/>
+        <relationship name="item" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Item" inverseName="thumbnail" inverseEntity="Item"/>
+    </entity>
+    <elements>
+        <element name="Item" positionX="-191.19921875" positionY="-760.1875" width="128" height="208"/>
+        <element name="Board" positionX="22.88671875" positionY="-761.84765625" width="143.1875" height="133"/>
+        <element name="Tag" positionX="27.77734375" positionY="-539.3984375" width="128" height="118"/>
+        <element name="ItemData" positionX="-388.046875" positionY="-712.76171875" width="128" height="73"/>
+        <element name="Thumbnail" positionX="-388.79296875" positionY="-585.23046875" width="128" height="73"/>
+    </elements>
+</model>
