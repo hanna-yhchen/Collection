@@ -7,8 +7,14 @@
 
 import CoreData
 
+enum StorageActor: String {
+    case mainApp
+}
+
 class StorageProvider {
-    static let shared = StorageProvider()
+    // MARK: - Properties
+
+    let actor: StorageActor
 
     lazy var persistentContainer: NSPersistentCloudKitContainer = {
         let container = NSPersistentCloudKitContainer(name: "Collection")
@@ -19,6 +25,22 @@ class StorageProvider {
 
             print("=== Persistent store loaded: \(storeDescription)")
         }
+        container.viewContext.automaticallyMergesChangesFromParent = true
         return container
     }()
+
+    // MARK: - Initializer
+
+    init(_ actor: StorageActor) {
+        self.actor = actor
+    }
+
+    // MARK: - Methods
+
+    func newTaskContext() -> NSManagedObjectContext {
+        let context = persistentContainer.newBackgroundContext()
+        context.transactionAuthor = actor.rawValue
+        context.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
+        return context
+    }
 }
