@@ -19,10 +19,11 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         guard let windowScene = (scene as? UIWindowScene) else { return }
         self.window = UIWindow(windowScene: windowScene)
 
-        self.window?.rootViewController = UIStoryboard(name: "Main", bundle: Bundle.main)
+        let itemListVC = UIStoryboard.main
             .instantiateViewController(identifier: "ItemListViewController") { coder in
                 ItemListViewController(coder: coder, storageProvider: self.storageProvider)
             }
+        self.window?.rootViewController = UINavigationController(rootViewController: itemListVC)
 
         self.window?.makeKeyAndVisible()
     }

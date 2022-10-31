@@ -39,15 +39,25 @@
                                     <action selector="pasteButtonTapped" destination="BYZ-38-t0r" eventType="touchUpInside" id="1aQ-9T-yrn"/>
                                 </connections>
                             </button>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="3KQ-uz-sqZ">
+                                <rect key="frame" x="307" y="725" width="91" height="35"/>
+                                <state key="normal" title="Button"/>
+                                <buttonConfiguration key="configuration" style="plain" title="Add Text"/>
+                                <connections>
+                                    <action selector="addTextButtonTapped" destination="BYZ-38-t0r" eventType="touchUpInside" id="gfZ-IN-NOW"/>
+                                </connections>
+                            </button>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                         <constraints>
+                            <constraint firstItem="ToU-Q0-zn1" firstAttribute="top" secondItem="3KQ-uz-sqZ" secondAttribute="bottom" constant="8" id="5wb-Wh-nQw"/>
                             <constraint firstItem="0n1-d6-dPk" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" id="949-KG-swU"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="0n1-d6-dPk" secondAttribute="trailing" id="BEz-7d-ahb"/>
                             <constraint firstItem="a5d-ID-WgL" firstAttribute="top" secondItem="ToU-Q0-zn1" secondAttribute="bottom" constant="8" id="HZh-HQ-Yd1"/>
                             <constraint firstItem="ToU-Q0-zn1" firstAttribute="trailing" secondItem="a5d-ID-WgL" secondAttribute="trailing" id="dJd-kS-see"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="a5d-ID-WgL" secondAttribute="bottom" constant="16" id="nu8-l3-PK8"/>
+                            <constraint firstItem="3KQ-uz-sqZ" firstAttribute="trailing" secondItem="ToU-Q0-zn1" secondAttribute="trailing" id="pZn-gP-PGO"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="0n1-d6-dPk" secondAttribute="bottom" id="sCF-7J-TBM"/>
                             <constraint firstItem="0n1-d6-dPk" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" id="vjy-Pu-Kuq"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="a5d-ID-WgL" secondAttribute="trailing" constant="16" id="zd5-HL-3hY"/>
@@ -61,8 +71,64 @@
             </objects>
             <point key="canvasLocation" x="137.68115942028987" y="138.61607142857142"/>
         </scene>
+        <!--Editor View Controller-->
+        <scene sceneID="vzK-C6-TKu">
+            <objects>
+                <viewController storyboardIdentifier="EditorViewController" id="i8Z-44-dcN" customClass="EditorViewController" customModule="Collection" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="P5f-hY-osU">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" textAlignment="natural" translatesAutoresizingMaskIntoConstraints="NO" id="dNj-gW-sk0">
+                                <rect key="frame" x="16" y="150" width="382" height="647"/>
+                                <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                                <color key="textColor" systemColor="labelColor"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
+                            </textView>
+                            <textField opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="248" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="Title" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="B9P-E1-UUe">
+                                <rect key="frame" x="16" y="108" width="382" height="34"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                <textInputTraits key="textInputTraits"/>
+                            </textField>
+                        </subviews>
+                        <viewLayoutGuide key="safeArea" id="7vw-zF-NqB"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                        <constraints>
+                            <constraint firstItem="7vw-zF-NqB" firstAttribute="trailing" secondItem="B9P-E1-UUe" secondAttribute="trailing" constant="16" id="C6c-uu-RWP"/>
+                            <constraint firstItem="dNj-gW-sk0" firstAttribute="top" secondItem="B9P-E1-UUe" secondAttribute="bottom" constant="8" id="Jlg-Pk-PAI"/>
+                            <constraint firstItem="7vw-zF-NqB" firstAttribute="bottom" secondItem="dNj-gW-sk0" secondAttribute="bottom" constant="16" id="Mpz-Wz-uFv"/>
+                            <constraint firstItem="dNj-gW-sk0" firstAttribute="leading" secondItem="7vw-zF-NqB" secondAttribute="leading" constant="16" id="V1M-J0-nDp"/>
+                            <constraint firstItem="7vw-zF-NqB" firstAttribute="trailing" secondItem="dNj-gW-sk0" secondAttribute="trailing" constant="16" id="XzU-Ky-MZI"/>
+                            <constraint firstItem="B9P-E1-UUe" firstAttribute="leading" secondItem="7vw-zF-NqB" secondAttribute="leading" constant="16" id="fVF-aZ-dVn"/>
+                            <constraint firstItem="B9P-E1-UUe" firstAttribute="top" secondItem="7vw-zF-NqB" secondAttribute="top" constant="16" id="ydL-ic-kZv"/>
+                        </constraints>
+                    </view>
+                    <toolbarItems/>
+                    <navigationItem key="navigationItem" id="aD1-cd-kvi">
+                        <barButtonItem key="rightBarButtonItem" title="Save" image="tray.and.arrow.down.fill" catalog="system" id="c6B-VM-w4X">
+                            <connections>
+                                <action selector="saveButtonTapped" destination="i8Z-44-dcN" id="ukq-64-2LQ"/>
+                            </connections>
+                        </barButtonItem>
+                    </navigationItem>
+                    <simulatedNavigationBarMetrics key="simulatedTopBarMetrics" prompted="NO"/>
+                    <simulatedToolbarMetrics key="simulatedBottomBarMetrics"/>
+                    <connections>
+                        <outlet property="noteTextView" destination="dNj-gW-sk0" id="T3W-p9-3oz"/>
+                        <outlet property="titleTextField" destination="B9P-E1-UUe" id="sCf-gU-m5y"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="1Oa-KT-NfG" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="993" y="139"/>
+        </scene>
     </scenes>
     <resources>
+        <image name="tray.and.arrow.down.fill" catalog="system" width="128" height="115"/>
+        <systemColor name="labelColor">
+            <color red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+        </systemColor>
         <systemColor name="systemBackgroundColor">
             <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
         </systemColor>

@@ -36,6 +36,8 @@ class ItemListViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
+        self.title = "All Items"
+        navigationController?.navigationBar.prefersLargeTitles = true
         collectionView.collectionViewLayout = createCardLayout()
         configureDataSource()
     }
@@ -64,6 +66,19 @@ class ItemListViewController: UIViewController {
 
     @IBAction func pasteButtonTapped() {
         paste(itemProviders: UIPasteboard.general.itemProviders)
+    }
+
+    @IBAction func addTextButtonTapped() {
+        let editorVC = UIStoryboard.main
+            .instantiateViewController(identifier: "EditorViewController") { coder in
+                EditorViewController(coder: coder, situation: .create) {[weak self] name, note in
+                    self?.storageProvider.addItem(
+                        name: name,
+                        contentType: UTType.plainText.identifier,
+                        note: note)
+                }
+            }
+        navigationController?.pushViewController(editorVC, animated: true)
     }
 
     // MARK: - Private Methods

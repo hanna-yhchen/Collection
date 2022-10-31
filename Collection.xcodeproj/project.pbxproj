@@ -12,6 +12,8 @@
 		B52203F2290FC74100F2224B /* CardItemCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = B52203F0290FC74100F2224B /* CardItemCell.xib */; };
 		B52203F5290FCA2200F2224B /* CollectionViewHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = B52203F4290FCA2200F2224B /* CollectionViewHelper.swift */; };
 		B52203F729101C7100F2224B /* DateFormatter+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = B52203F629101C7100F2224B /* DateFormatter+Extension.swift */; };
+		B538E9E32910255100DF5DEB /* EditorViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B538E9E22910255100DF5DEB /* EditorViewController.swift */; };
+		B538E9E62910277300DF5DEB /* UIStoryboard+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = B538E9E52910277300DF5DEB /* UIStoryboard+Extension.swift */; };
 		B5E50DFA290BDF16006A7B22 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5E50DF9290BDF16006A7B22 /* AppDelegate.swift */; };
 		B5E50DFC290BDF16006A7B22 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5E50DFB290BDF16006A7B22 /* SceneDelegate.swift */; };
 		B5E50DFE290BDF16006A7B22 /* ItemListViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5E50DFD290BDF16006A7B22 /* ItemListViewController.swift */; };
@@ -29,6 +31,8 @@
 		B52203F0290FC74100F2224B /* CardItemCell.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = CardItemCell.xib; sourceTree = "<group>"; };
 		B52203F4290FCA2200F2224B /* CollectionViewHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionViewHelper.swift; sourceTree = "<group>"; };
 		B52203F629101C7100F2224B /* DateFormatter+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DateFormatter+Extension.swift"; sourceTree = "<group>"; };
+		B538E9E22910255100DF5DEB /* EditorViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = EditorViewController.swift; path = Collection/View/EditorViewController.swift; sourceTree = SOURCE_ROOT; };
+		B538E9E52910277300DF5DEB /* UIStoryboard+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIStoryboard+Extension.swift"; sourceTree = "<group>"; };
 		B5E50DF6290BDF16006A7B22 /* Collection.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Collection.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B5E50DF9290BDF16006A7B22 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		B5E50DFB290BDF16006A7B22 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -67,9 +71,18 @@
 			children = (
 				B52203F4290FCA2200F2224B /* CollectionViewHelper.swift */,
 				B52203F629101C7100F2224B /* DateFormatter+Extension.swift */,
+				B538E9E52910277300DF5DEB /* UIStoryboard+Extension.swift */,
 			);
 			name = Extension;
 			path = Resource;
+			sourceTree = "<group>";
+		};
+		B538E9E42910255800DF5DEB /* Editor */ = {
+			isa = PBXGroup;
+			children = (
+				B538E9E22910255100DF5DEB /* EditorViewController.swift */,
+			);
+			name = Editor;
 			sourceTree = "<group>";
 		};
 		B5E50DED290BDF16006A7B22 = {
@@ -113,6 +126,7 @@
 		B5E50E12290F6E08006A7B22 /* View */ = {
 			isa = PBXGroup;
 			children = (
+				B538E9E42910255800DF5DEB /* Editor */,
 				B5E50E13290F6E11006A7B22 /* ItemList */,
 				B5E50DFF290BDF16006A7B22 /* Main.storyboard */,
 				B5E50E07290BDF17006A7B22 /* LaunchScreen.storyboard */,
@@ -243,8 +257,10 @@
 			files = (
 				B52203F5290FCA2200F2224B /* CollectionViewHelper.swift in Sources */,
 				B5E50E1A290F7A31006A7B22 /* CoreDataHelper.swift in Sources */,
+				B538E9E62910277300DF5DEB /* UIStoryboard+Extension.swift in Sources */,
 				B5E50DFE290BDF16006A7B22 /* ItemListViewController.swift in Sources */,
 				B5E50DFA290BDF16006A7B22 /* AppDelegate.swift in Sources */,
+				B538E9E32910255100DF5DEB /* EditorViewController.swift in Sources */,
 				B52203F729101C7100F2224B /* DateFormatter+Extension.swift in Sources */,
 				B5E50DFC290BDF16006A7B22 /* SceneDelegate.swift in Sources */,
 				B5E50E04290BDF16006A7B22 /* Collection.xcdatamodeld in Sources */,
