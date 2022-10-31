@@ -5,18 +5,45 @@
 //  Created by Hanna Chen on 2022/10/28.
 //
 
+import CoreData
 import UniformTypeIdentifiers
 import UIKit
 
 class ItemListViewController: UIViewController {
 
-    let storageProvider: StorageProvider
+    typealias Snapshot = NSDiffableDataSourceSnapshot<Int, NSManagedObjectID>
+    typealias DataSource = UICollectionViewDiffableDataSource<Int, NSManagedObjectID>
+
+    private let storageProvider: StorageProvider
+    private lazy var fetchedResultsController: NSFetchedResultsController<Item> = {
+        let fetchRequest = Item.fetchRequest()
+        fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \Item.creationDate, ascending: false)]
+        let controller = NSFetchedResultsController(
+            fetchRequest: fetchRequest,
+            managedObjectContext: storageProvider.persistentContainer.viewContext,
+            sectionNameKeyPath: nil,
+            cacheName: nil)
+        controller.delegate = self
+        return controller
+    }()
+
+    private var dataSource: DataSource?
+
+    @IBOutlet var collectionView: UICollectionView!
 
     // MARK: - Lifecycle
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view.
+
+        collectionView.collectionViewLayout = createCardLayout()
+        configureDataSource()
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+
+        try? fetchedResultsController.performFetch()
     }
 
     init?(coder: NSCoder, storageProvider: StorageProvider) {
@@ -37,12 +64,52 @@ class ItemListViewController: UIViewController {
 
     // MARK: - Private Methods
 
+    private func configureDataSource() {
+        let cellRegistration = UICollectionView.CellRegistration<CardItemCell, NSManagedObjectID>(
+            cellNib: UINib(nibName: CardItemCell.identifier, bundle: nil)
+        ) {[unowned self] cell, _, objectID in
+            guard let item = try? fetchedResultsController
+                .managedObjectContext
+                .existingObject(with: objectID) as? Item
+            else { fatalError("#\(#function): Failed to retrieve item by objectID") }
+
+            cell.nameLabel.text = item.name
+            cell.placeholderImageView.isHidden = item.thumbnail == nil
+            // TODO: display thumbnail image
+        }
+
+        dataSource = DataSource(collectionView: collectionView) { collectionView, indexPath, item in
+            collectionView.dequeueConfiguredReusableCell(using: cellRegistration, for: indexPath, item: item)
+        }
+    }
+
     private func showDocumentPicker() {
         let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.data])
         picker.delegate = self
         picker.allowsMultipleSelection = true
 
         present(picker, animated: true)
+    }
+
+    private func createCardLayout() -> UICollectionViewLayout {
+        let itemSize = NSCollectionLayoutSize(
+            widthDimension: .fractionalWidth(1.0),
+            heightDimension: .fractionalHeight(1.0))
+        let item = NSCollectionLayoutItem(layoutSize: itemSize)
+
+        let groupSize = NSCollectionLayoutSize(
+            widthDimension: .fractionalWidth(1.0),
+            heightDimension: .fractionalWidth(0.5))
+        let group = NSCollectionLayoutGroup.horizontal(
+            layoutSize: groupSize,
+            subitem: item,
+            count: 1)
+
+        let section = NSCollectionLayoutSection(group: group)
+        section.interGroupSpacing = 8
+        section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16)
+
+        return UICollectionViewCompositionalLayout(section: section)
     }
 }
 
@@ -75,5 +142,32 @@ extension ItemListViewController: UIDocumentPickerDelegate {
                     itemData: data)
             }
         }
+    }
+}
+
+// MARK: - NSFetchedResultsControllerDelegate
+
+extension ItemListViewController: NSFetchedResultsControllerDelegate {
+    func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChangeContentWith snapshot: NSDiffableDataSourceSnapshotReference) {
+        guard let dataSource = dataSource else { fatalError("#\(#function): Failed to unwrap data source") }
+
+        var newSnapshot = snapshot as Snapshot
+        let currentSnapshot = dataSource.snapshot()
+
+        let updatedIDs = newSnapshot.itemIdentifiers.filter { objectID in
+            guard
+                let currentIndex = currentSnapshot.indexOfItem(objectID),
+                let newIndex = newSnapshot.indexOfItem(objectID),
+                newIndex == currentIndex,
+                let existingObject = try? controller.managedObjectContext.existingObject(with: objectID),
+                existingObject.isUpdated
+            else { return false }
+
+            return true
+        }
+        newSnapshot.reloadItems(updatedIDs)
+
+        let shouldAnimate = collectionView.numberOfSections != 0
+        dataSource.apply(newSnapshot, animatingDifferences: shouldAnimate)
     }
 }

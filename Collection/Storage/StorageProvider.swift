@@ -25,6 +25,7 @@ class StorageProvider {
 
             print("=== Persistent store loaded: \(storeDescription)")
         }
+        container.viewContext.automaticallyMergesChangesFromParent = true
         return container
     }()
 
