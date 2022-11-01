@@ -13,26 +13,23 @@ enum ThumbnailError: Error {
 }
 
 struct ThumbnailProvider {
-    func generateThumbnailData(url: URL, completion: @escaping (Result<Data, Error>) -> Void) {
-        let request = QLThumbnailGenerator.Request(
+    func generateThumbnailData(url: URL) async -> Result<Data, Error> {
+        let request = await QLThumbnailGenerator.Request(
             fileAt: url,
             size: CGSize(width: 400, height: 400),
             scale: UIScreen.main.scale,
             representationTypes: .thumbnail)
 
-        Task {
-            do {
-                let thumbnail = try await QLThumbnailGenerator.shared.generateBestRepresentation(for: request)
+        do {
+            let thumbnail = try await QLThumbnailGenerator.shared.generateBestRepresentation(for: request)
 
-                if let data = thumbnail.uiImage.pngData() {
-                    completion(.success(data))
-                } else {
-                    completion(.failure(ThumbnailError.nilImageData))
-                }
-            } catch {
-                print("#\(#function): Failed to generate thumbnail, \(error)")
-                completion(.failure(error))
+            if let data = thumbnail.uiImage.pngData() {
+                return .success(data)
+            } else {
+                return .failure(ThumbnailError.nilImageData)
             }
+        } catch {
+            return .failure(error)
         }
     }
 }

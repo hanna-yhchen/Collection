@@ -154,11 +154,16 @@ class ItemListViewController: UIViewController {
                 return
             }
 
-            print("Start generate thumbnail data for", type.identifier)
-            thumbnailProvider.generateThumbnailData(url: url) { result in
+            let semaphore = DispatchSemaphore(value: 0)
+
+            Task {
+                defer { semaphore.signal() }
+
+                let thumbnailResult = await self.thumbnailProvider.generateThumbnailData(url: url)
+
                 var thumbnailData: Data?
 
-                switch result {
+                switch thumbnailResult {
                 case .success(let data):
                     thumbnailData = data
                 case .failure(let error):
@@ -171,6 +176,8 @@ class ItemListViewController: UIViewController {
                     itemData: data,
                     thumbnailData: thumbnailData)
             }
+
+            semaphore.wait()
         }
 
         if let error = error {
@@ -183,7 +190,11 @@ class ItemListViewController: UIViewController {
 
 extension ItemListViewController: UIDocumentPickerDelegate {
     func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
-        urls.forEach { readAndSave($0) }
+        urls.forEach { url in
+            DispatchQueue.global().async {
+                self.readAndSave(url)
+            }
+        }
     }
 }
 
@@ -226,11 +237,27 @@ extension ItemListViewController {
             return
         }
 
-        let currentTime = DateFormatter.hyphenatedDateTimeFormatter.string(from: Date())
-        let name = "Pasted \(currentTime)"
+        if provider.hasItemConformingToTypeIdentifier(UTType.url.identifier) {
+            guard
+                let urlString = UIPasteboard.general.string,
+                let data = urlString.data(using: .utf8)
+            else {
+                // TODO: show failure alert
+                return
+            }
 
-        if provider.hasItemConformingToTypeIdentifier(UTType.plainText.identifier) {
+            storageProvider.addItem(
+                name: urlString,
+                contentType: UTType.url.identifier,
+                itemData: data
+            )
+            return
+        }
+
+        if provider.hasItemConformingToTypeIdentifier(UTType.utf8PlainText.identifier) {
             let text = UIPasteboard.general.string
+            let currentTime = DateFormatter.hyphenatedDateTimeFormatter.string(from: Date())
+            let name = "Pasted note \(currentTime)"
             storageProvider.addItem(
                 name: name,
                 contentType: UTType.plainText.identifier,
@@ -239,8 +266,16 @@ extension ItemListViewController {
             return
         }
 
-        let type = provider.registeredTypeIdentifiers[0]
-        provider.loadInPlaceFileRepresentation(forTypeIdentifier: type) {[weak self] url, _, error in
+        guard let type = provider.registeredTypeIdentifiers.first(where: { identifier in
+            UTType(identifier) != nil
+        }) else {
+            // TODO: show failure alert
+            return
+        }
+
+        provider.loadFileRepresentation(forTypeIdentifier: type) {[weak self] url, error in
+            guard let `self` = self else { return }
+
             if let error = error {
                 print("#\(#function): Error loading data from pasteboard, \(error)")
                 return
@@ -251,7 +286,7 @@ extension ItemListViewController {
                 return
             }
 
-            self?.readAndSave(url)
+            self.readAndSave(url)
         }
     }
 }
