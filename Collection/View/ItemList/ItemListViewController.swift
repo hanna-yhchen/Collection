@@ -14,6 +14,7 @@ class ItemListViewController: UIViewController {
     typealias Snapshot = NSDiffableDataSourceSnapshot<Int, NSManagedObjectID>
     typealias DataSource = UICollectionViewDiffableDataSource<Int, NSManagedObjectID>
 
+    private let thumbnailProvider: ThumbnailProvider
     private let storageProvider: StorageProvider
     private lazy var fetchedResultsController: NSFetchedResultsController<Item> = {
         let fetchRequest = Item.fetchRequest()
@@ -48,8 +49,9 @@ class ItemListViewController: UIViewController {
         try? fetchedResultsController.performFetch()
     }
 
-    init?(coder: NSCoder, storageProvider: StorageProvider) {
+    init?(coder: NSCoder, storageProvider: StorageProvider, thumbnailProvider: ThumbnailProvider = ThumbnailProvider()) {
         self.storageProvider = storageProvider
+        self.thumbnailProvider = thumbnailProvider
 
         super.init(coder: coder)
     }
@@ -92,9 +94,7 @@ class ItemListViewController: UIViewController {
                 .existingObject(with: objectID) as? Item
             else { fatalError("#\(#function): Failed to retrieve item by objectID") }
 
-            cell.nameLabel.text = item.name
-            cell.placeholderImageView.isHidden = item.thumbnail == nil
-            // TODO: display thumbnail image
+            cell.layoutItem(item)
         }
 
         dataSource = DataSource(collectionView: collectionView) { collectionView, indexPath, item in
@@ -130,37 +130,60 @@ class ItemListViewController: UIViewController {
 
         return UICollectionViewCompositionalLayout(section: section)
     }
+
+    private func readAndSave(_ url: URL) {
+        guard url.startAccessingSecurityScopedResource() else {
+            // TODO: show failure alert
+            return
+        }
+
+        defer { url.stopAccessingSecurityScopedResource() }
+
+        var error: NSError?
+
+        NSFileCoordinator().coordinate(readingItemAt: url, error: &error) { url in
+            guard
+                let values = try? url.resourceValues(forKeys: [.nameKey, .fileSizeKey, .contentTypeKey]),
+                let size = values.fileSize,
+                size <= 20_000_000,
+                let type = values.contentType,
+                let name = values.name,
+                let data = try? Data(contentsOf: url)
+            else {
+                // TODO: show alert
+                return
+            }
+
+            print("Start generate thumbnail data for", type.identifier)
+            thumbnailProvider.generateThumbnailData(url: url) { result in
+                var thumbnailData: Data?
+
+                switch result {
+                case .success(let data):
+                    thumbnailData = data
+                case .failure(let error):
+                    print("#\(#function): Failed to generate thumbnail data, \(error)")
+                }
+
+                self.storageProvider.addItem(
+                    name: name,
+                    contentType: type.identifier,
+                    itemData: data,
+                    thumbnailData: thumbnailData)
+            }
+        }
+
+        if let error = error {
+            print("#\(#function): Error reading input data, \(error)")
+        }
+    }
 }
 
 // MARK: - UIDocumentPickerDelegate
 
 extension ItemListViewController: UIDocumentPickerDelegate {
     func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
-        urls.forEach { url in
-            guard url.startAccessingSecurityScopedResource() else { return }
-
-            defer { url.stopAccessingSecurityScopedResource() }
-
-            var error: NSError?
-
-            NSFileCoordinator().coordinate(readingItemAt: url, error: &error) { url in
-                guard
-                    let values = try? url.resourceValues(forKeys: [.nameKey, .fileSizeKey, .contentTypeKey]),
-                    let size = values.fileSize,
-                    size <= 20_000_000,
-                    let type = values.contentType,
-                    let name = values.name,
-                    let data = try? Data(contentsOf: url)
-                else {
-                    return
-                }
-
-                storageProvider.addItem(
-                    name: name,
-                    contentType: type.identifier,
-                    itemData: data)
-            }
-        }
+        urls.forEach { readAndSave($0) }
     }
 }
 
@@ -217,17 +240,18 @@ extension ItemListViewController {
         }
 
         let type = provider.registeredTypeIdentifiers[0]
-        provider.loadDataRepresentation(forTypeIdentifier: type) {[weak self] data, error in
+        provider.loadInPlaceFileRepresentation(forTypeIdentifier: type) {[weak self] url, _, error in
             if let error = error {
-                print("#\(#function): Error loading plain text data from pasteboard, \(error)")
+                print("#\(#function): Error loading data from pasteboard, \(error)")
                 return
             }
 
-            self?.storageProvider.addItem(
-                name: name,
-                contentType: type,
-                itemData: data
-            )
+            guard let url = url else {
+                print("#\(#function): Failed to retrieve url for loaded file")
+                return
+            }
+
+            self?.readAndSave(url)
         }
     }
 }
