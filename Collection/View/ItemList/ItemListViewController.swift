@@ -14,17 +14,35 @@ class ItemListViewController: UIViewController {
     typealias Snapshot = NSDiffableDataSourceSnapshot<Int, NSManagedObjectID>
     typealias DataSource = UICollectionViewDiffableDataSource<Int, NSManagedObjectID>
 
+    private let boardID: NSManagedObjectID
+    private lazy var board: Board = {
+        let context = storageProvider.persistentContainer.viewContext
+        do {
+            guard let board = try context.existingObject(with: boardID) as? Board else {
+                fatalError("#\(#function): failed to downcast to board object")
+            }
+
+            return board
+        } catch let error as NSError {
+            fatalError("#\(#function): failed to retrieve board object by id, \(error)")
+        }
+    }()
+
     private let thumbnailProvider: ThumbnailProvider
     private let storageProvider: StorageProvider
+
     private lazy var fetchedResultsController: NSFetchedResultsController<Item> = {
         let fetchRequest = Item.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "board == %@", board)
         fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \Item.creationDate, ascending: false)]
+
         let controller = NSFetchedResultsController(
             fetchRequest: fetchRequest,
             managedObjectContext: storageProvider.persistentContainer.viewContext,
             sectionNameKeyPath: nil,
             cacheName: nil)
         controller.delegate = self
+
         return controller
     }()
 
@@ -37,7 +55,7 @@ class ItemListViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        self.title = "All Items"
+        self.title = board.name
         navigationController?.navigationBar.prefersLargeTitles = true
         collectionView.collectionViewLayout = createCardLayout()
         configureDataSource()
@@ -49,7 +67,13 @@ class ItemListViewController: UIViewController {
         try? fetchedResultsController.performFetch()
     }
 
-    init?(coder: NSCoder, storageProvider: StorageProvider = StorageProvider.shared, thumbnailProvider: ThumbnailProvider = ThumbnailProvider()) {
+    init?(
+        coder: NSCoder,
+        boardID: NSManagedObjectID,
+        storageProvider: StorageProvider = StorageProvider.shared,
+        thumbnailProvider: ThumbnailProvider = ThumbnailProvider()
+    ) {
+        self.boardID = boardID
         self.storageProvider = storageProvider
         self.thumbnailProvider = thumbnailProvider
 
@@ -74,10 +98,13 @@ class ItemListViewController: UIViewController {
         let editorVC = UIStoryboard.main
             .instantiateViewController(identifier: "EditorViewController") { coder in
                 EditorViewController(coder: coder, situation: .create) {[weak self] name, note in
-                    self?.storageProvider.addItem(
+                    guard let `self` = self else { return }
+
+                    self.storageProvider.addItem(
                         name: name,
                         contentType: UTType.plainText.identifier,
-                        note: note)
+                        note: note,
+                        atBoard: self.board)
                 }
             }
         navigationController?.pushViewController(editorVC, animated: true)
@@ -174,7 +201,8 @@ class ItemListViewController: UIViewController {
                     name: name,
                     contentType: type.identifier,
                     itemData: data,
-                    thumbnailData: thumbnailData)
+                    thumbnailData: thumbnailData,
+                    atBoard: board)
             }
 
             semaphore.wait()
@@ -249,8 +277,8 @@ extension ItemListViewController {
             storageProvider.addItem(
                 name: urlString,
                 contentType: UTType.url.identifier,
-                itemData: data
-            )
+                itemData: data,
+                atBoard: board)
             return
         }
 
@@ -261,8 +289,8 @@ extension ItemListViewController {
             storageProvider.addItem(
                 name: name,
                 contentType: UTType.plainText.identifier,
-                note: text
-            )
+                note: text,
+                atBoard: board)
             return
         }
 

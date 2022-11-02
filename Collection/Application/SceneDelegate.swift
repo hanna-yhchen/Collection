@@ -10,7 +10,7 @@ import UIKit
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     var window: UIWindow?
-    let storageProvider = StorageProvider(.mainApp)
+    let storageProvider = StorageProvider.shared
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         // Use this method to optionally configure and attach the UIWindow `window` to the provided UIWindowScene `scene`.
@@ -19,11 +19,17 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         guard let windowScene = (scene as? UIWindowScene) else { return }
         self.window = UIWindow(windowScene: windowScene)
 
-        let itemListVC = UIStoryboard.main
-            .instantiateViewController(identifier: "ItemListViewController") { coder in
-                ItemListViewController(coder: coder)
+        storageProvider.cloudKitContainer.requestApplicationPermission(.userDiscoverability) { _, error in
+            if let error = error {
+                print("#\(#function): Failed to request application permission, \(error)")
             }
-        self.window?.rootViewController = UINavigationController(rootViewController: itemListVC)
+        }
+
+        let boardListVC = UIStoryboard.main
+            .instantiateViewController(identifier: String(describing: BoardListViewController.self)) { coder in
+                BoardListViewController(coder: coder, storageProvider: self.storageProvider)
+            }
+        self.window?.rootViewController = UINavigationController(rootViewController: boardListVC)
 
         self.window?.makeKeyAndVisible()
     }

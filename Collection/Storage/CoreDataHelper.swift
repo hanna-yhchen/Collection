@@ -5,6 +5,7 @@
 //  Created by Hanna Chen on 2022/10/31.
 //
 
+import CloudKit
 import CoreData
 
 extension NSManagedObjectContext {
@@ -21,6 +22,62 @@ extension NSManagedObjectContext {
             } catch let error as NSError {
                 print("\(#function): Failed to save context for \(situation.rawValue): \(error), \(error.userInfo)")
             }
+        }
+    }
+}
+
+extension NSManagedObject {
+    var persistentStore: NSPersistentStore {
+        let storageProvider = StorageProvider.shared
+        if storageProvider.sharedPersistentStore.contains(self) {
+            return storageProvider.sharedPersistentStore
+        } else if storageProvider.privatePersistentStore.contains(self) {
+            return storageProvider.privatePersistentStore
+        } else {
+            fatalError("#\(#function): Failed to specify the persistent store containing the object, \(self.entity)")
+        }
+    }
+
+    var isPrivate: Bool {
+        let storageProvider = StorageProvider.shared
+        return persistentStore == storageProvider.privatePersistentStore
+    }
+
+    var isShared: Bool {
+        let storageProvider = StorageProvider.shared
+        return persistentStore == storageProvider.sharedPersistentStore
+    }
+
+    func fetchOwnerName() async -> String? {
+        let storageProvider = StorageProvider.shared
+
+        if self.isPrivate {
+            return storageProvider.currentUserName
+        }
+
+        return nil
+    }
+}
+
+extension NSPersistentStore {
+    func contains(_ managedObject: NSManagedObject) -> Bool {
+        guard let entityName = managedObject.entity.name else {
+            print("#\(#function): Couldn't retrieve entity name for \(managedObject.entity)")
+            return false
+        }
+
+        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: entityName)
+        fetchRequest.predicate = NSPredicate(format: "self == %@", managedObject)
+        fetchRequest.affectedStores = [self]
+
+        let context = StorageProvider.shared.newTaskContext()
+        return context.performAndWait {
+            guard
+                let result = try? context.count(for: fetchRequest),
+                result > 0
+            else { return false }
+
+            return true
         }
     }
 }

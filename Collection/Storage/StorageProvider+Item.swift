@@ -13,7 +13,8 @@ extension StorageProvider {
         contentType: String,
         note: String? = nil,
         itemData: Data? = nil,
-        thumbnailData: Data? = nil
+        thumbnailData: Data? = nil,
+        atBoard board: Board
     ) {
         let context = newTaskContext()
         context.perform {
@@ -33,6 +34,10 @@ extension StorageProvider {
             let currentDate = Date()
             item.creationDate = currentDate
             item.updateDate = currentDate
+
+            if let board = context.object(with: board.objectID) as? Board {
+                board.addToItems(item)
+            }
 
             context.save(situation: .addItem)
         }

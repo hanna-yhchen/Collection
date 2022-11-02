@@ -118,6 +118,8 @@ class StorageProvider {
             fatalError("#\(#function): Failed to pin viewContext to the current generation:\(error)")
         }
 
+        fetchCurrentUser()
+
         return container
     }()
 
@@ -137,6 +139,8 @@ class StorageProvider {
         return CKContainer(identifier: Constant.cloudKitContainerIdentifier)
     }()
 
+    var currentUserName: String?
+
     // MARK: - Initializer
 
     init(_ actor: StorageActor) {
@@ -150,5 +154,27 @@ class StorageProvider {
         context.transactionAuthor = actor.rawValue
         context.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
         return context
+    }
+
+    // MARK: - Private
+
+    private func fetchCurrentUser() {
+        Task {
+            do {
+                let authStatus = try await cloudKitContainer.applicationPermissionStatus(for: .userDiscoverability)
+                if authStatus == .granted {
+                    let userRecordID = try await cloudKitContainer.userRecordID()
+                    let userIdentity = try await cloudKitContainer.userIdentity(forUserRecordID: userRecordID)
+                    if let nameComponents = userIdentity?.nameComponents {
+                        let formatter = PersonNameComponentsFormatter()
+                        let name = formatter.string(from: nameComponents)
+
+                        self.currentUserName = name
+                    }
+                }
+            } catch {
+                print("#\(#function): Failed to fetch user, \(error)")
+            }
+        }
     }
 }
