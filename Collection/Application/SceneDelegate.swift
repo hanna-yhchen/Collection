@@ -21,7 +21,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
         let itemListVC = UIStoryboard.main
             .instantiateViewController(identifier: "ItemListViewController") { coder in
-                ItemListViewController(coder: coder, storageProvider: self.storageProvider)
+                ItemListViewController(coder: coder)
             }
         self.window?.rootViewController = UINavigationController(rootViewController: itemListVC)
 

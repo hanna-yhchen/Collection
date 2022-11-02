@@ -49,7 +49,7 @@ class ItemListViewController: UIViewController {
         try? fetchedResultsController.performFetch()
     }
 
-    init?(coder: NSCoder, storageProvider: StorageProvider, thumbnailProvider: ThumbnailProvider = ThumbnailProvider()) {
+    init?(coder: NSCoder, storageProvider: StorageProvider = StorageProvider.shared, thumbnailProvider: ThumbnailProvider = ThumbnailProvider()) {
         self.storageProvider = storageProvider
         self.thumbnailProvider = thumbnailProvider
 
