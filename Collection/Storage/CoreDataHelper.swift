@@ -8,6 +8,8 @@
 import CloudKit
 import CoreData
 
+// MARK: - NSManagedObjectContext
+
 extension NSManagedObjectContext {
     enum SituationForSaving: String {
         case addItem, updateItem, deleteItem
@@ -25,6 +27,8 @@ extension NSManagedObjectContext {
         }
     }
 }
+
+// MARK: - NSManagedObject
 
 extension NSManagedObject {
     var storageProvider: StorageProvider { StorageProvider.shared }
@@ -58,6 +62,8 @@ extension NSManagedObject {
         return name
     }
 }
+
+// MARK: - NSPersistentStore
 
 extension NSPersistentStore {
     func contains(_ managedObject: NSManagedObject) -> Bool {
