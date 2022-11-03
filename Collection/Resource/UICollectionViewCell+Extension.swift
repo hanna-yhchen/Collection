@@ -1,5 +1,5 @@
 //
-//  CollectionViewHelper.swift
+//  UICollectionViewCell+Extension.swift
 //  Collection
 //
 //  Created by Hanna Chen on 2022/10/31.
