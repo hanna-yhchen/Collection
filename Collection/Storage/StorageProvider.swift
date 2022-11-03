@@ -34,8 +34,6 @@ class StorageProvider {
 
     lazy var cloudKitContainer = CKContainer(identifier: Constant.cloudKitContainerIdentifier)
 
-    var currentUserName: String?
-
     // MARK: - Initializer
 
     init(_ actor: StorageActor) {
@@ -157,7 +155,7 @@ class StorageProvider {
                 if authStatus == .granted {
                     let userRecordID = try await cloudKitContainer.userRecordID()
                     let userIdentity = try await cloudKitContainer.userIdentity(forUserRecordID: userRecordID)
-                    self.currentUserName = userIdentity?.nameComponents?.formatted()
+                    UserDefaults.username = userIdentity?.nameComponents?.formatted() ?? "You"
                 }
             } catch {
                 print("#\(#function): Failed to fetch user, \(error)")

@@ -10,6 +10,8 @@ import UIKit
 
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
+    let storageProvider = StorageProvider.shared
+
     var window: UIWindow?
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
@@ -21,7 +23,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
         let boardListVC = UIStoryboard.main
             .instantiateViewController(identifier: String(describing: BoardListViewController.self)) { coder in
-                BoardListViewController(coder: coder, storageProvider: StorageProvider.shared)
+                BoardListViewController(coder: coder, storageProvider: self.storageProvider)
             }
         self.window?.rootViewController = UINavigationController(rootViewController: boardListVC)
 
@@ -57,8 +59,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
 
     func windowScene(_ windowScene: UIWindowScene, userDidAcceptCloudKitShareWith cloudKitShareMetadata: CKShare.Metadata) {
-        let sharedStore = StorageProvider.shared.sharedPersistentStore
-        let container = StorageProvider.shared.persistentContainer
+        let sharedStore = storageProvider.sharedPersistentStore
+        let container = storageProvider.persistentContainer
         container.acceptShareInvitations(from: [cloudKitShareMetadata], into: sharedStore) { _, error in
             if let error = error {
                 print("\(#function): Failed to accept share invitations: \(error)")

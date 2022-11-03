@@ -45,7 +45,7 @@ extension NSManagedObject {
 
     var ownerName: String? {
         if isPrivate {
-            return storageProvider.currentUserName
+            return UserDefaults.username
         }
 
         guard
