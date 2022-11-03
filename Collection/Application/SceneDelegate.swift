@@ -5,12 +5,12 @@
 //  Created by Hanna Chen on 2022/10/28.
 //
 
+import CloudKit
 import UIKit
 
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     var window: UIWindow?
-    let storageProvider = StorageProvider.shared
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         // Use this method to optionally configure and attach the UIWindow `window` to the provided UIWindowScene `scene`.
@@ -19,15 +19,9 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         guard let windowScene = (scene as? UIWindowScene) else { return }
         self.window = UIWindow(windowScene: windowScene)
 
-        storageProvider.cloudKitContainer.requestApplicationPermission(.userDiscoverability) { _, error in
-            if let error = error {
-                print("#\(#function): Failed to request application permission, \(error)")
-            }
-        }
-
         let boardListVC = UIStoryboard.main
             .instantiateViewController(identifier: String(describing: BoardListViewController.self)) { coder in
-                BoardListViewController(coder: coder, storageProvider: self.storageProvider)
+                BoardListViewController(coder: coder, storageProvider: StorageProvider.shared)
             }
         self.window?.rootViewController = UINavigationController(rootViewController: boardListVC)
 
@@ -60,5 +54,15 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         // Called as the scene transitions from the foreground to the background.
         // Use this method to save data, release shared resources, and store enough scene-specific state information
         // to restore the scene back to its current state.
+    }
+
+    func windowScene(_ windowScene: UIWindowScene, userDidAcceptCloudKitShareWith cloudKitShareMetadata: CKShare.Metadata) {
+        let sharedStore = StorageProvider.shared.sharedPersistentStore
+        let container = StorageProvider.shared.persistentContainer
+        container.acceptShareInvitations(from: [cloudKitShareMetadata], into: sharedStore) { _, error in
+            if let error = error {
+                print("\(#function): Failed to accept share invitations: \(error)")
+            }
+        }
     }
 }

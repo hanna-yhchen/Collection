@@ -27,8 +27,9 @@ extension NSManagedObjectContext {
 }
 
 extension NSManagedObject {
+    var storageProvider: StorageProvider { StorageProvider.shared }
+
     var persistentStore: NSPersistentStore {
-        let storageProvider = StorageProvider.shared
         if storageProvider.sharedPersistentStore.contains(self) {
             return storageProvider.sharedPersistentStore
         } else if storageProvider.privatePersistentStore.contains(self) {
@@ -38,24 +39,23 @@ extension NSManagedObject {
         }
     }
 
-    var isPrivate: Bool {
-        let storageProvider = StorageProvider.shared
-        return persistentStore == storageProvider.privatePersistentStore
-    }
+    var isPrivate: Bool { persistentStore == storageProvider.privatePersistentStore }
 
-    var isShared: Bool {
-        let storageProvider = StorageProvider.shared
-        return persistentStore == storageProvider.sharedPersistentStore
-    }
+    var isShared: Bool { persistentStore == storageProvider.sharedPersistentStore }
 
-    func fetchOwnerName() async -> String? {
-        let storageProvider = StorageProvider.shared
-
-        if self.isPrivate {
+    var ownerName: String? {
+        if isPrivate {
             return storageProvider.currentUserName
         }
 
-        return nil
+        guard
+            let matchedShares = try? storageProvider.persistentContainer.fetchShares(matching: [objectID]),
+            let share = matchedShares[objectID],
+            let owner = share.participants.first(where: { $0.role == .owner }),
+            let name = owner.userIdentity.nameComponents?.formatted()
+        else { return "Unknown" }
+
+        return name
     }
 }
 

@@ -5,7 +5,6 @@
 //  Created by Hanna Chen on 2022/10/28.
 //
 
-import CloudKit
 import UIKit
 
 @main
@@ -28,18 +27,5 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Called when the user discards a scene session.
         // If any sessions were discarded while the application was not running, this will be called shortly after application:didFinishLaunchingWithOptions.
         // Use this method to release any resources that were specific to the discarded scenes, as they will not return.
-    }
-
-    // MARK: - CloudKit sharing
-
-    func application(_ application: UIApplication, userDidAcceptCloudKitShareWith cloudKitShareMetadata: CKShare.Metadata) {
-        let storageProvider = StorageProvider.shared
-        let sharedStore = storageProvider.sharedPersistentStore
-        let container = storageProvider.persistentContainer
-        container.acceptShareInvitations(from: [cloudKitShareMetadata], into: sharedStore) { _, error in
-            if let error = error {
-                print("\(#function): Failed to accept share invitations: \(error)")
-            }
-        }
     }
 }

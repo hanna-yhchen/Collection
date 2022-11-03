@@ -13,6 +13,8 @@ class BoardCell: UICollectionViewCell {
     @IBOutlet var itemCountLabel: UILabel!
     @IBOutlet var ownerNameLabel: UILabel!
 
+    var shareHandler: (() -> Void)?
+
     // MARK: - Lifecycle
 
     override func awakeFromNib() {
@@ -30,6 +32,7 @@ class BoardCell: UICollectionViewCell {
     // MARK: - Actions
 
     @IBAction func shareButtonTapped() {
+        shareHandler?()
     }
 
     // MARK: - Methods
@@ -37,10 +40,7 @@ class BoardCell: UICollectionViewCell {
     func layoutBoard(_ board: Board) {
         boardNameLabel.text = board.name
         itemCountLabel.text = "\(board.itemCount) items"
-
-        Task {
-            ownerNameLabel.text = await board.fetchOwnerName()
-        }
+        ownerNameLabel.text = board.ownerName
     }
 
     private func setInitialLayout() {

@@ -13,13 +13,51 @@ enum StorageActor: String {
 }
 
 class StorageProvider {
-    static let shared = StorageProvider(StorageActor.mainApp)
+    static let shared = StorageProvider(.mainApp)
 
     // MARK: - Properties
 
     let actor: StorageActor
+    let persistentContainer: NSPersistentCloudKitContainer
 
-    lazy var persistentContainer: NSPersistentCloudKitContainer = {
+    // swiftlint:disable:next implicitly_unwrapped_optional
+    private var _privatePersistentStore: NSPersistentStore!
+    var privatePersistentStore: NSPersistentStore {
+        return _privatePersistentStore
+    }
+
+    // swiftlint:disable:next implicitly_unwrapped_optional
+    private var _sharedPersistentStore: NSPersistentStore!
+    var sharedPersistentStore: NSPersistentStore {
+        return _sharedPersistentStore
+    }
+
+    lazy var cloudKitContainer = CKContainer(identifier: Constant.cloudKitContainerIdentifier)
+
+    var currentUserName: String?
+
+    // MARK: - Initializer
+
+    init(_ actor: StorageActor) {
+        self.actor = actor
+        self.persistentContainer = NSPersistentCloudKitContainer(name: "Collection")
+        configurePersistentContainer()
+//        initializeCloudKitSchema()
+        fetchCurrentUser()
+    }
+
+    // MARK: - Methods
+
+    func newTaskContext() -> NSManagedObjectContext {
+        let context = persistentContainer.newBackgroundContext()
+        context.transactionAuthor = actor.rawValue
+        context.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
+        return context
+    }
+
+    // MARK: - Private
+
+    private func configurePersistentContainer() {
         /**
          Prepare containing folders for different persistence stores, because each store will have companion files.
          */
@@ -38,21 +76,21 @@ class StorageProvider {
             }
         }
 
-        let container = NSPersistentCloudKitContainer(name: "Collection")
-
         /**
          Set up store descriptions associated with different CloudKit database.
          */
-        guard let privateStoreDescription = container.persistentStoreDescriptions.first else {
+        guard let privateStoreDescription = persistentContainer.persistentStoreDescriptions.first else {
             fatalError("#\(#function): Failed to retrieve a persistent store description.")
         }
         privateStoreDescription.url = privateStoreFolder.appendingPathComponent("Private.sqlite")
-        privateStoreDescription.setOption(
-            true as NSNumber,
-            forKey: NSPersistentHistoryTrackingKey)
-        privateStoreDescription.setOption(
-            true as NSNumber,
-            forKey: NSPersistentStoreRemoteChangeNotificationPostOptionKey)
+
+        // TODO: enable history tracking
+//        privateStoreDescription.setOption(
+//            true as NSNumber,
+//            forKey: NSPersistentHistoryTrackingKey)
+//        privateStoreDescription.setOption(
+//            true as NSNumber,
+//            forKey: NSPersistentStoreRemoteChangeNotificationPostOptionKey)
 
         let privateStoreOptions = NSPersistentCloudKitContainerOptions(
             containerIdentifier: Constant.cloudKitContainerIdentifier)
@@ -71,11 +109,11 @@ class StorageProvider {
 
         sharedStoreDescription.cloudKitContainerOptions = sharedStoreOptions
 
+        persistentContainer.persistentStoreDescriptions = [privateStoreDescription, sharedStoreDescription]
         /**
          Load the persistent stores.
          */
-        container.persistentStoreDescriptions.append(sharedStoreDescription)
-        container.loadPersistentStores { storeDescription, error in
+        persistentContainer.loadPersistentStores {[unowned self] storeDescription, error in
             if let error = error as NSError? {
                 fatalError("#\(#function): Failed to load persistent stores: \(error), \(error.userInfo)")
             }
@@ -89,92 +127,50 @@ class StorageProvider {
 
             switch cloudKitContainerOptions.databaseScope {
             case .private:
-                self._privatePersistentStore = container.persistentStoreCoordinator.persistentStore(for: storeURL)
+                _privatePersistentStore = persistentContainer.persistentStoreCoordinator.persistentStore(for: storeURL)
             case .shared:
-                self._sharedPersistentStore = container.persistentStoreCoordinator.persistentStore(for: storeURL)
+                _sharedPersistentStore = persistentContainer.persistentStoreCoordinator.persistentStore(for: storeURL)
             default:
                 break
             }
 
-            print(storeDescription)
+            print("#Load persistent store:", storeDescription)
         }
 
-        /// Sync schema when needed during development
-//        do {
-//            try container.initializeCloudKitSchema()
-//        } catch {
-//            print("\(#function): initializeCloudKitSchema: \(error)")
-//        }
-
-        container.viewContext.automaticallyMergesChangesFromParent = true
-        container.viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
+        persistentContainer.viewContext.automaticallyMergesChangesFromParent = true
+        persistentContainer.viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
 
         /**
          Pin the viewContext to the current generation token and set it to keep itself up-to-date with local changes.
          */
         do {
-            try container.viewContext.setQueryGenerationFrom(.current)
+            try persistentContainer.viewContext.setQueryGenerationFrom(.current)
         } catch {
             fatalError("#\(#function): Failed to pin viewContext to the current generation:\(error)")
         }
-
-        fetchCurrentUser()
-
-        return container
-    }()
-
-    // swiftlint:disable:next implicitly_unwrapped_optional
-    private var _privatePersistentStore: NSPersistentStore!
-    var privatePersistentStore: NSPersistentStore {
-        return _privatePersistentStore
     }
-
-    // swiftlint:disable:next implicitly_unwrapped_optional
-    private var _sharedPersistentStore: NSPersistentStore!
-    var sharedPersistentStore: NSPersistentStore {
-        return _sharedPersistentStore
-    }
-
-    lazy var cloudKitContainer: CKContainer = {
-        return CKContainer(identifier: Constant.cloudKitContainerIdentifier)
-    }()
-
-    var currentUserName: String?
-
-    // MARK: - Initializer
-
-    init(_ actor: StorageActor) {
-        self.actor = actor
-    }
-
-    // MARK: - Methods
-
-    func newTaskContext() -> NSManagedObjectContext {
-        let context = persistentContainer.newBackgroundContext()
-        context.transactionAuthor = actor.rawValue
-        context.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
-        return context
-    }
-
-    // MARK: - Private
 
     private func fetchCurrentUser() {
         Task {
             do {
-                let authStatus = try await cloudKitContainer.applicationPermissionStatus(for: .userDiscoverability)
+                let authStatus = try await cloudKitContainer.requestApplicationPermission(.userDiscoverability)
                 if authStatus == .granted {
                     let userRecordID = try await cloudKitContainer.userRecordID()
                     let userIdentity = try await cloudKitContainer.userIdentity(forUserRecordID: userRecordID)
-                    if let nameComponents = userIdentity?.nameComponents {
-                        let formatter = PersonNameComponentsFormatter()
-                        let name = formatter.string(from: nameComponents)
-
-                        self.currentUserName = name
-                    }
+                    self.currentUserName = userIdentity?.nameComponents?.formatted()
                 }
             } catch {
                 print("#\(#function): Failed to fetch user, \(error)")
             }
+        }
+    }
+
+    /// Sync schema when needed during development
+    private func initializeCloudKitSchema() {
+        do {
+            try persistentContainer.initializeCloudKitSchema()
+        } catch {
+            print("\(#function): initializeCloudKitSchema: \(error)")
         }
     }
 }

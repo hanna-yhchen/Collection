@@ -5,6 +5,7 @@
 //  Created by Hanna Chen on 2022/11/2.
 //
 
+import CloudKit
 import CoreData
 import UIKit
 
@@ -29,6 +30,8 @@ class BoardListViewController: UIViewController {
     }()
 
     private var dataSource: DataSource?
+
+    private var boardToShare: Board?
 
     @IBOutlet var collectionView: UICollectionView!
 
@@ -105,6 +108,11 @@ class BoardListViewController: UIViewController {
             else { fatalError("#\(#function): Failed to retrieve item by objectID") }
 
             cell.layoutBoard(board)
+            // TODO: check share status to display different titles and implement corresponding logic
+            cell.shareHandler = {[weak self] in
+                self?.boardToShare = board
+                self?.startSharingFlow()
+            }
         }
 
         dataSource = DataSource(collectionView: collectionView) { collectionView, indexPath, item in
@@ -131,6 +139,39 @@ class BoardListViewController: UIViewController {
         section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16)
 
         return UICollectionViewCompositionalLayout(section: section)
+    }
+
+    // TODO: abstract sharing functionality into StorageProvider
+    private func startSharingFlow() {
+        guard let board = boardToShare else {
+            return
+        }
+
+        Task {
+            guard let share = await newShare(board: board) else {
+                // TODO: show failure alert
+                return
+            }
+
+            let sharingController = UICloudSharingController(share: share, container: storageProvider.cloudKitContainer)
+            sharingController.delegate = self
+            sharingController.modalPresentationStyle = .formSheet
+
+            await MainActor.run {
+                present(sharingController, animated: true)
+            }
+        }
+    }
+
+    private func newShare(board: Board) async -> CKShare? {
+        do {
+            let (_, share, _) = try await storageProvider.persistentContainer.share([board], to: nil)
+            share[CKShare.SystemFieldKey.title] = board.name
+            return share
+        } catch {
+            print("#\(#function): Failed to create new CKShare, \(error)")
+            return nil
+        }
     }
 }
 
@@ -173,5 +214,17 @@ extension BoardListViewController: UICollectionViewDelegate {
                 ItemListViewController(coder: coder, boardID: boardID)
             }
         navigationController?.pushViewController(itemListVC, animated: true)
+    }
+}
+
+// MARK: - UICloudSharingControllerDelegate
+
+extension BoardListViewController: UICloudSharingControllerDelegate {
+    func itemTitle(for csc: UICloudSharingController) -> String? {
+        nil
+    }
+
+    func cloudSharingController(_ csc: UICloudSharingController, failedToSaveShareWithError error: Error) {
+        print("#\(#function): Failed to save share, \(error)")
     }
 }
