@@ -8,6 +8,8 @@
 import CloudKit
 import CoreData
 
+private let storageProvider = StorageProvider.shared
+
 // MARK: - NSManagedObjectContext
 
 extension NSManagedObjectContext {
@@ -31,15 +33,14 @@ extension NSManagedObjectContext {
 // MARK: - NSManagedObject
 
 extension NSManagedObject {
-    var storageProvider: StorageProvider { StorageProvider.shared }
-
-    var persistentStore: NSPersistentStore {
+    var persistentStore: NSPersistentStore? {
         if storageProvider.sharedPersistentStore.contains(self) {
             return storageProvider.sharedPersistentStore
         } else if storageProvider.privatePersistentStore.contains(self) {
             return storageProvider.privatePersistentStore
         } else {
-            fatalError("#\(#function): Failed to specify the persistent store containing the object, \(self.entity)")
+            print("#\(#function): Failed to specify the persistent store containing the object, \(self.entity)")
+            return nil
         }
     }
 
@@ -76,7 +77,7 @@ extension NSPersistentStore {
         fetchRequest.predicate = NSPredicate(format: "self == %@", managedObject)
         fetchRequest.affectedStores = [self]
 
-        let context = StorageProvider.shared.newTaskContext()
+        let context = storageProvider.newTaskContext()
         return context.performAndWait {
             guard
                 let result = try? context.count(for: fetchRequest),

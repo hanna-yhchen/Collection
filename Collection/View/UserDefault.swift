@@ -11,7 +11,7 @@ import Foundation
 struct UserDefault<Value> {
     let key: String
     let defaultValue: Value
-    let userDefaults = UserDefaults.standard
+    var userDefaults = UserDefaults.standard
 
     var wrappedValue: Value {
         get {

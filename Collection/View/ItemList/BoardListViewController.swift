@@ -6,6 +6,7 @@
 //
 
 import CloudKit
+import Combine
 import CoreData
 import UIKit
 
@@ -15,6 +16,7 @@ class BoardListViewController: UIViewController {
     typealias DataSource = UICollectionViewDiffableDataSource<Int, NSManagedObjectID>
 
     private let storageProvider: StorageProvider
+    // TODO: move fetchedResultsController logic to viewModel
     private lazy var fetchedResultsController: NSFetchedResultsController<Board> = {
         let fetchRequest = Board.fetchRequest()
         fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \Board.sortOrder, ascending: false)]
@@ -30,8 +32,8 @@ class BoardListViewController: UIViewController {
     }()
 
     private var dataSource: DataSource?
-
     private var boardToShare: Board?
+    private var subscriptions: Set<AnyCancellable> = []
 
     @IBOutlet var collectionView: UICollectionView!
 
@@ -44,6 +46,7 @@ class BoardListViewController: UIViewController {
         navigationController?.navigationBar.prefersLargeTitles = true
         configureCollectionView()
         configureDataSource()
+        addObservers()
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -97,7 +100,6 @@ class BoardListViewController: UIViewController {
         collectionView.delegate = self
     }
 
-
     private func configureDataSource() {
         let cellRegistration = UICollectionView.CellRegistration<BoardCell, NSManagedObjectID>(
             cellNib: UINib(nibName: BoardCell.identifier, bundle: nil)
@@ -118,6 +120,21 @@ class BoardListViewController: UIViewController {
         dataSource = DataSource(collectionView: collectionView) { collectionView, indexPath, item in
             collectionView.dequeueConfiguredReusableCell(using: cellRegistration, for: indexPath, item: item)
         }
+    }
+
+    private func addObservers() {
+        storageProvider.historyManager?.storeDidChangePublisher
+            .receive(on: DispatchQueue.main)
+            .sink {[weak self] transactions in
+                guard let `self` = self else { return }
+
+                let boardTransactions = self.boardTransactions(from: transactions)
+                guard !boardTransactions.isEmpty else { return }
+                self.storageProvider.mergeTransactions(
+                    boardTransactions,
+                    to: self.fetchedResultsController.managedObjectContext)
+            }
+            .store(in: &subscriptions)
     }
 
     private func createCardLayout() -> UICollectionViewLayout {
@@ -171,6 +188,17 @@ class BoardListViewController: UIViewController {
         } catch {
             print("#\(#function): Failed to create new CKShare, \(error)")
             return nil
+        }
+    }
+
+    private func boardTransactions(from transactions: [NSPersistentHistoryTransaction]) -> [NSPersistentHistoryTransaction] {
+        let boardEntityName = Board.entity().name
+
+        return transactions.filter { transaction in
+            if let changes = transaction.changes {
+                return changes.contains { $0.changedObjectID.entity.name == boardEntityName }
+            }
+            return false
         }
     }
 }

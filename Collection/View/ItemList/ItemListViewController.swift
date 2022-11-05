@@ -5,6 +5,7 @@
 //  Created by Hanna Chen on 2022/10/28.
 //
 
+import Combine
 import CoreData
 import UniformTypeIdentifiers
 import UIKit
@@ -30,7 +31,7 @@ class ItemListViewController: UIViewController {
 
     private let thumbnailProvider: ThumbnailProvider
     private let storageProvider: StorageProvider
-
+    // TODO: move fetchedResultsController logic to viewModel
     private lazy var fetchedResultsController: NSFetchedResultsController<Item> = {
         let fetchRequest = Item.fetchRequest()
         fetchRequest.predicate = NSPredicate(format: "board == %@", board)
@@ -47,6 +48,7 @@ class ItemListViewController: UIViewController {
     }()
 
     private var dataSource: DataSource?
+    private var subscriptions: Set<AnyCancellable> = []
 
     @IBOutlet var collectionView: UICollectionView!
 
@@ -59,6 +61,7 @@ class ItemListViewController: UIViewController {
         navigationController?.navigationBar.prefersLargeTitles = true
         collectionView.collectionViewLayout = createCardLayout()
         configureDataSource()
+        addObservers()
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -128,6 +131,22 @@ class ItemListViewController: UIViewController {
             collectionView.dequeueConfiguredReusableCell(using: cellRegistration, for: indexPath, item: item)
         }
     }
+
+    private func addObservers() {
+        storageProvider.historyManager?.storeDidChangePublisher
+            .receive(on: DispatchQueue.main)
+            .sink {[weak self] transactions in
+                guard let `self` = self else { return }
+
+                let boardTransactions = self.currentBoardTransactions(from: transactions)
+                guard !boardTransactions.isEmpty else { return }
+                self.storageProvider.mergeTransactions(
+                    boardTransactions,
+                    to: self.fetchedResultsController.managedObjectContext)
+            }
+            .store(in: &subscriptions)
+    }
+
 
     private func showDocumentPicker() {
         let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.data])
@@ -210,6 +229,15 @@ class ItemListViewController: UIViewController {
 
         if let error = error {
             print("#\(#function): Error reading input data, \(error)")
+        }
+    }
+
+    private func currentBoardTransactions(from transactions: [NSPersistentHistoryTransaction]) -> [NSPersistentHistoryTransaction] {
+        transactions.filter { transaction in
+            if let changes = transaction.changes {
+                return changes.contains { $0.changedObjectID == boardID }
+            }
+            return false
         }
     }
 }
