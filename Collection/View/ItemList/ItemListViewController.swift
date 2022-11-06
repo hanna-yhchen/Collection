@@ -5,6 +5,7 @@
 //  Created by Hanna Chen on 2022/10/28.
 //
 
+import Combine
 import CoreData
 import UniformTypeIdentifiers
 import UIKit
@@ -28,9 +29,10 @@ class ItemListViewController: UIViewController {
         }
     }()
 
-    private let thumbnailProvider: ThumbnailProvider
+    private let importManager: ItemImportManager
+//    private let thumbnailProvider: ThumbnailProvider
     private let storageProvider: StorageProvider
-
+    // TODO: move fetchedResultsController logic to viewModel
     private lazy var fetchedResultsController: NSFetchedResultsController<Item> = {
         let fetchRequest = Item.fetchRequest()
         fetchRequest.predicate = NSPredicate(format: "board == %@", board)
@@ -47,6 +49,7 @@ class ItemListViewController: UIViewController {
     }()
 
     private var dataSource: DataSource?
+    private var subscriptions: Set<AnyCancellable> = []
 
     @IBOutlet var collectionView: UICollectionView!
 
@@ -59,6 +62,12 @@ class ItemListViewController: UIViewController {
         navigationController?.navigationBar.prefersLargeTitles = true
         collectionView.collectionViewLayout = createCardLayout()
         configureDataSource()
+        addObservers()
+        importManager.completion = { error in
+            if let error = error {
+                print(error)
+            }
+        }
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -67,15 +76,28 @@ class ItemListViewController: UIViewController {
         try? fetchedResultsController.performFetch()
     }
 
+    convenience init?(
+        coder: NSCoder,
+        boardID: NSManagedObjectID,
+        storageProvider: StorageProvider
+    ) {
+        let importManager = ItemImportManager(
+            storageProvider: storageProvider,
+            thumbnailProvider: ThumbnailProvider(),
+            boardID: boardID)
+
+        self.init(coder: coder, boardID: boardID, storageProvider: storageProvider, importManager: importManager)
+    }
+
     init?(
         coder: NSCoder,
         boardID: NSManagedObjectID,
-        storageProvider: StorageProvider = StorageProvider.shared,
-        thumbnailProvider: ThumbnailProvider = ThumbnailProvider()
+        storageProvider: StorageProvider,
+        importManager: ItemImportManager
     ) {
         self.boardID = boardID
         self.storageProvider = storageProvider
-        self.thumbnailProvider = thumbnailProvider
+        self.importManager = importManager
 
         super.init(coder: coder)
     }
@@ -104,7 +126,9 @@ class ItemListViewController: UIViewController {
                         name: name,
                         contentType: UTType.plainText.identifier,
                         note: note,
-                        atBoard: self.board)
+                        boardID: self.boardID,
+                        context: self.storageProvider.newTaskContext()
+                    )
                 }
             }
         navigationController?.pushViewController(editorVC, animated: true)
@@ -128,6 +152,22 @@ class ItemListViewController: UIViewController {
             collectionView.dequeueConfiguredReusableCell(using: cellRegistration, for: indexPath, item: item)
         }
     }
+
+    private func addObservers() {
+        storageProvider.historyManager?.storeDidChangePublisher
+            .receive(on: DispatchQueue.main)
+            .sink {[weak self] transactions in
+                guard let `self` = self else { return }
+
+                let boardTransactions = self.currentBoardTransactions(from: transactions)
+                guard !boardTransactions.isEmpty else { return }
+                self.storageProvider.mergeTransactions(
+                    boardTransactions,
+                    to: self.fetchedResultsController.managedObjectContext)
+            }
+            .store(in: &subscriptions)
+    }
+
 
     private func showDocumentPicker() {
         let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.data])
@@ -158,58 +198,12 @@ class ItemListViewController: UIViewController {
         return UICollectionViewCompositionalLayout(section: section)
     }
 
-    private func readAndSave(_ url: URL) {
-        guard url.startAccessingSecurityScopedResource() else {
-            // TODO: show failure alert
-            return
-        }
-
-        defer { url.stopAccessingSecurityScopedResource() }
-
-        var error: NSError?
-
-        NSFileCoordinator().coordinate(readingItemAt: url, error: &error) { url in
-            guard
-                let values = try? url.resourceValues(forKeys: [.nameKey, .fileSizeKey, .contentTypeKey]),
-                let size = values.fileSize,
-                size <= 20_000_000,
-                let type = values.contentType,
-                let name = values.name,
-                let data = try? Data(contentsOf: url)
-            else {
-                // TODO: show alert
-                return
+    private func currentBoardTransactions(from transactions: [NSPersistentHistoryTransaction]) -> [NSPersistentHistoryTransaction] {
+        transactions.filter { transaction in
+            if let changes = transaction.changes {
+                return changes.contains { $0.changedObjectID == boardID }
             }
-
-            let semaphore = DispatchSemaphore(value: 0)
-
-            Task {
-                defer { semaphore.signal() }
-
-                let thumbnailResult = await self.thumbnailProvider.generateThumbnailData(url: url)
-
-                var thumbnailData: Data?
-
-                switch thumbnailResult {
-                case .success(let data):
-                    thumbnailData = data
-                case .failure(let error):
-                    print("#\(#function): Failed to generate thumbnail data, \(error)")
-                }
-
-                self.storageProvider.addItem(
-                    name: name,
-                    contentType: type.identifier,
-                    itemData: data,
-                    thumbnailData: thumbnailData,
-                    atBoard: board)
-            }
-
-            semaphore.wait()
-        }
-
-        if let error = error {
-            print("#\(#function): Error reading input data, \(error)")
+            return false
         }
     }
 }
@@ -218,9 +212,10 @@ class ItemListViewController: UIViewController {
 
 extension ItemListViewController: UIDocumentPickerDelegate {
     func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
-        urls.forEach { url in
-            DispatchQueue.global().async {
-                self.readAndSave(url)
+        importManager.process(urls) { error in
+            // TODO: UI reaction
+            if let error = error {
+                print("#\(#function): Failed to process input from document picker, \(error)")
             }
         }
     }
@@ -257,64 +252,11 @@ extension ItemListViewController: NSFetchedResultsControllerDelegate {
 
 extension ItemListViewController {
     override func paste(itemProviders: [NSItemProvider]) {
-        guard
-            let provider = itemProviders.first,
-            provider.hasItemConformingToTypeIdentifier(UTType.data.identifier)
-        else {
-            // TODO: show failure alert
-            return
-        }
-
-        if provider.hasItemConformingToTypeIdentifier(UTType.url.identifier) {
-            guard
-                let urlString = UIPasteboard.general.string,
-                let data = urlString.data(using: .utf8)
-            else {
-                // TODO: show failure alert
-                return
-            }
-
-            storageProvider.addItem(
-                name: urlString,
-                contentType: UTType.url.identifier,
-                itemData: data,
-                atBoard: board)
-            return
-        }
-
-        if provider.hasItemConformingToTypeIdentifier(UTType.utf8PlainText.identifier) {
-            let text = UIPasteboard.general.string
-            let currentTime = DateFormatter.hyphenatedDateTimeFormatter.string(from: Date())
-            let name = "Pasted note \(currentTime)"
-            storageProvider.addItem(
-                name: name,
-                contentType: UTType.plainText.identifier,
-                note: text,
-                atBoard: board)
-            return
-        }
-
-        guard let type = provider.registeredTypeIdentifiers.first(where: { identifier in
-            UTType(identifier) != nil
-        }) else {
-            // TODO: show failure alert
-            return
-        }
-
-        provider.loadFileRepresentation(forTypeIdentifier: type) {[weak self] url, error in
-            guard let `self` = self else { return }
-
+        importManager.processPasteboard(itemProviders: itemProviders) { error in
+            // TODO: UI reaction
             if let error = error {
-                print("#\(#function): Error loading data from pasteboard, \(error)")
-                return
+                print("#\(#function): Failed to process input from document picker, \(error)")
             }
-
-            guard let url = url else {
-                print("#\(#function): Failed to retrieve url for loaded file")
-                return
-            }
-
-            self.readAndSave(url)
         }
     }
 }

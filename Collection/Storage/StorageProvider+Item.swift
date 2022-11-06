@@ -14,9 +14,9 @@ extension StorageProvider {
         note: String? = nil,
         itemData: Data? = nil,
         thumbnailData: Data? = nil,
-        atBoard board: Board
+        boardID boardID: NSManagedObjectID,
+        context: NSManagedObjectContext
     ) {
-        let context = newTaskContext()
         context.perform {
             let item = Item(context: context)
             item.name = name
@@ -35,7 +35,7 @@ extension StorageProvider {
             item.creationDate = currentDate
             item.updateDate = currentDate
 
-            if let board = context.object(with: board.objectID) as? Board {
+            if let board = context.object(with: boardID) as? Board {
                 board.addToItems(item)
             }
 
