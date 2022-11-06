@@ -53,6 +53,7 @@ extension NSManagedObject {
             return UserDefaults.username
         }
 
+        // FIXME: failed to fetch shares owned by others at first launch
         guard
             let matchedShares = try? storageProvider.persistentContainer.fetchShares(matching: [objectID]),
             let share = matchedShares[objectID],

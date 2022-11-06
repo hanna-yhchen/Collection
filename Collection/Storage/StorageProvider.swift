@@ -28,7 +28,13 @@ class StorageProvider {
 
     // MARK: - Properties
 
-    let actor: StorageActor
+    lazy var actor: StorageActor = {
+        #if MainApp
+        return .mainApp
+        #elseif ShareExtension
+        return .shareExtension
+        #endif
+    }()
     let persistentContainer: NSPersistentCloudKitContainer
     var historyManager: StorageHistoryManager?
 
@@ -50,7 +56,6 @@ class StorageProvider {
 
     init() {
         // TODO: use custom flags to specify current target
-        self.actor = .mainApp
         self.persistentContainer = NSPersistentCloudKitContainer(name: AppIdentifier.coreDataModel)
         // TODO: tackle the situation when user turn off iCloud sync
         configurePersistentContainer()

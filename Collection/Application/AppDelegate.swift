@@ -11,7 +11,8 @@ import UIKit
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Override point for customization after application launch.
+        prepareForFirstLaunch()
+
         return true
     }
 
@@ -27,5 +28,26 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Called when the user discards a scene session.
         // If any sessions were discarded while the application was not running, this will be called shortly after application:didFinishLaunchingWithOptions.
         // Use this method to release any resources that were specific to the discarded scenes, as they will not return.
+    }
+}
+
+extension AppDelegate {
+    private func prepareForFirstLaunch() {
+        if UserDefaults.isFirstLaunch {
+            let viewContext = StorageProvider.shared.persistentContainer.viewContext
+            StorageProvider.shared.addBoard(name: "Inbox", context: viewContext)
+
+            let fetchRequest = Board.fetchRequest()
+            fetchRequest.predicate = NSPredicate(format: "%K = %@", #keyPath(Board.name), "Inbox" as String)
+            fetchRequest.fetchLimit = 1
+
+            if let inboxBoard = try? viewContext.fetch(fetchRequest).first {
+                UserDefaults.defaultBoardURL = inboxBoard.objectID.uriRepresentation().absoluteString
+            }
+
+            // FIXME: (concurrency issue) there will be duplicate inbox board if user ever installed this app and sync with iCloud before
+
+            UserDefaults.isFirstLaunch = false
+        }
     }
 }

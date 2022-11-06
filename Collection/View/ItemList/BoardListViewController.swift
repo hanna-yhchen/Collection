@@ -81,7 +81,7 @@ class BoardListViewController: UIViewController {
             else { return }
 
             if !name.isEmpty {
-                storageProvider.addBoard(name: name)
+                storageProvider.addBoard(name: name, context: storageProvider.newTaskContext())
             } else {
                 // TODO: show warning
             }
@@ -239,7 +239,10 @@ extension BoardListViewController: UICollectionViewDelegate {
 
         let itemListVC = UIStoryboard.main
             .instantiateViewController(identifier: "ItemListViewController") { coder in
-                ItemListViewController(coder: coder, boardID: boardID)
+                ItemListViewController(
+                    coder: coder,
+                    boardID: boardID,
+                    storageProvider: self.storageProvider)
             }
         navigationController?.pushViewController(itemListVC, animated: true)
     }
