@@ -6,13 +6,13 @@
 //
 
 import UIKit
-import CoreData
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Override point for customization after application launch.
+        prepareForFirstLaunch()
+
         return true
     }
 
@@ -29,50 +29,25 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // If any sessions were discarded while the application was not running, this will be called shortly after application:didFinishLaunchingWithOptions.
         // Use this method to release any resources that were specific to the discarded scenes, as they will not return.
     }
+}
 
-    // MARK: - Core Data stack
+extension AppDelegate {
+    private func prepareForFirstLaunch() {
+        if UserDefaults.isFirstLaunch {
+            let viewContext = StorageProvider.shared.persistentContainer.viewContext
+            StorageProvider.shared.addBoard(name: "Inbox", context: viewContext)
 
-    lazy var persistentContainer: NSPersistentCloudKitContainer = {
-        /*
-         The persistent container for the application. This implementation
-         creates and returns a container, having loaded the store for the
-         application to it. This property is optional since there are legitimate
-         error conditions that could cause the creation of the store to fail.
-        */
-        let container = NSPersistentCloudKitContainer(name: "Collection")
-        container.loadPersistentStores { storeDescription, error in
-            if let error = error as NSError? {
-                print("=== Persistent store:", storeDescription)
-                // Replace this implementation with code to handle the error appropriately.
-                // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
+            let fetchRequest = Board.fetchRequest()
+            fetchRequest.predicate = NSPredicate(format: "%K = %@", #keyPath(Board.name), "Inbox" as String)
+            fetchRequest.fetchLimit = 1
 
-                /*
-                 Typical reasons for an error here include:
-                 * The parent directory does not exist, cannot be created, or disallows writing.
-                 * The persistent store is not accessible, due to permissions or data protection when the device is locked.
-                 * The device is out of space.
-                 * The store could not be migrated to the current model version.
-                 Check the error message to determine what the actual problem was.
-                 */
-                fatalError("Unresolved error \(error), \(error.userInfo)")
+            if let inboxBoard = try? viewContext.fetch(fetchRequest).first {
+                UserDefaults.defaultBoardURL = inboxBoard.objectID.uriRepresentation().absoluteString
             }
-        }
-        return container
-    }()
 
-    // MARK: - Core Data Saving support
+            // FIXME: (concurrency issue) there will be duplicate inbox board if user ever installed this app and sync with iCloud before
 
-    func saveContext () {
-        let context = persistentContainer.viewContext
-        if context.hasChanges {
-            do {
-                try context.save()
-            } catch {
-                // Replace this implementation with code to handle the error appropriately.
-                // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-                let nserror = error as NSError
-                fatalError("Unresolved error \(nserror), \(nserror.userInfo)")
-            }
+            UserDefaults.isFirstLaunch = false
         }
     }
 }
