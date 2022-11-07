@@ -87,9 +87,6 @@ final class ItemImportManager {
             }
 
             if provider.hasItemConformingToTypeIdentifier(UTType.url.identifier) {
-                let currentTime = DateFormatter.hyphenatedDateTimeFormatter.string(from: Date())
-                let name = "Pasted \(currentTime)"
-
                 provider.loadObject(ofClass: URL.self) {[weak self]  url, error in
                     guard let `self` = self else { return }
                     guard let url = url else {
@@ -105,7 +102,8 @@ final class ItemImportManager {
                         context: self.storageProvider.newTaskContext()
                     )
                     completion(error)
-                }.resume()
+                }
+                .resume()
 
                 return
             }
@@ -114,7 +112,9 @@ final class ItemImportManager {
                 let currentTime = DateFormatter.hyphenatedDateTimeFormatter.string(from: Date())
                 let name = "Pasted \(currentTime)"
 
-                provider.loadDataRepresentation(forTypeIdentifier: UTType.utf8PlainText.identifier) {[weak self] data, error in
+                provider.loadDataRepresentation(
+                    forTypeIdentifier: UTType.utf8PlainText.identifier
+                ) {[weak self] data, error in
                     guard let `self` = self else { return }
                     guard let data = data else {
                         completion(ImportError.invalidData)

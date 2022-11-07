@@ -48,7 +48,7 @@ class EditorViewController: UIViewController {
     }
 
     @IBAction func saveButtonTapped() {
-        completion(titleTextField.text!, noteTextView.text!)
+        completion(titleTextField.text ?? "", noteTextView.text ?? "")
         navigationController?.popViewController(animated: true)
     }
 }
