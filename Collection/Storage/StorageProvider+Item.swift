@@ -22,6 +22,7 @@ extension StorageProvider {
             item.name = name
             item.contentType = contentType
             item.note = note
+            item.uuid = UUID()
 
             let thumbnail = Thumbnail(context: context)
             thumbnail.data = thumbnailData

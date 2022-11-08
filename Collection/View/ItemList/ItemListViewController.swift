@@ -7,6 +7,7 @@
 
 import Combine
 import CoreData
+import QuickLook
 import UniformTypeIdentifiers
 import UIKit
 
@@ -48,6 +49,16 @@ class ItemListViewController: UIViewController {
         return controller
     }()
 
+    let previewController = QLPreviewController()
+    private var previewingURL: URL? {
+        didSet {
+            if previewingURL != nil {
+                previewController.reloadData()
+            }
+        }
+    }
+    private var previewingItem: Item?
+
     private var dataSource: DataSource?
     private var subscriptions: Set<AnyCancellable> = []
 
@@ -61,6 +72,9 @@ class ItemListViewController: UIViewController {
         self.title = board.name
         navigationController?.navigationBar.prefersLargeTitles = true
         collectionView.collectionViewLayout = createCardLayout()
+        collectionView.delegate = self
+        previewController.dataSource = self
+        previewController.delegate = self
         configureDataSource()
         addObservers()
     }
@@ -172,6 +186,36 @@ class ItemListViewController: UIViewController {
         present(picker, animated: true)
     }
 
+    private func showItem(of itemID: NSManagedObjectID) {
+        let context = fetchedResultsController.managedObjectContext
+
+        guard
+            let item = context.object(with: itemID) as? Item,
+            let data = item.itemData?.data,
+            let uuid = item.uuid,
+            let typeIdentifier = item.contentType,
+            let filenameExtension = UTType(typeIdentifier)?.preferredFilenameExtension
+        else {
+            // TODO: show alert
+            return
+        }
+
+        let fileURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(uuid.uuidString)
+            .appendingPathExtension(filenameExtension)
+
+        try? data.write(to: fileURL, options: .atomic)
+
+        guard QLPreviewController.canPreview(fileURL as QLPreviewItem) else {
+            // TODO: show alert
+            return
+        }
+
+        self.previewingItem = item
+        self.previewingURL = fileURL
+        navigationController?.pushViewController(previewController, animated: true)
+    }
+
     private func createCardLayout() -> UICollectionViewLayout {
         let itemSize = NSCollectionLayoutSize(
             widthDimension: .fractionalWidth(1.0),
@@ -202,6 +246,18 @@ class ItemListViewController: UIViewController {
         }
     }
 }
+
+// MARK: - UICollectionViewDelegate
+
+extension ItemListViewController: UICollectionViewDelegate {
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        collectionView.deselectItem(at: indexPath, animated: true)
+        guard let itemID = dataSource?.itemIdentifier(for: indexPath) else { return }
+
+        showItem(of: itemID)
+    }
+}
+
 
 // MARK: - UIDocumentPickerDelegate
 
@@ -257,5 +313,61 @@ extension ItemListViewController {
                 print("#\(#function): Failed to process input from pasteboard, \(error)")
             }
         }
+    }
+}
+
+// MARK: - QLPreviewControllerDataSource
+
+extension ItemListViewController: QLPreviewControllerDataSource {
+    func numberOfPreviewItems(in controller: QLPreviewController) -> Int {
+        previewingURL == nil ? 0 : 1
+    }
+
+    func previewController(_ controller: QLPreviewController, previewItemAt index: Int) -> QLPreviewItem {
+        guard let previewItem = previewingURL as? QLPreviewItem else {
+            fatalError("#\(#function): there should exist a non-nil preview item but not")
+        }
+
+        return previewItem
+    }
+}
+
+// MARK: - QLPreviewControllerDelegate
+
+extension ItemListViewController: QLPreviewControllerDelegate {
+    func previewController(_ controller: QLPreviewController, editingModeFor previewItem: QLPreviewItem) -> QLPreviewItemEditingMode {
+        .updateContents
+    }
+
+    func previewController(_ controller: QLPreviewController, didUpdateContentsOf previewItem: QLPreviewItem) {
+        guard
+            let url = previewItem as? URL,
+            let data = try? Data(contentsOf: url),
+            let item = previewingItem,
+            let context = item.managedObjectContext,
+            let thumbnail = item.thumbnail,
+            let itemDataObject = previewingItem?.itemData
+        else { return }
+
+        Task {
+            let thumbnailProvider = ThumbnailProvider()
+            if let thumbnailData = try? await thumbnailProvider.generateThumbnailData(url: url).get() {
+                thumbnail.data = thumbnailData
+            }
+
+            itemDataObject.data = data
+            context.save(situation: .updateItem)
+
+            guard let dataSource = dataSource else { return }
+
+            var newSnapshot = dataSource.snapshot()
+            newSnapshot.reloadItems([item.objectID])
+            await dataSource.apply(newSnapshot, animatingDifferences: false)
+        }
+    }
+
+    func previewControllerDidDismiss(_ controller: QLPreviewController) {
+        previewingItem = nil
+        previewingURL = nil
     }
 }
