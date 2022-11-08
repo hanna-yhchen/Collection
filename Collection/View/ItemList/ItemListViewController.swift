@@ -207,9 +207,11 @@ class ItemListViewController: UIViewController {
 
 extension ItemListViewController: UIDocumentPickerDelegate {
     func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
-        importManager.process(urls) { error in
-            // TODO: UI reaction on main thread
-            if let error = error {
+        Task {
+            // TODO: UI reaction
+            do {
+                try await importManager.process(urls)
+            } catch {
                 print("#\(#function): Failed to process input from document picker, \(error)")
             }
         }
@@ -247,9 +249,11 @@ extension ItemListViewController: NSFetchedResultsControllerDelegate {
 
 extension ItemListViewController {
     override func paste(itemProviders: [NSItemProvider]) {
-        importManager.process(itemProviders) { error in
+        Task {
             // TODO: UI reaction
-            if let error = error {
+            do {
+                try await importManager.process(itemProviders)
+            } catch {
                 print("#\(#function): Failed to process input from pasteboard, \(error)")
             }
         }

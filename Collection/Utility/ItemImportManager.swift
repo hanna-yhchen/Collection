@@ -10,9 +10,16 @@ import UniformTypeIdentifiers
 import UIKit
 
 enum ImportError: Error {
-    case invalidData
+    case invalidData, invalidURL
     case unsupportedType
     case inaccessibleFile
+}
+
+actor ErrorStore {
+    var errors: [Error] = []
+    func append(_ error: Error) {
+        errors.append(error)
+    }
 }
 
 struct ItemImportManager {
@@ -39,148 +46,102 @@ struct ItemImportManager {
 
     // MARK: - Methods
 
-    func process(_ urls: [URL], completion: @escaping (Error?) -> Void) {
-        let group = DispatchGroup()
-        let lock = NSLock()
-        var errors: [Error] = []
+    func process(_ urls: [URL]) async throws {
+        try await withThrowingTaskGroup(of: Void.self) { group in
+            for url in urls {
+                guard url.startAccessingSecurityScopedResource() else {
+                    throw ImportError.inaccessibleFile
+                }
 
-        for url in urls {
-            guard url.startAccessingSecurityScopedResource() else {
-                completion(ImportError.inaccessibleFile)
-                break
-            }
-
-            group.enter()
-
-            DispatchQueue.global().async {
-                readAndSave(url) { error in
-                    if let error = error {
-                        lock.with { errors.append(error) }
-                    }
+                group.addTask {
+                    try await readAndSave(url)
                     url.stopAccessingSecurityScopedResource()
-                    group.leave()
                 }
             }
-        }
 
-        group.notify(queue: .main) {
-            let errorIfAny = errors.first
-            completion(errorIfAny)
+            try await group.next()
         }
     }
 
-    func process(_ itemProviders: [NSItemProvider], completion: @escaping (Error?) -> Void) {
-        let group = DispatchGroup()
-        let lock = NSLock()
-        var errors: [Error] = []
+    func process(_ itemProviders: [NSItemProvider]) async throws {
+        try await withThrowingTaskGroup(of: Void.self) { group in
+            for provider in itemProviders {
+                print("#\(#function): start handling items with types:", provider.registeredTypeIdentifiers)
+                guard
+                    provider.hasItemConformingToTypeIdentifier(UTType.data.identifier),
+                    let type = provider.registeredTypeIdentifiers.first(where: { UTType($0) != nil })
+                else {
+                    throw ImportError.unsupportedType
+                }
 
-        for provider in itemProviders {
-            group.enter()
-            print("#\(#function): start handling items with types:", provider.registeredTypeIdentifiers)
+                if provider.hasItemConformingToTypeIdentifier(UTType.url.identifier)
+                    && !provider.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier) {
+                    group.addTask {
+                        try await processURL(provider: provider)
+                    }
+                    continue
+                }
 
-            guard
-                provider.hasItemConformingToTypeIdentifier(UTType.data.identifier),
-                let type = provider.registeredTypeIdentifiers.first(where: { identifier in
-                    UTType(identifier) != nil
-                })
-            else {
-                completion(ImportError.unsupportedType)
-                group.leave()
-                continue
+                if provider.hasItemConformingToTypeIdentifier(UTType.utf8PlainText.identifier) {
+                    group.addTask {
+                        try await processText(provider: provider)
+                    }
+                    continue
+                }
+
+                group.addTask {
+                    // FIXME: collect error inside async block
+                    let errorStore = ErrorStore()
+//                    let semaphore = DispatchSemaphore(value: 0)
+
+                    provider.loadFileRepresentation(forTypeIdentifier: type) { url, error in
+                        if let error = error {
+                            Task {
+                                await errorStore.append(error)
+//                                semaphore.signal()
+                            }
+                            return
+                        }
+
+                        guard let url = url else {
+                            Task {
+                                await errorStore.append(ImportError.invalidURL)
+//                                semaphore.signal()
+                            }
+                            return
+                        }
+
+                        let innerSemaphore = DispatchSemaphore(value: 0)
+
+                        Task {
+                            do {
+                                try await readAndSave(url)
+                            } catch {
+                                await errorStore.append(error)
+                                innerSemaphore.signal()
+//                                semaphore.signal()
+                            }
+                        }
+
+                        innerSemaphore.wait()
+                    }
+
+//                    semaphore.wait()
+
+                    if let error = await errorStore.errors.first {
+                        throw error
+                    }
+                }
             }
 
-            if provider.hasItemConformingToTypeIdentifier(UTType.url.identifier)
-                && !provider.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier) {
-                provider.loadObject(ofClass: URL.self) { url, error in
-                    if let error = error {
-                        completion(error)
-                        return
-                    }
-
-                    guard let url = url else {
-                        completion(ImportError.invalidData)
-                        return
-                    }
-
-                    self.storageProvider.addItem(
-                        name: url.absoluteString,
-                        contentType: UTType.url.identifier,
-                        itemData: url.dataRepresentation,
-                        boardID: self.boardID,
-                        context: self.storageProvider.newTaskContext()
-                    )
-
-                    group.leave()
-                }
-                .resume()
-
-                continue
-            }
-
-            if provider.hasItemConformingToTypeIdentifier(UTType.utf8PlainText.identifier) {
-                let currentTime = DateFormatter.hyphenatedDateTimeFormatter.string(from: Date())
-                let name = "Note \(currentTime)"
-
-                provider.loadDataRepresentation(
-                    forTypeIdentifier: UTType.utf8PlainText.identifier
-                ) { data, error in
-                    if let error = error {
-                        completion(error)
-                        return
-                    }
-
-                    guard let data = data else {
-                        completion(ImportError.invalidData)
-                        return
-                    }
-
-                    self.storageProvider.addItem(
-                        name: name,
-                        contentType: UTType.plainText.identifier,
-                        note: String(data: data, encoding: .utf8),
-                        boardID: self.boardID,
-                        context: self.storageProvider.newTaskContext()
-                    )
-
-                    group.leave()
-                }
-
-                return
-            }
-
-            provider.loadFileRepresentation(forTypeIdentifier: type) { url, error in
-                if let error = error {
-                    print("#\(#function): Error loading data from pasteboard, \(error)")
-                    return
-                }
-
-                guard let url = url else {
-                    print("#\(#function): Failed to retrieve url for loaded file")
-                    return
-                }
-
-                let semaphore = DispatchSemaphore(value: 0)
-
-                self.readAndSave(url) { error in
-                    if let error = error {
-                        completion(error)
-                    }
-                    semaphore.signal()
-                }
-
-                semaphore.wait()
-                group.leave()
-            }
-        }
-
-        group.notify(queue: .main) {
-            let errorIfAny = errors.first
-            completion(errorIfAny)
+            try await group.next()
         }
     }
+}
 
-    // MARK: - Private
+// MARK: - Private
 
+extension ItemImportManager {
     private func processURL(provider: NSItemProvider) async throws {
         guard let url = try await provider.loadObject(ofClass: URL.self) else {
             throw ImportError.invalidData
@@ -190,15 +151,34 @@ struct ItemImportManager {
             name: url.absoluteString,
             contentType: UTType.url.identifier,
             itemData: url.dataRepresentation,
-            boardID: self.boardID,
-            context: self.storageProvider.newTaskContext()
+            boardID: boardID,
+            context: storageProvider.newTaskContext()
         )
     }
 
-    private func readAndSave(_ url: URL, completion: @escaping (Error?) -> Void) {
-        var error: NSError?
+    private func processText(provider: NSItemProvider) async throws {
+        guard let data = try await provider.loadDataRepresentation(
+            forTypeIdentifier: UTType.utf8PlainText.identifier)
+        else { throw ImportError.invalidData }
 
-        NSFileCoordinator().coordinate(readingItemAt: url, error: &error) { url in
+        let currentTime = DateFormatter.hyphenatedDateTimeFormatter.string(from: Date())
+        let name = "Note \(currentTime)"
+
+        self.storageProvider.addItem(
+            name: name,
+            contentType: UTType.utf8PlainText.identifier,
+            note: String(data: data, encoding: .utf8),
+            boardID: boardID,
+            context: storageProvider.newTaskContext()
+        )
+    }
+
+
+    private func readAndSave(_ url: URL) async throws {
+        var nserror: NSError?
+        var error: Error?
+
+        NSFileCoordinator().coordinate(readingItemAt: url, error: &nserror) { url in
             guard
                 let values = try? url.resourceValues(forKeys: [.nameKey, .fileSizeKey, .contentTypeKey]),
                 let size = values.fileSize,
@@ -207,7 +187,7 @@ struct ItemImportManager {
                 let name = values.name,
                 let data = try? Data(contentsOf: url)
             else {
-                completion(ImportError.invalidData)
+                error = ImportError.invalidData
                 return
             }
 
@@ -235,31 +215,39 @@ struct ItemImportManager {
                     boardID: boardID,
                     context: storageProvider.newTaskContext()
                 )
-
-                completion(nil)
             }
 
             semaphore.wait()
         }
 
         if let error = error {
-            completion(error)
+            throw error
+        }
+
+        if let nserror = nserror {
+            throw nserror
         }
     }
 }
 
+// MARK: - NSItemProvider+Sendable
+
 extension NSItemProvider: @unchecked Sendable {}
 
-extension NSLock {
-    @discardableResult
-    func with<T>(_ block: () throws -> T) rethrows -> T {
-        lock()
-        defer { unlock() }
-        return try block()
-    }
-}
+// MARK: - NSItemProvider+async/await wrapper
 
 extension NSItemProvider {
+    func loadDataRepresentation(forTypeIdentifier typeIdentifier: String) async throws -> Data? {
+        return try await withCheckedThrowingContinuation { continuation in
+            loadDataRepresentation(forTypeIdentifier: typeIdentifier) { data, error in
+                if let error = error {
+                    continuation.resume(throwing: error)
+                } else {
+                    continuation.resume(returning: data)
+                }
+            }
+        }
+    }
     func loadObject<T>(ofClass: T.Type) async throws -> T? where T: _ObjectiveCBridgeable, T._ObjectiveCType: NSItemProviderReading {
         return try await withCheckedThrowingContinuation { continuation in
             _ = loadObject(ofClass: ofClass) { object, error in

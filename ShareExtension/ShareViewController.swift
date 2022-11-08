@@ -46,14 +46,15 @@ class ShareViewController: SLComposeServiceViewController {
             return
         }
 
-        importManager?.process(attachments) { error in
-            if let error = error {
-                // TODO: show alert msg
-                print(error)
+        Task {
+            do {
+                try await importManager?.process(attachments)
+            } catch {
+                print("#\(#function): Failed to process attachments: \(error)")
             }
 
-            DispatchQueue.main.async {
-                self.extensionContext?.completeRequest(returningItems: [], completionHandler: nil)
+            await MainActor.run {
+                extensionContext?.completeRequest(returningItems: [], completionHandler: nil)
             }
         }
     }
