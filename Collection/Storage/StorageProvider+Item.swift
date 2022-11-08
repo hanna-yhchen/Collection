@@ -14,7 +14,7 @@ extension StorageProvider {
         note: String? = nil,
         itemData: Data? = nil,
         thumbnailData: Data? = nil,
-        boardID boardID: NSManagedObjectID,
+        boardID: NSManagedObjectID,
         context: NSManagedObjectContext
     ) {
         context.perform {
