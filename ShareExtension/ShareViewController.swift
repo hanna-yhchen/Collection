@@ -48,9 +48,13 @@ class ShareViewController: SLComposeServiceViewController {
 
         importManager?.process(attachments) { error in
             if let error = error {
+                // TODO: show alert msg
                 print(error)
             }
-            self.extensionContext?.completeRequest(returningItems: [], completionHandler: nil)
+
+            DispatchQueue.main.async {
+                self.extensionContext?.completeRequest(returningItems: [], completionHandler: nil)
+            }
         }
     }
 

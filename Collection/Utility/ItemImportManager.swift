@@ -11,23 +11,16 @@ import UIKit
 
 enum ImportError: Error {
     case invalidData
+    case unsupportedType
+    case inaccessibleFile
 }
 
-actor ImportErrorBag {
-    var errors: [Error] = []
-    func append(_ error: Error) {
-        errors.append(error)
-    }
-}
-
-final class ItemImportManager {
+struct ItemImportManager {
     // MARK: - Properties
 
     let storageProvider: StorageProvider
     let thumbnailProvider: ThumbnailProvider
     let boardID: NSManagedObjectID
-
-    var completion: ((Error?) -> Void)?
 
     // MARK: - Initializers
 
@@ -37,7 +30,7 @@ final class ItemImportManager {
         self.boardID = boardID
     }
 
-    convenience init(storageProvider: StorageProvider, boardID: NSManagedObjectID) {
+    init(storageProvider: StorageProvider, boardID: NSManagedObjectID) {
         self.init(
             storageProvider: storageProvider,
             thumbnailProvider: ThumbnailProvider(),
@@ -47,48 +40,63 @@ final class ItemImportManager {
     // MARK: - Methods
 
     func process(_ urls: [URL], completion: @escaping (Error?) -> Void) {
-        // TODO: tackle batch import
         let group = DispatchGroup()
-        let errorBag = ImportErrorBag()
+        let lock = NSLock()
+        var errors: [Error] = []
 
-        urls.forEach { url in
+        for url in urls {
+            guard url.startAccessingSecurityScopedResource() else {
+                completion(ImportError.inaccessibleFile)
+                break
+            }
+
             group.enter()
 
-            Task {
-                guard (await errorBag.errors).isEmpty else {
+            DispatchQueue.global().async {
+                readAndSave(url) { error in
+                    if let error = error {
+                        lock.with { errors.append(error) }
+                    }
+                    url.stopAccessingSecurityScopedResource()
                     group.leave()
-                    return
                 }
-
-                if let error = await self.readAndSave(url) {
-                    await errorBag.append(error)
-                }
-                group.leave()
             }
         }
 
         group.notify(queue: .main) {
-            Task {
-                completion(await errorBag.errors.first)
-            }
+            let errorIfAny = errors.first
+            completion(errorIfAny)
         }
     }
 
     func process(_ itemProviders: [NSItemProvider], completion: @escaping (Error?) -> Void) {
-        itemProviders.forEach { provider in
+        let group = DispatchGroup()
+        let lock = NSLock()
+        var errors: [Error] = []
+
+        for provider in itemProviders {
+            group.enter()
+            print("#\(#function): start handling items with types:", provider.registeredTypeIdentifiers)
+
             guard
                 provider.hasItemConformingToTypeIdentifier(UTType.data.identifier),
                 let type = provider.registeredTypeIdentifiers.first(where: { identifier in
                     UTType(identifier) != nil
                 })
             else {
-                // TODO: show failure alert
-                return
+                completion(ImportError.unsupportedType)
+                group.leave()
+                continue
             }
 
-            if provider.hasItemConformingToTypeIdentifier(UTType.url.identifier) {
-                provider.loadObject(ofClass: URL.self) {[weak self]  url, error in
-                    guard let `self` = self else { return }
+            if provider.hasItemConformingToTypeIdentifier(UTType.url.identifier)
+                && !provider.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier) {
+                provider.loadObject(ofClass: URL.self) { url, error in
+                    if let error = error {
+                        completion(error)
+                        return
+                    }
+
                     guard let url = url else {
                         completion(ImportError.invalidData)
                         return
@@ -101,21 +109,26 @@ final class ItemImportManager {
                         boardID: self.boardID,
                         context: self.storageProvider.newTaskContext()
                     )
-                    completion(error)
+
+                    group.leave()
                 }
                 .resume()
 
-                return
+                continue
             }
 
             if provider.hasItemConformingToTypeIdentifier(UTType.utf8PlainText.identifier) {
                 let currentTime = DateFormatter.hyphenatedDateTimeFormatter.string(from: Date())
-                let name = "Pasted \(currentTime)"
+                let name = "Note \(currentTime)"
 
                 provider.loadDataRepresentation(
                     forTypeIdentifier: UTType.utf8PlainText.identifier
-                ) {[weak self] data, error in
-                    guard let `self` = self else { return }
+                ) { data, error in
+                    if let error = error {
+                        completion(error)
+                        return
+                    }
+
                     guard let data = data else {
                         completion(ImportError.invalidData)
                         return
@@ -128,14 +141,14 @@ final class ItemImportManager {
                         boardID: self.boardID,
                         context: self.storageProvider.newTaskContext()
                     )
-                    completion(error)
+
+                    group.leave()
                 }
+
                 return
             }
 
-            provider.loadFileRepresentation(forTypeIdentifier: type) {[weak self] url, error in
-                guard let `self` = self else { return }
-
+            provider.loadFileRepresentation(forTypeIdentifier: type) { url, error in
                 if let error = error {
                     print("#\(#function): Error loading data from pasteboard, \(error)")
                     return
@@ -146,73 +159,43 @@ final class ItemImportManager {
                     return
                 }
 
-                Task {
-                    let error = await self.readAndSave(url)
-                    completion(error)
+                let semaphore = DispatchSemaphore(value: 0)
+
+                self.readAndSave(url) { error in
+                    if let error = error {
+                        completion(error)
+                    }
+                    semaphore.signal()
                 }
+
+                semaphore.wait()
+                group.leave()
             }
         }
-    }
 
-    func processPasteboard(itemProviders: [NSItemProvider], completion: @escaping (Error?) -> Void) {
-        itemProviders.forEach { provider in
-            guard
-                provider.hasItemConformingToTypeIdentifier(UTType.data.identifier)
-            else {
-                // TODO: show failure alert
-                return
-            }
-
-            // TODO: abstract early return logic
-            if provider.hasItemConformingToTypeIdentifier(UTType.url.identifier) {
-                guard
-                    let urlString = UIPasteboard.general.string,
-                    let data = urlString.data(using: .utf8)
-                else {
-                    // TODO: show failure alert
-                    return
-                }
-
-                storageProvider.addItem(
-                    name: urlString,
-                    contentType: UTType.url.identifier,
-                    itemData: data,
-                    boardID: boardID,
-                    context: storageProvider.newTaskContext()
-                )
-                return
-            }
-
-
-            if provider.hasItemConformingToTypeIdentifier(UTType.utf8PlainText.identifier) {
-                let text = UIPasteboard.general.string
-                let currentTime = DateFormatter.hyphenatedDateTimeFormatter.string(from: Date())
-                let name = "Pasted \(currentTime)"
-                storageProvider.addItem(
-                    name: name,
-                    contentType: UTType.plainText.identifier,
-                    note: text,
-                    boardID: boardID,
-                    context: storageProvider.newTaskContext()
-                )
-                return
-            }
-
-            process([provider], completion: completion)
+        group.notify(queue: .main) {
+            let errorIfAny = errors.first
+            completion(errorIfAny)
         }
     }
 
     // MARK: - Private
 
-    private func readAndSave(_ url: URL) async -> NSError? {
-        // FIXME: cannot access photo url when imported by share extension
-        guard url.startAccessingSecurityScopedResource() else {
-            // TODO: pass error msg and show alert
-            return nil
+    private func processURL(provider: NSItemProvider) async throws {
+        guard let url = try await provider.loadObject(ofClass: URL.self) else {
+            throw ImportError.invalidData
         }
 
-        defer { url.stopAccessingSecurityScopedResource() }
+        storageProvider.addItem(
+            name: url.absoluteString,
+            contentType: UTType.url.identifier,
+            itemData: url.dataRepresentation,
+            boardID: self.boardID,
+            context: self.storageProvider.newTaskContext()
+        )
+    }
 
+    private func readAndSave(_ url: URL, completion: @escaping (Error?) -> Void) {
         var error: NSError?
 
         NSFileCoordinator().coordinate(readingItemAt: url, error: &error) { url in
@@ -224,7 +207,7 @@ final class ItemImportManager {
                 let name = values.name,
                 let data = try? Data(contentsOf: url)
             else {
-                // TODO: pass error msg and show alert
+                completion(ImportError.invalidData)
                 return
             }
 
@@ -252,15 +235,40 @@ final class ItemImportManager {
                     boardID: boardID,
                     context: storageProvider.newTaskContext()
                 )
+
+                completion(nil)
             }
 
             semaphore.wait()
         }
 
         if let error = error {
-            print("#\(#function): Error reading input data, \(error)")
+            completion(error)
         }
+    }
+}
 
-        return error
+extension NSItemProvider: @unchecked Sendable {}
+
+extension NSLock {
+    @discardableResult
+    func with<T>(_ block: () throws -> T) rethrows -> T {
+        lock()
+        defer { unlock() }
+        return try block()
+    }
+}
+
+extension NSItemProvider {
+    func loadObject<T>(ofClass: T.Type) async throws -> T? where T: _ObjectiveCBridgeable, T._ObjectiveCType: NSItemProviderReading {
+        return try await withCheckedThrowingContinuation { continuation in
+            _ = loadObject(ofClass: ofClass) { object, error in
+                if let error = error {
+                    continuation.resume(throwing: error)
+                } else {
+                    continuation.resume(returning: object)
+                }
+            }
+        }
     }
 }

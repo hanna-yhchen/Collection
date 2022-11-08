@@ -63,11 +63,6 @@ class ItemListViewController: UIViewController {
         collectionView.collectionViewLayout = createCardLayout()
         configureDataSource()
         addObservers()
-        importManager.completion = { error in
-            if let error = error {
-                print(error)
-            }
-        }
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -213,7 +208,7 @@ class ItemListViewController: UIViewController {
 extension ItemListViewController: UIDocumentPickerDelegate {
     func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
         importManager.process(urls) { error in
-            // TODO: UI reaction
+            // TODO: UI reaction on main thread
             if let error = error {
                 print("#\(#function): Failed to process input from document picker, \(error)")
             }
@@ -252,10 +247,10 @@ extension ItemListViewController: NSFetchedResultsControllerDelegate {
 
 extension ItemListViewController {
     override func paste(itemProviders: [NSItemProvider]) {
-        importManager.processPasteboard(itemProviders: itemProviders) { error in
+        importManager.process(itemProviders) { error in
             // TODO: UI reaction
             if let error = error {
-                print("#\(#function): Failed to process input from document picker, \(error)")
+                print("#\(#function): Failed to process input from pasteboard, \(error)")
             }
         }
     }
