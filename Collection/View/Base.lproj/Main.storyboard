@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="21507" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES">
-    <device id="retina6_1" orientation="portrait" appearance="light"/>
+    <device id="retina6_0" orientation="portrait" appearance="light"/>
     <dependencies>
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="21505"/>
@@ -14,11 +14,11 @@
             <objects>
                 <viewController storyboardIdentifier="BoardListViewController" id="BQ3-04-65o" customClass="BoardListViewController" customModule="Collection" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="RMT-FO-6Yt">
-                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                        <rect key="frame" x="0.0" y="0.0" width="390" height="844"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <collectionView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" dataMode="prototypes" translatesAutoresizingMaskIntoConstraints="NO" id="JSz-EI-3rn">
-                                <rect key="frame" x="0.0" y="92" width="414" height="770"/>
+                                <rect key="frame" x="0.0" y="91" width="390" height="719"/>
                                 <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                                 <collectionViewLayout key="collectionViewLayout" id="lK4-zg-Ekp"/>
                                 <cells/>
@@ -54,53 +54,23 @@
             <objects>
                 <viewController storyboardIdentifier="ItemListViewController" id="BYZ-38-t0r" customClass="ItemListViewController" customModule="Collection" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="8bC-Xf-vdC">
-                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                        <rect key="frame" x="0.0" y="0.0" width="390" height="844"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <collectionView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" dataMode="prototypes" translatesAutoresizingMaskIntoConstraints="NO" id="0n1-d6-dPk">
-                                <rect key="frame" x="0.0" y="48" width="414" height="814"/>
+                                <rect key="frame" x="0.0" y="47" width="390" height="763"/>
                                 <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                                 <collectionViewLayout key="collectionViewLayout" id="Tjg-Nb-Wjd"/>
                                 <cells/>
                             </collectionView>
-                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="a5d-ID-WgL">
-                                <rect key="frame" x="312" y="811" width="86" height="35"/>
-                                <state key="normal" title="Button"/>
-                                <buttonConfiguration key="configuration" style="plain" title="Add File"/>
-                                <connections>
-                                    <action selector="addFileButtonTapped" destination="BYZ-38-t0r" eventType="touchUpInside" id="cDs-jv-q2p"/>
-                                </connections>
-                            </button>
-                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="ToU-Q0-zn1">
-                                <rect key="frame" x="331" y="768" width="67" height="35"/>
-                                <state key="normal" title="Button"/>
-                                <buttonConfiguration key="configuration" style="plain" title="Paste"/>
-                                <connections>
-                                    <action selector="pasteButtonTapped" destination="BYZ-38-t0r" eventType="touchUpInside" id="1aQ-9T-yrn"/>
-                                </connections>
-                            </button>
-                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="3KQ-uz-sqZ">
-                                <rect key="frame" x="307" y="725" width="91" height="35"/>
-                                <state key="normal" title="Button"/>
-                                <buttonConfiguration key="configuration" style="plain" title="Add Text"/>
-                                <connections>
-                                    <action selector="addNoteButtonTapped" destination="BYZ-38-t0r" eventType="touchUpInside" id="gfZ-IN-NOW"/>
-                                </connections>
-                            </button>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                         <constraints>
-                            <constraint firstItem="ToU-Q0-zn1" firstAttribute="top" secondItem="3KQ-uz-sqZ" secondAttribute="bottom" constant="8" id="5wb-Wh-nQw"/>
                             <constraint firstItem="0n1-d6-dPk" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" id="949-KG-swU"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="0n1-d6-dPk" secondAttribute="trailing" id="BEz-7d-ahb"/>
-                            <constraint firstItem="a5d-ID-WgL" firstAttribute="top" secondItem="ToU-Q0-zn1" secondAttribute="bottom" constant="8" id="HZh-HQ-Yd1"/>
-                            <constraint firstItem="ToU-Q0-zn1" firstAttribute="trailing" secondItem="a5d-ID-WgL" secondAttribute="trailing" id="dJd-kS-see"/>
-                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="a5d-ID-WgL" secondAttribute="bottom" constant="16" id="nu8-l3-PK8"/>
-                            <constraint firstItem="3KQ-uz-sqZ" firstAttribute="trailing" secondItem="ToU-Q0-zn1" secondAttribute="trailing" id="pZn-gP-PGO"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="0n1-d6-dPk" secondAttribute="bottom" id="sCF-7J-TBM"/>
                             <constraint firstItem="0n1-d6-dPk" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" id="vjy-Pu-Kuq"/>
-                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="a5d-ID-WgL" secondAttribute="trailing" constant="16" id="zd5-HL-3hY"/>
                         </constraints>
                     </view>
                     <connections>
@@ -109,25 +79,25 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="137.68115942028987" y="138.61607142857142"/>
+            <point key="canvasLocation" x="135.38461538461539" y="137.91469194312796"/>
         </scene>
         <!--Editor View Controller-->
         <scene sceneID="vzK-C6-TKu">
             <objects>
                 <viewController storyboardIdentifier="EditorViewController" id="i8Z-44-dcN" customClass="EditorViewController" customModule="Collection" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="P5f-hY-osU">
-                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                        <rect key="frame" x="0.0" y="0.0" width="390" height="844"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" textAlignment="natural" translatesAutoresizingMaskIntoConstraints="NO" id="dNj-gW-sk0">
-                                <rect key="frame" x="16" y="150" width="382" height="696"/>
+                                <rect key="frame" x="16" y="149" width="358" height="645"/>
                                 <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                                 <color key="textColor" systemColor="labelColor"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="14"/>
                                 <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
                             </textView>
                             <textField opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="248" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="Title" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="B9P-E1-UUe">
-                                <rect key="frame" x="16" y="108" width="382" height="34"/>
+                                <rect key="frame" x="16" y="107" width="358" height="34"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="14"/>
                                 <textInputTraits key="textInputTraits"/>
                             </textField>
@@ -167,14 +137,14 @@
             <objects>
                 <viewController storyboardIdentifier="NotePreviewController" id="ZLB-V9-8DA" customClass="NotePreviewController" customModule="Collection" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="9XY-uy-2FG">
-                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                        <rect key="frame" x="0.0" y="0.0" width="390" height="844"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <subviews>
                             <scrollView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="51C-so-tuH">
-                                <rect key="frame" x="0.0" y="92" width="414" height="770"/>
+                                <rect key="frame" x="0.0" y="91" width="390" height="719"/>
                                 <subviews>
                                     <label opaque="NO" userInteractionEnabled="NO" contentMode="TopLeft" horizontalHuggingPriority="251" verticalHuggingPriority="1000" verticalCompressionResistancePriority="1000" text="Note" textAlignment="natural" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="25K-tU-YP2">
-                                        <rect key="frame" x="16" y="0.0" width="382" height="17"/>
+                                        <rect key="frame" x="16" y="0.0" width="358" height="17"/>
                                         <fontDescription key="fontDescription" type="system" pointSize="14"/>
                                         <nil key="textColor"/>
                                         <nil key="highlightedColor"/>

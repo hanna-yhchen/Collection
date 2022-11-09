@@ -7,6 +7,7 @@
 
 import Combine
 import CoreData
+import PhotosUI
 import QuickLook
 import UniformTypeIdentifiers
 import UIKit
@@ -70,6 +71,7 @@ class ItemListViewController: UIViewController {
         super.viewDidLoad()
 
         self.title = board.name
+        addButtonStack()
         navigationController?.navigationBar.prefersLargeTitles = true
         collectionView.collectionViewLayout = createCardLayout()
         collectionView.delegate = self
@@ -104,15 +106,15 @@ class ItemListViewController: UIViewController {
 
     // MARK: - Actions
 
-    @IBAction func addFileButtonTapped() {
+    @objc private func addFileButtonTapped() {
         showDocumentPicker()
     }
 
-    @IBAction func pasteButtonTapped() {
+    @objc private func pasteButtonTapped() {
         paste(itemProviders: UIPasteboard.general.itemProviders)
     }
 
-    @IBAction func addNoteButtonTapped() {
+    @objc private func addNoteButtonTapped() {
         let editorVC = UIStoryboard.main
             .instantiateViewController(identifier: EditorViewController.storyboardID) { coder in
                 let viewModel = EditorViewModel(itemManager: self.itemManager, scenario: .create(boardID: self.boardID))
@@ -121,7 +123,39 @@ class ItemListViewController: UIViewController {
         navigationController?.pushViewController(editorVC, animated: true)
     }
 
+    @objc private func addPhotoButtonTapped() {
+        showPhotoPicker()
+    }
+
     // MARK: - Private Methods
+
+    private func addButtonStack() {
+        let stackView = UIStackView()
+        stackView.axis = .vertical
+        stackView.alignment = .trailing
+        stackView.spacing = 8
+
+        let buttonConfigs: [(title: String, action: Selector)] = [
+            ("Add Note", #selector(addNoteButtonTapped)),
+            ("Add Files", #selector(addFileButtonTapped)),
+            ("Add Photos", #selector(addPhotoButtonTapped)),
+            ("Paste", #selector(pasteButtonTapped)),
+        ]
+
+        buttonConfigs.forEach { config in
+            let button = UIButton(type: .system)
+            button.setTitle(config.title, for: .normal)
+            button.addTarget(self, action: config.action, for: .touchUpInside)
+            stackView.addArrangedSubview(button)
+        }
+
+        view.addSubview(stackView)
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            stackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            stackView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
+        ])
+    }
 
     private func configureDataSource() {
         let cellRegistration = UICollectionView.CellRegistration<CardItemCell, NSManagedObjectID>(
@@ -160,6 +194,15 @@ class ItemListViewController: UIViewController {
         let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.data])
         picker.delegate = self
         picker.allowsMultipleSelection = true
+
+        present(picker, animated: true)
+    }
+
+    private func showPhotoPicker() {
+        var config = PHPickerConfiguration()
+        config.selectionLimit = 10
+        let picker = PHPickerViewController(configuration: config)
+        picker.delegate = self
 
         present(picker, animated: true)
     }
@@ -264,7 +307,7 @@ class ItemListViewController: UIViewController {
 
             var newSnapshot = dataSource.snapshot()
             newSnapshot.reloadItems(items)
-            dataSource.apply(newSnapshot, animatingDifferences: true)
+            await dataSource.apply(newSnapshot, animatingDifferences: true)
         }
     }
 }
@@ -291,6 +334,24 @@ extension ItemListViewController: UIDocumentPickerDelegate {
                 try await itemManager.process(urls, saveInto: boardID)
             } catch {
                 print("#\(#function): Failed to process input from document picker, \(error)")
+            }
+        }
+    }
+}
+
+// MARK: - PHPickerViewControllerDelegate
+
+extension ItemListViewController: PHPickerViewControllerDelegate {
+    func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
+        Task {
+            // TODO: UI reaction
+            do {
+                try await itemManager.process(results.map(\.itemProvider), saveInto: boardID)
+                await MainActor.run {
+                    dismiss(animated: true)
+                }
+            } catch {
+                print("#\(#function): Failed to process input from pasteboard, \(error)")
             }
         }
     }

@@ -97,39 +97,32 @@ final class ItemManager {
 
         try await withThrowingTaskGroup(of: Void.self) { group in
             for provider in itemProviders {
-                print("#\(#function): start handling items with types:", provider.registeredTypeIdentifiers)
-                guard
-                    provider.hasItemConformingToTypeIdentifier(UTType.data.identifier),
-                    let type = provider.registeredTypeIdentifiers.first(where: { UTType($0) != nil })
-                else {
-                    throw ImportError.unsupportedType
-                }
-
-                if provider.hasItemConformingToTypeIdentifier(UTType.url.identifier)
-                    && !provider.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier) {
-                    group.addTask {[unowned self] in
-                        try await processURL(provider: provider, saveInto: boardID)
-                    }
-                    continue
-                }
-
-                if provider.hasItemConformingToTypeIdentifier(UTType.utf8PlainText.identifier) {
-                    group.addTask {[unowned self] in
-                        try await processText(provider: provider, saveInto: boardID)
-                    }
-                    continue
-                }
-
                 group.addTask {[unowned self] in
+                    print("#\(#function): start handling items with types:", provider.registeredTypeIdentifiers)
+                    guard
+                        provider.hasItemConformingToTypeIdentifier(UTType.data.identifier),
+                        let type = provider.registeredTypeIdentifiers.first(where: { UTType($0) != nil })
+                    else {
+                        throw ImportError.unsupportedType
+                    }
+
+                    if provider.hasItemConformingToTypeIdentifier(UTType.url.identifier)
+                        && !provider.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier) {
+                        try await processURL(provider: provider, saveInto: boardID)
+                        return
+                    }
+
+                    if provider.hasItemConformingToTypeIdentifier(UTType.utf8PlainText.identifier) {
+                        try await processText(provider: provider, saveInto: boardID)
+                        return
+                    }
+
                     // FIXME: collect error inside async block
                     let errorStore = ErrorStore()
-//                    let semaphore = DispatchSemaphore(value: 0)
-
                     provider.loadFileRepresentation(forTypeIdentifier: type) { url, error in
                         if let error = error {
                             Task {
                                 await errorStore.append(error)
-//                                semaphore.signal()
                             }
                             return
                         }
@@ -137,7 +130,6 @@ final class ItemManager {
                         guard let url = url else {
                             Task {
                                 await errorStore.append(ImportError.invalidURL)
-//                                semaphore.signal()
                             }
                             return
                         }
@@ -149,15 +141,13 @@ final class ItemManager {
                                 try await self.processFile(url, saveInto: boardID)
                             } catch {
                                 await errorStore.append(error)
-                                innerSemaphore.signal()
-//                                semaphore.signal()
                             }
+                            innerSemaphore.signal()
                         }
 
                         innerSemaphore.wait()
                     }
 
-//                    semaphore.wait()
 
                     if let error = await errorStore.errors.first {
                         throw error
@@ -205,6 +195,11 @@ extension ItemManager {
     }
 
     private func processFile(_ url: URL, saveInto boardID: ObjectID) async throws {
+        guard url.startAccessingSecurityScopedResource() else {
+            throw ImportError.inaccessibleFile
+        }
+        defer { url.stopAccessingSecurityScopedResource() }
+
         var nserror: NSError?
         var error: Error?
 
