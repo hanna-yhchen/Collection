@@ -30,7 +30,7 @@ class ItemListViewController: UIViewController {
         }
     }()
 
-    private let importManager: ItemImportManager
+    private let itemManager: ItemManager
 //    private let thumbnailProvider: ThumbnailProvider
     private let storageProvider: StorageProvider
     // TODO: move fetchedResultsController logic to viewModel
@@ -85,28 +85,15 @@ class ItemListViewController: UIViewController {
         try? fetchedResultsController.performFetch()
     }
 
-    convenience init?(
-        coder: NSCoder,
-        boardID: NSManagedObjectID,
-        storageProvider: StorageProvider
-    ) {
-        let importManager = ItemImportManager(
-            storageProvider: storageProvider,
-            thumbnailProvider: ThumbnailProvider(),
-            boardID: boardID)
-
-        self.init(coder: coder, boardID: boardID, storageProvider: storageProvider, importManager: importManager)
-    }
-
     init?(
         coder: NSCoder,
         boardID: NSManagedObjectID,
         storageProvider: StorageProvider,
-        importManager: ItemImportManager
+        itemManager: ItemManager = ItemManager.shared
     ) {
         self.boardID = boardID
         self.storageProvider = storageProvider
-        self.importManager = importManager
+        self.itemManager = itemManager
 
         super.init(coder: coder)
     }
@@ -125,20 +112,11 @@ class ItemListViewController: UIViewController {
         paste(itemProviders: UIPasteboard.general.itemProviders)
     }
 
-    @IBAction func addTextButtonTapped() {
+    @IBAction func addNoteButtonTapped() {
         let editorVC = UIStoryboard.main
-            .instantiateViewController(identifier: "EditorViewController") { coder in
-                EditorViewController(coder: coder, situation: .create) {[weak self] name, note in
-                    guard let `self` = self else { return }
-
-                    self.storageProvider.addItem(
-                        name: name,
-                        contentType: UTType.plainText.identifier,
-                        note: note,
-                        boardID: self.boardID,
-                        context: self.storageProvider.newTaskContext()
-                    )
-                }
+            .instantiateViewController(identifier: EditorViewController.storyboardID) { coder in
+                let viewModel = EditorViewModel(itemManager: self.itemManager, scenario: .create(boardID: self.boardID))
+                return EditorViewController(coder: coder, viewModel: viewModel)
             }
         navigationController?.pushViewController(editorVC, animated: true)
     }
@@ -186,15 +164,26 @@ class ItemListViewController: UIViewController {
         present(picker, animated: true)
     }
 
-    private func showItem(of itemID: NSManagedObjectID) {
+    private func showItem(id: NSManagedObjectID) {
         let context = fetchedResultsController.managedObjectContext
 
         guard
-            let item = context.object(with: itemID) as? Item,
-            let data = item.itemData?.data,
-            let uuid = item.uuid,
+            let item = context.object(with: id) as? Item,
             let typeIdentifier = item.contentType,
-            let filenameExtension = UTType(typeIdentifier)?.preferredFilenameExtension
+            let itemType = UTType(typeIdentifier)
+        else {
+            // TODO: show alert
+            return
+        }
+
+        if itemType.conforms(to: .utf8PlainText) {
+            showNotePreview(item)
+        }
+
+        guard
+            let data = item.itemData?.data, // Note item will filtered out here
+            let uuid = item.uuid,
+            let filenameExtension = itemType.preferredFilenameExtension
         else {
             // TODO: show alert
             return
@@ -252,6 +241,14 @@ class ItemListViewController: UIViewController {
         return UICollectionViewCompositionalLayout(section: section)
     }
 
+    private func showNotePreview(_ item: Item) {
+        let noteVC = UIStoryboard.main
+            .instantiateViewController(identifier: NotePreviewController.storyboardID) { coder in
+                NotePreviewController(coder: coder, item: item, itemManager: self.itemManager)
+            }
+        navigationController?.pushViewController(noteVC, animated: true)
+    }
+
     private func currentBoardTransactions(from transactions: [NSPersistentHistoryTransaction]) -> [NSPersistentHistoryTransaction] {
         transactions.filter { transaction in
             if let changes = transaction.changes {
@@ -279,7 +276,7 @@ extension ItemListViewController: UICollectionViewDelegate {
         collectionView.deselectItem(at: indexPath, animated: true)
         guard let itemID = dataSource?.itemIdentifier(for: indexPath) else { return }
 
-        showItem(of: itemID)
+        showItem(id: itemID)
     }
 }
 
@@ -291,7 +288,7 @@ extension ItemListViewController: UIDocumentPickerDelegate {
         Task {
             // TODO: UI reaction
             do {
-                try await importManager.process(urls)
+                try await itemManager.process(urls, saveInto: boardID)
             } catch {
                 print("#\(#function): Failed to process input from document picker, \(error)")
             }
@@ -333,7 +330,7 @@ extension ItemListViewController {
         Task {
             // TODO: UI reaction
             do {
-                try await importManager.process(itemProviders)
+                try await itemManager.process(itemProviders)
             } catch {
                 print("#\(#function): Failed to process input from pasteboard, \(error)")
             }

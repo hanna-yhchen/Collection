@@ -10,6 +10,8 @@ import CoreData
 
 private let storageProvider = StorageProvider.shared
 
+typealias ObjectID = NSManagedObjectID
+
 // MARK: - NSManagedObjectContext
 
 extension NSManagedObjectContext {
