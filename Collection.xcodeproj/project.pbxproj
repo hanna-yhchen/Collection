@@ -133,8 +133,7 @@
 			children = (
 				B573118C2913B0F000AD129F /* UserDefault.swift */,
 			);
-			name = Model;
-			path = View;
+			path = Model;
 			sourceTree = "<group>";
 		};
 		B515D5DD29121EB300072CBC /* BoardList */ = {
