@@ -1,5 +1,5 @@
 //
-//  ItemImportManager.swift
+//  ItemManager.swift
 //  Collection
 //
 //  Created by Hanna Chen on 2022/11/6.
@@ -13,6 +13,7 @@ enum ImportError: Error {
     case invalidData, invalidURL
     case unsupportedType
     case inaccessibleFile
+    case unfoundDefaultBoard
 }
 
 actor ErrorStore {
@@ -22,39 +23,60 @@ actor ErrorStore {
     }
 }
 
-struct ItemImportManager {
+final class ItemManager {
+    static let shared = ItemManager()
+
     // MARK: - Properties
 
     let storageProvider: StorageProvider
     let thumbnailProvider: ThumbnailProvider
-    let boardID: NSManagedObjectID
+    //    let boardID: NSManagedObjectID
+    lazy var defaultBoardID: ObjectID? = {
+        guard
+            let url = URL(string: UserDefaults.defaultBoardURL),
+            let boardID = storageProvider.persistentContainer.persistentStoreCoordinator
+                .managedObjectID(forURIRepresentation: url)
+        else { return nil }
+
+        return boardID
+    }()
 
     // MARK: - Initializers
 
-    init(storageProvider: StorageProvider, thumbnailProvider: ThumbnailProvider, boardID: NSManagedObjectID) {
+    init(storageProvider: StorageProvider = .shared, thumbnailProvider: ThumbnailProvider = ThumbnailProvider()) {
         self.storageProvider = storageProvider
         self.thumbnailProvider = thumbnailProvider
-        self.boardID = boardID
-    }
-
-    init(storageProvider: StorageProvider, boardID: NSManagedObjectID) {
-        self.init(
-            storageProvider: storageProvider,
-            thumbnailProvider: ThumbnailProvider(),
-            boardID: boardID)
     }
 
     // MARK: - Methods
 
-    func process(_ urls: [URL]) async throws {
+    func addNote(name: String, note: String, saveInto boardID: ObjectID) async throws {
+        // TODO: throwable
+        addItem(
+            name: name,
+            contentType: UTType.utf8PlainText.identifier,
+            note: note,
+            boardID: boardID,
+            context: storageProvider.newTaskContext())
+    }
+
+    func updateNote(itemID: ObjectID, name: String, note: String) async throws {
+        try await updateItem(
+            itemID: itemID,
+            name: name,
+            note: note,
+            context: storageProvider.newTaskContext())
+    }
+
+    func process(_ urls: [URL], saveInto boardID: ObjectID) async throws {
         try await withThrowingTaskGroup(of: Void.self) { group in
             for url in urls {
                 guard url.startAccessingSecurityScopedResource() else {
                     throw ImportError.inaccessibleFile
                 }
 
-                group.addTask {
-                    try await readAndSave(url)
+                group.addTask {[unowned self] in
+                    try await processFile(url, saveInto: boardID)
                     url.stopAccessingSecurityScopedResource()
                 }
             }
@@ -63,7 +85,16 @@ struct ItemImportManager {
         }
     }
 
-    func process(_ itemProviders: [NSItemProvider]) async throws {
+    func process(_ itemProviders: [NSItemProvider], saveInto boardID: ObjectID? = nil) async throws {
+        var boardID = boardID
+        if boardID == nil {
+            boardID = defaultBoardID
+        }
+
+        guard let boardID = boardID else {
+            throw ImportError.unfoundDefaultBoard
+        }
+
         try await withThrowingTaskGroup(of: Void.self) { group in
             for provider in itemProviders {
                 print("#\(#function): start handling items with types:", provider.registeredTypeIdentifiers)
@@ -76,20 +107,20 @@ struct ItemImportManager {
 
                 if provider.hasItemConformingToTypeIdentifier(UTType.url.identifier)
                     && !provider.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier) {
-                    group.addTask {
-                        try await processURL(provider: provider)
+                    group.addTask {[unowned self] in
+                        try await processURL(provider: provider, saveInto: boardID)
                     }
                     continue
                 }
 
                 if provider.hasItemConformingToTypeIdentifier(UTType.utf8PlainText.identifier) {
-                    group.addTask {
-                        try await processText(provider: provider)
+                    group.addTask {[unowned self] in
+                        try await processText(provider: provider, saveInto: boardID)
                     }
                     continue
                 }
 
-                group.addTask {
+                group.addTask {[unowned self] in
                     // FIXME: collect error inside async block
                     let errorStore = ErrorStore()
 //                    let semaphore = DispatchSemaphore(value: 0)
@@ -115,7 +146,7 @@ struct ItemImportManager {
 
                         Task {
                             do {
-                                try await readAndSave(url)
+                                try await self.processFile(url, saveInto: boardID)
                             } catch {
                                 await errorStore.append(error)
                                 innerSemaphore.signal()
@@ -141,13 +172,13 @@ struct ItemImportManager {
 
 // MARK: - Private
 
-extension ItemImportManager {
-    private func processURL(provider: NSItemProvider) async throws {
+extension ItemManager {
+    private func processURL(provider: NSItemProvider, saveInto boardID: ObjectID) async throws {
         guard let url = try await provider.loadObject(ofClass: URL.self) else {
             throw ImportError.invalidData
         }
 
-        storageProvider.addItem(
+        addItem(
             name: url.absoluteString,
             contentType: UTType.url.identifier,
             itemData: url.dataRepresentation,
@@ -156,7 +187,7 @@ extension ItemImportManager {
         )
     }
 
-    private func processText(provider: NSItemProvider) async throws {
+    private func processText(provider: NSItemProvider, saveInto boardID: ObjectID) async throws {
         guard let data = try await provider.loadDataRepresentation(
             forTypeIdentifier: UTType.utf8PlainText.identifier)
         else { throw ImportError.invalidData }
@@ -164,7 +195,7 @@ extension ItemImportManager {
         let currentTime = DateFormatter.hyphenatedDateTimeFormatter.string(from: Date())
         let name = "Note \(currentTime)"
 
-        self.storageProvider.addItem(
+        addItem(
             name: name,
             contentType: UTType.utf8PlainText.identifier,
             note: String(data: data, encoding: .utf8),
@@ -173,8 +204,7 @@ extension ItemImportManager {
         )
     }
 
-
-    private func readAndSave(_ url: URL) async throws {
+    private func processFile(_ url: URL, saveInto boardID: ObjectID) async throws {
         var nserror: NSError?
         var error: Error?
 
@@ -207,7 +237,7 @@ extension ItemImportManager {
                     print("#\(#function): Failed to generate thumbnail data, \(error)")
                 }
 
-                storageProvider.addItem(
+                addItem(
                     name: name,
                     contentType: type.identifier,
                     itemData: data,
@@ -226,6 +256,80 @@ extension ItemImportManager {
 
         if let nserror = nserror {
             throw nserror
+        }
+    }
+}
+
+// MARK: - CoreData Methods
+
+extension ItemManager {
+    private func addItem(
+        name: String,
+        contentType: String,
+        note: String? = nil,
+        itemData: Data? = nil,
+        thumbnailData: Data? = nil,
+        boardID: NSManagedObjectID,
+        context: NSManagedObjectContext
+    ) {
+        context.perform {
+            let item = Item(context: context)
+            item.name = name
+            item.contentType = contentType
+            item.note = note
+            item.uuid = UUID()
+
+            let thumbnail = Thumbnail(context: context)
+            thumbnail.data = thumbnailData
+            thumbnail.item = item
+
+            let itemDataObject = ItemData(context: context)
+            itemDataObject.data = itemData
+            itemDataObject.item = item
+
+            let currentDate = Date()
+            item.creationDate = currentDate
+            item.updateDate = currentDate
+
+            if let board = context.object(with: boardID) as? Board {
+                board.addToItems(item)
+            }
+
+            context.save(situation: .addItem)
+        }
+    }
+
+    private func updateItem(
+        itemID: NSManagedObjectID,
+        name: String? = nil,
+        note: String? = nil,
+        itemData: Data? = nil,
+        thumbnailData: Data? = nil,
+        boardID: NSManagedObjectID? = nil,
+        context: NSManagedObjectContext
+    ) async throws {
+        guard let item = try context.existingObject(with: itemID) as? Item else {
+            throw ItemError.unfoundItem
+        }
+
+        try await context.perform {
+            if let name = name {
+                item.name = name
+            }
+            if let note = note {
+                item.note = note
+            }
+            if let itemData = itemData, let itemDataObject = item.itemData {
+                itemDataObject.data = itemData
+            }
+            if let thumbnailData = thumbnailData, let thumbnail = item.thumbnail {
+                thumbnail.data = thumbnailData
+            }
+            if let boardID = boardID, let board = try context.existingObject(with: boardID) as? Board {
+                board.addToItems(item)
+            }
+
+            context.save(situation: .updateItem)
         }
     }
 }

@@ -6,7 +6,7 @@
 //
 /*
  Build files:
- StorageProvider, StorageProvider+Item, StorageHistoryManage, UserDefault, UserDefaults+Extension, Collection(Core Data Model), DateFormatter+Extensions, ThumbnailProvider, ItemImportManager
+ StorageProvider, StorageProvider+Item, StorageHistoryManage, UserDefault, UserDefaults+Extension, Collection(Core Data Model), DateFormatter+Extensions, ThumbnailProvider, ItemManager
  */
 
 import CoreData
@@ -19,21 +19,6 @@ enum ShareExtensionError: Error {
 }
 
 class ShareViewController: SLComposeServiceViewController {
-
-    lazy var importManager: ItemImportManager? = {
-        let storageProvider = StorageProvider.shared
-
-        guard
-            let url = URL(string: UserDefaults.defaultBoardURL),
-            let boardID = storageProvider.persistentContainer.persistentStoreCoordinator
-                .managedObjectID(forURIRepresentation: url)
-        else {
-            extensionContext?.cancelRequest(withError: ShareExtensionError.unfoundDefaultBoard)
-            return nil
-        }
-
-        return ItemImportManager(storageProvider: storageProvider, boardID: boardID)
-    }()
 
     override func isContentValid() -> Bool {
         // Do validation of contentText and/or NSExtensionContext attachments here
@@ -48,7 +33,7 @@ class ShareViewController: SLComposeServiceViewController {
 
         Task {
             do {
-                try await importManager?.process(attachments)
+                try await ItemManager.shared.process(attachments)
             } catch {
                 print("#\(#function): Failed to process attachments: \(error)")
             }

@@ -7,6 +7,7 @@
 
 import Combine
 import CoreData
+import QuickLook
 import UniformTypeIdentifiers
 import UIKit
 
@@ -29,7 +30,7 @@ class ItemListViewController: UIViewController {
         }
     }()
 
-    private let importManager: ItemImportManager
+    private let itemManager: ItemManager
 //    private let thumbnailProvider: ThumbnailProvider
     private let storageProvider: StorageProvider
     // TODO: move fetchedResultsController logic to viewModel
@@ -48,6 +49,16 @@ class ItemListViewController: UIViewController {
         return controller
     }()
 
+    let previewController = QLPreviewController()
+    private var previewingURL: URL? {
+        didSet {
+            if previewingURL != nil {
+                previewController.reloadData()
+            }
+        }
+    }
+    private var previewingItem: Item?
+
     private var dataSource: DataSource?
     private var subscriptions: Set<AnyCancellable> = []
 
@@ -61,6 +72,9 @@ class ItemListViewController: UIViewController {
         self.title = board.name
         navigationController?.navigationBar.prefersLargeTitles = true
         collectionView.collectionViewLayout = createCardLayout()
+        collectionView.delegate = self
+        previewController.dataSource = self
+        previewController.delegate = self
         configureDataSource()
         addObservers()
     }
@@ -71,28 +85,15 @@ class ItemListViewController: UIViewController {
         try? fetchedResultsController.performFetch()
     }
 
-    convenience init?(
-        coder: NSCoder,
-        boardID: NSManagedObjectID,
-        storageProvider: StorageProvider
-    ) {
-        let importManager = ItemImportManager(
-            storageProvider: storageProvider,
-            thumbnailProvider: ThumbnailProvider(),
-            boardID: boardID)
-
-        self.init(coder: coder, boardID: boardID, storageProvider: storageProvider, importManager: importManager)
-    }
-
     init?(
         coder: NSCoder,
         boardID: NSManagedObjectID,
         storageProvider: StorageProvider,
-        importManager: ItemImportManager
+        itemManager: ItemManager = ItemManager.shared
     ) {
         self.boardID = boardID
         self.storageProvider = storageProvider
-        self.importManager = importManager
+        self.itemManager = itemManager
 
         super.init(coder: coder)
     }
@@ -111,20 +112,11 @@ class ItemListViewController: UIViewController {
         paste(itemProviders: UIPasteboard.general.itemProviders)
     }
 
-    @IBAction func addTextButtonTapped() {
+    @IBAction func addNoteButtonTapped() {
         let editorVC = UIStoryboard.main
-            .instantiateViewController(identifier: "EditorViewController") { coder in
-                EditorViewController(coder: coder, situation: .create) {[weak self] name, note in
-                    guard let `self` = self else { return }
-
-                    self.storageProvider.addItem(
-                        name: name,
-                        contentType: UTType.plainText.identifier,
-                        note: note,
-                        boardID: self.boardID,
-                        context: self.storageProvider.newTaskContext()
-                    )
-                }
+            .instantiateViewController(identifier: EditorViewController.storyboardID) { coder in
+                let viewModel = EditorViewModel(itemManager: self.itemManager, scenario: .create(boardID: self.boardID))
+                return EditorViewController(coder: coder, viewModel: viewModel)
             }
         navigationController?.pushViewController(editorVC, animated: true)
     }
@@ -172,6 +164,62 @@ class ItemListViewController: UIViewController {
         present(picker, animated: true)
     }
 
+    private func showItem(id: NSManagedObjectID) {
+        let context = fetchedResultsController.managedObjectContext
+
+        guard
+            let item = context.object(with: id) as? Item,
+            let typeIdentifier = item.contentType,
+            let itemType = UTType(typeIdentifier)
+        else {
+            // TODO: show alert
+            return
+        }
+
+        if itemType.conforms(to: .utf8PlainText) {
+            showNotePreview(item)
+        }
+
+        guard
+            let data = item.itemData?.data, // Note item will filtered out here
+            let uuid = item.uuid,
+            let filenameExtension = itemType.preferredFilenameExtension
+        else {
+            // TODO: show alert
+            return
+        }
+
+        let fileURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(uuid.uuidString)
+            .appendingPathExtension(filenameExtension)
+
+        var writingError: Error?
+        var coordinatingError: NSError?
+
+        NSFileCoordinator().coordinate(writingItemAt: fileURL, error: &coordinatingError) { url in
+            do {
+                try data.write(to: url, options: .atomic)
+            } catch {
+                writingError = error
+            }
+        }
+
+        guard writingError == nil && coordinatingError == nil else {
+            // TODO: show alert
+            return
+        }
+
+
+        guard QLPreviewController.canPreview(fileURL as QLPreviewItem) else {
+            // TODO: show alert
+            return
+        }
+
+        self.previewingItem = item
+        self.previewingURL = fileURL
+        navigationController?.pushViewController(previewController, animated: true)
+    }
+
     private func createCardLayout() -> UICollectionViewLayout {
         let itemSize = NSCollectionLayoutSize(
             widthDimension: .fractionalWidth(1.0),
@@ -193,6 +241,14 @@ class ItemListViewController: UIViewController {
         return UICollectionViewCompositionalLayout(section: section)
     }
 
+    private func showNotePreview(_ item: Item) {
+        let noteVC = UIStoryboard.main
+            .instantiateViewController(identifier: NotePreviewController.storyboardID) { coder in
+                NotePreviewController(coder: coder, item: item, itemManager: self.itemManager)
+            }
+        navigationController?.pushViewController(noteVC, animated: true)
+    }
+
     private func currentBoardTransactions(from transactions: [NSPersistentHistoryTransaction]) -> [NSPersistentHistoryTransaction] {
         transactions.filter { transaction in
             if let changes = transaction.changes {
@@ -201,7 +257,29 @@ class ItemListViewController: UIViewController {
             return false
         }
     }
+
+    private func reloadItems(_ items: [NSManagedObjectID]) {
+        Task { @MainActor in
+            guard let dataSource = dataSource else { return }
+
+            var newSnapshot = dataSource.snapshot()
+            newSnapshot.reloadItems(items)
+            dataSource.apply(newSnapshot, animatingDifferences: true)
+        }
+    }
 }
+
+// MARK: - UICollectionViewDelegate
+
+extension ItemListViewController: UICollectionViewDelegate {
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        collectionView.deselectItem(at: indexPath, animated: true)
+        guard let itemID = dataSource?.itemIdentifier(for: indexPath) else { return }
+
+        showItem(id: itemID)
+    }
+}
+
 
 // MARK: - UIDocumentPickerDelegate
 
@@ -210,7 +288,7 @@ extension ItemListViewController: UIDocumentPickerDelegate {
         Task {
             // TODO: UI reaction
             do {
-                try await importManager.process(urls)
+                try await itemManager.process(urls, saveInto: boardID)
             } catch {
                 print("#\(#function): Failed to process input from document picker, \(error)")
             }
@@ -252,10 +330,64 @@ extension ItemListViewController {
         Task {
             // TODO: UI reaction
             do {
-                try await importManager.process(itemProviders)
+                try await itemManager.process(itemProviders)
             } catch {
                 print("#\(#function): Failed to process input from pasteboard, \(error)")
             }
         }
+    }
+}
+
+// MARK: - QLPreviewControllerDataSource
+
+extension ItemListViewController: QLPreviewControllerDataSource {
+    func numberOfPreviewItems(in controller: QLPreviewController) -> Int {
+        previewingURL == nil ? 0 : 1
+    }
+
+    func previewController(_ controller: QLPreviewController, previewItemAt index: Int) -> QLPreviewItem {
+        guard let previewItem = previewingURL as? QLPreviewItem else {
+            fatalError("#\(#function): there should exist a non-nil preview item but not")
+        }
+
+        return previewItem
+    }
+}
+
+// MARK: - QLPreviewControllerDelegate
+
+extension ItemListViewController: QLPreviewControllerDelegate {
+    func previewController(_ controller: QLPreviewController, editingModeFor previewItem: QLPreviewItem) -> QLPreviewItemEditingMode {
+        .updateContents
+    }
+
+    func previewController(_ controller: QLPreviewController, didUpdateContentsOf previewItem: QLPreviewItem) {
+        guard
+            let url = previewItem as? URL,
+            let data = try? Data(contentsOf: url),
+            let item = previewingItem,
+            let context = item.managedObjectContext,
+            let thumbnail = item.thumbnail,
+            let itemDataObject = previewingItem?.itemData
+        else { return }
+
+        let itemID = item.objectID
+
+        Task {
+            itemDataObject.data = data
+
+            let thumbnailProvider = ThumbnailProvider() // TODO: use shared one?
+            if let thumbnailData = try? await thumbnailProvider.generateThumbnailData(url: url).get() {
+                thumbnail.data = thumbnailData
+            }
+
+            context.save(situation: .updateItem)
+            reloadItems([itemID])
+        }
+    }
+
+    func previewControllerDidDismiss(_ controller: QLPreviewController) {
+        previewingItem = nil
+        previewingURL = nil
     }
 }
