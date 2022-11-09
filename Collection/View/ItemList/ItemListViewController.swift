@@ -204,7 +204,22 @@ class ItemListViewController: UIViewController {
             .appendingPathComponent(uuid.uuidString)
             .appendingPathExtension(filenameExtension)
 
-        try? data.write(to: fileURL, options: .atomic)
+        var writingError: Error?
+        var coordinatingError: NSError?
+
+        NSFileCoordinator().coordinate(writingItemAt: fileURL, error: &coordinatingError) { url in
+            do {
+                try data.write(to: url, options: .atomic)
+            } catch {
+                writingError = error
+            }
+        }
+
+        guard writingError == nil && coordinatingError == nil else {
+            // TODO: show alert
+            return
+        }
+
 
         guard QLPreviewController.canPreview(fileURL as QLPreviewItem) else {
             // TODO: show alert
@@ -243,6 +258,16 @@ class ItemListViewController: UIViewController {
                 return changes.contains { $0.changedObjectID == boardID }
             }
             return false
+        }
+    }
+
+    private func reloadItems(_ items: [NSManagedObjectID]) {
+        Task { @MainActor in
+            guard let dataSource = dataSource else { return }
+
+            var newSnapshot = dataSource.snapshot()
+            newSnapshot.reloadItems(items)
+            dataSource.apply(newSnapshot, animatingDifferences: true)
         }
     }
 }
@@ -349,20 +374,18 @@ extension ItemListViewController: QLPreviewControllerDelegate {
             let itemDataObject = previewingItem?.itemData
         else { return }
 
+        let itemID = item.objectID
+
         Task {
-            let thumbnailProvider = ThumbnailProvider()
+            itemDataObject.data = data
+
+            let thumbnailProvider = ThumbnailProvider() // TODO: use shared one?
             if let thumbnailData = try? await thumbnailProvider.generateThumbnailData(url: url).get() {
                 thumbnail.data = thumbnailData
             }
 
-            itemDataObject.data = data
             context.save(situation: .updateItem)
-
-            guard let dataSource = dataSource else { return }
-
-            var newSnapshot = dataSource.snapshot()
-            newSnapshot.reloadItems([item.objectID])
-            await dataSource.apply(newSnapshot, animatingDifferences: false)
+            reloadItems([itemID])
         }
     }
 
