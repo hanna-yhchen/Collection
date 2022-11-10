@@ -100,7 +100,7 @@ final class ItemManager {
                     print("#\(#function): start handling items with types:", provider.registeredTypeIdentifiers)
                     guard
                         provider.hasItemConformingToTypeIdentifier(UTType.data.identifier),
-                        let type = provider.registeredTypeIdentifiers.first(where: { UTType($0) != nil })
+                        provider.registeredTypeIdentifiers.contains(where: { UTType($0) != nil })
                     else {
                         throw ImportError.unsupportedType
                     }
@@ -116,41 +116,35 @@ final class ItemManager {
                         return
                     }
 
-                    // FIXME: collect error inside async block
-                    let errorStore = ErrorStore()
-                    provider.loadFileRepresentation(forTypeIdentifier: type) { url, error in
-                        if let error = error {
-                            Task {
-                                await errorStore.append(error)
-                            }
-                            return
-                        }
-
-                        guard let url = url else {
-                            Task {
-                                await errorStore.append(ImportError.invalidURL)
-                            }
-                            return
-                        }
-
-                        let innerSemaphore = DispatchSemaphore(value: 0)
-
-                        Task {
-                            do {
-                                try await self.processFile(url, saveInto: boardID, isSecurityScoped: isSecurityScoped)
-                            } catch {
-                                await errorStore.append(error)
-                            }
-                            innerSemaphore.signal()
-                        }
-
-                        innerSemaphore.wait()
-                    }
-
-
-                    if let error = await errorStore.errors.first {
-                        throw error
-                    }
+                    try await processFile(provider: provider, saveInto: boardID, isSecurityScoped: isSecurityScoped)
+//                    provider.loadFileRepresentation(forTypeIdentifier: type) { url, error in
+//                        if let error = error {
+//                            Task {
+//                                await errorStore.append(error)
+//                            }
+//                            return
+//                        }
+//
+//                        guard let url = url else {
+//                            Task {
+//                                await errorStore.append(ImportError.invalidURL)
+//                            }
+//                            return
+//                        }
+//
+//                        let innerSemaphore = DispatchSemaphore(value: 0)
+//
+//                        Task {
+//                            do {
+//                                try await self.processFile(url, saveInto: boardID, isSecurityScoped: isSecurityScoped)
+//                            } catch {
+//                                await errorStore.append(error)
+//                            }
+//                            innerSemaphore.signal()
+//                        }
+//
+//                        innerSemaphore.wait()
+//                    }
                 }
             }
 
@@ -212,7 +206,57 @@ extension ItemManager {
         )
     }
 
-    private func processFile(_ url: URL, saveInto boardID: ObjectID, isSecurityScoped: Bool = true) async throws {
+    private func processFile(provider: NSItemProvider, saveInto boardID: ObjectID, isSecurityScoped: Bool) async throws {
+        guard let typeIdentifier = provider.registeredTypeIdentifiers
+            .compactMap({ UTType($0) })
+            .first(where: { type in
+                let isLivePhotoType = type.conforms(to: UTType.heif)
+                    || type.conforms(to: .livePhoto)
+                    || type.conforms(to: .livePhotoBundle)
+
+                return (type.isPublic || type.isDeclared) && !isLivePhotoType
+            })?
+            .identifier
+        else {
+            throw ImportError.unsupportedType
+        }
+        print("#start process file type", typeIdentifier)
+
+        return try await withCheckedThrowingContinuation { continuation in
+            provider.loadFileRepresentation(forTypeIdentifier: typeIdentifier) { url, error in
+                if let error = error {
+                    continuation.resume(throwing: error)
+                    return
+                }
+
+                guard let url = url else {
+                    continuation.resume(throwing: ImportError.invalidURL)
+                    return
+                }
+
+                let semaphore = DispatchSemaphore(value: 0)
+
+                Task {
+                    var errorIfAny: Error?
+                    do {
+                        try await self.processFile(url, saveInto: boardID, isSecurityScoped: isSecurityScoped)
+                    } catch {
+                        errorIfAny = error
+                    }
+                    if let errorIfAny = errorIfAny {
+                        continuation.resume(throwing: errorIfAny)
+                    } else {
+                        continuation.resume()
+                    }
+                    semaphore.signal()
+                }
+
+                semaphore.wait()
+            }
+        }
+    }
+
+    private func processFile(_ url: URL, saveInto boardID: ObjectID, isSecurityScoped: Bool) async throws {
         if isSecurityScoped {
             guard url.startAccessingSecurityScopedResource() else {
                 throw ImportError.inaccessibleFile
@@ -228,7 +272,7 @@ extension ItemManager {
             guard
                 let values = try? url.resourceValues(forKeys: [.nameKey, .fileSizeKey, .contentTypeKey]),
                 let size = values.fileSize,
-                size <= 20_000_000,
+                size <= 50_000_000,
                 let type = values.contentType,
                 let name = values.name,
                 let data = try? Data(contentsOf: url)
