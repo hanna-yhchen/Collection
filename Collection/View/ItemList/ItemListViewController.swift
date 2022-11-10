@@ -32,7 +32,6 @@ class ItemListViewController: UIViewController {
     }()
 
     private let itemManager: ItemManager
-//    private let thumbnailProvider: ThumbnailProvider
     private let storageProvider: StorageProvider
     // TODO: move fetchedResultsController logic to viewModel
     private lazy var fetchedResultsController: NSFetchedResultsController<Item> = {
@@ -131,6 +130,10 @@ class ItemListViewController: UIViewController {
         openCamera()
     }
 
+    @objc private func voiceButtonTapped() {
+        showAudioRecorder()
+    }
+
     // MARK: - Private Methods
 
     private func addButtonStack() {
@@ -141,6 +144,7 @@ class ItemListViewController: UIViewController {
 
         let buttonConfigs: [(title: String, action: Selector)] = [
             ("Camera", #selector(cameraButtonTapped)),
+            ("Voice", #selector(voiceButtonTapped)),
             ("Add Note", #selector(addNoteButtonTapped)),
             ("Add Files", #selector(addFileButtonTapped)),
             ("Add Photos", #selector(addPhotoButtonTapped)),
@@ -227,6 +231,39 @@ class ItemListViewController: UIViewController {
         picker.delegate = self
 
         self.present(picker, animated: true)
+    }
+
+    private func showAudioRecorder() {
+        let recorderVC = UIStoryboard.main
+            .instantiateViewController(identifier: AudioRecorderController.storyboardID) { coder in
+                return AudioRecorderController(coder: coder) {[unowned self] result in
+                    switch result {
+                    case .success(let record):
+                        Task {
+                            do {
+                                try await itemManager.process(record, saveInto: boardID)
+                            } catch {
+                                print("#\(#function): Failed to save new record, \(error)")
+                            }
+                            await MainActor.run {
+                                dismiss(animated: true)
+                            }
+                        }
+                    case .failure(let error):
+                        print("#\(#function): Failed to record new void memo, \(error)")
+                        dismiss(animated: true)
+                    }
+                }
+            }
+
+        if let sheet = recorderVC.sheetPresentationController {
+            sheet.detents = [.medium()]
+            sheet.prefersScrollingExpandsWhenScrolledToEdge = false
+            sheet.prefersEdgeAttachedInCompactHeight = true
+            sheet.preferredCornerRadius = 30
+        }
+
+        present(recorderVC, animated: true, completion: nil)
     }
 
     private func showItem(id: NSManagedObjectID) {

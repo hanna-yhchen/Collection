@@ -43,6 +43,7 @@
 		B5D6C12F29174C010050A3E0 /* StorageProvider+Item.swift in Sources */ = {isa = PBXBuildFile; fileRef = B52203EA290F9A9A00F2224B /* StorageProvider+Item.swift */; };
 		B5D6C13029174C150050A3E0 /* Collection.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = B5E50E02290BDF16006A7B22 /* Collection.xcdatamodeld */; };
 		B5D6C13129179C5F0050A3E0 /* CoreDataHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5E50E19290F7A31006A7B22 /* CoreDataHelper.swift */; };
+		B5DEA41E291CC8900068CFE0 /* AudioRecorderController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5DEA41D291CC8900068CFE0 /* AudioRecorderController.swift */; };
 		B5E50DFA290BDF16006A7B22 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5E50DF9290BDF16006A7B22 /* AppDelegate.swift */; };
 		B5E50DFC290BDF16006A7B22 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5E50DFB290BDF16006A7B22 /* SceneDelegate.swift */; };
 		B5E50DFE290BDF16006A7B22 /* ItemListViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5E50DFD290BDF16006A7B22 /* ItemListViewController.swift */; };
@@ -107,6 +108,7 @@
 		B573118C2913B0F000AD129F /* UserDefault.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDefault.swift; sourceTree = "<group>"; };
 		B5B64E052917A52A002183FA /* ItemManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemManager.swift; sourceTree = "<group>"; };
 		B5D6C12A2916ACAF0050A3E0 /* ShareExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ShareExtension.entitlements; sourceTree = "<group>"; };
+		B5DEA41D291CC8900068CFE0 /* AudioRecorderController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioRecorderController.swift; sourceTree = "<group>"; };
 		B5E50DF6290BDF16006A7B22 /* Collection.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Collection.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B5E50DF9290BDF16006A7B22 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		B5E50DFB290BDF16006A7B22 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -221,6 +223,7 @@
 			isa = PBXGroup;
 			children = (
 				B538E9E22910255100DF5DEB /* EditorViewController.swift */,
+				B5DEA41D291CC8900068CFE0 /* AudioRecorderController.swift */,
 			);
 			path = ItemEditor;
 			sourceTree = "<group>";
@@ -482,6 +485,7 @@
 				B515D5E82912215400072CBC /* BoardCell.swift in Sources */,
 				B559BE542914FACF00F342C1 /* StorageHistoryManager.swift in Sources */,
 				B5E50E1A290F7A31006A7B22 /* CoreDataHelper.swift in Sources */,
+				B5DEA41E291CC8900068CFE0 /* AudioRecorderController.swift in Sources */,
 				B538E9E62910277300DF5DEB /* UIStoryboard+Extension.swift in Sources */,
 				B5E50DFE290BDF16006A7B22 /* ItemListViewController.swift in Sources */,
 				B5E50DFA290BDF16006A7B22 /* AppDelegate.swift in Sources */,
