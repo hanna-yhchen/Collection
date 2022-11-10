@@ -127,6 +127,10 @@ class ItemListViewController: UIViewController {
         showPhotoPicker()
     }
 
+    @objc private func cameraButtonTapped() {
+        openCamera()
+    }
+
     // MARK: - Private Methods
 
     private func addButtonStack() {
@@ -136,6 +140,7 @@ class ItemListViewController: UIViewController {
         stackView.spacing = 8
 
         let buttonConfigs: [(title: String, action: Selector)] = [
+            ("Camera", #selector(cameraButtonTapped)),
             ("Add Note", #selector(addNoteButtonTapped)),
             ("Add Files", #selector(addFileButtonTapped)),
             ("Add Photos", #selector(addPhotoButtonTapped)),
@@ -205,6 +210,23 @@ class ItemListViewController: UIViewController {
         picker.delegate = self
 
         present(picker, animated: true)
+    }
+
+    private func openCamera() {
+        let camera = UIImagePickerController.SourceType.camera
+        guard
+            UIImagePickerController.isSourceTypeAvailable(camera),
+            UIImagePickerController.availableMediaTypes(for: camera) != nil
+        else {
+            // TODO: show alert
+            return
+        }
+        let picker = UIImagePickerController()
+        picker.sourceType = camera
+        picker.mediaTypes = [UTType.movie.identifier, UTType.image.identifier]
+        picker.delegate = self
+
+        self.present(picker, animated: true)
     }
 
     private func showItem(id: NSManagedObjectID) {
@@ -346,13 +368,61 @@ extension ItemListViewController: PHPickerViewControllerDelegate {
         Task {
             // TODO: UI reaction
             do {
-                try await itemManager.process(results.map(\.itemProvider), saveInto: boardID)
+                try await itemManager.process(results.map(\.itemProvider), saveInto: boardID, isSecurityScoped: false)
                 await MainActor.run {
-                    dismiss(animated: true)
+                    picker.dismiss(animated: true)
                 }
             } catch {
-                print("#\(#function): Failed to process input from pasteboard, \(error)")
+                print("#\(#function): Failed to process input from photo picker, \(error)")
             }
+        }
+    }
+}
+
+// MARK: - UIImagePickerControllerDelegate & UINavigationControllerDelegate
+
+extension ItemListViewController: UIImagePickerControllerDelegate & UINavigationControllerDelegate {
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
+        guard
+            let typeIdentifier = info[.mediaType] as? String,
+            let type = UTType(typeIdentifier)
+        else {
+            picker.dismiss(animated: true)
+            return
+        }
+
+        // TODO: UI reaction
+        switch type {
+        case .image:
+            guard let image = info[.originalImage] as? UIImage else {
+                picker.dismiss(animated: true)
+                return
+            }
+
+            Task {
+                await itemManager.process(image, saveInto: boardID)
+                await MainActor.run {
+                    picker.dismiss(animated: true)
+                }
+            }
+        case .movie:
+            guard let movieURL = info[.mediaURL] as? URL else {
+                picker.dismiss(animated: true)
+                return
+            }
+
+            Task {
+                do {
+                    try await itemManager.process([movieURL], saveInto: boardID, isSecurityScoped: false)
+                } catch {
+                    print("#\(#function): Failed to process movie captured from image picker, \(error)")
+                }
+                await MainActor.run {
+                    picker.dismiss(animated: true)
+                }
+            }
+        default:
+            picker.dismiss(animated: true)
         }
     }
 }
@@ -391,7 +461,7 @@ extension ItemListViewController {
         Task {
             // TODO: UI reaction
             do {
-                try await itemManager.process(itemProviders)
+                try await itemManager.process(itemProviders, isSecurityScoped: false)
             } catch {
                 print("#\(#function): Failed to process input from pasteboard, \(error)")
             }
@@ -435,6 +505,7 @@ extension ItemListViewController: QLPreviewControllerDelegate {
         let itemID = item.objectID
 
         Task {
+            // TODO: update using itemManager
             itemDataObject.data = data
 
             let thumbnailProvider = ThumbnailProvider() // TODO: use shared one?

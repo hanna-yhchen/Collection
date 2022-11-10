@@ -30,7 +30,7 @@ final class ItemManager {
 
     let storageProvider: StorageProvider
     let thumbnailProvider: ThumbnailProvider
-    //    let boardID: NSManagedObjectID
+
     lazy var defaultBoardID: ObjectID? = {
         guard
             let url = URL(string: UserDefaults.defaultBoardURL),
@@ -68,16 +68,11 @@ final class ItemManager {
             context: storageProvider.newTaskContext())
     }
 
-    func process(_ urls: [URL], saveInto boardID: ObjectID) async throws {
+    func process(_ urls: [URL], saveInto boardID: ObjectID, isSecurityScoped: Bool = true) async throws {
         try await withThrowingTaskGroup(of: Void.self) { group in
             for url in urls {
-                guard url.startAccessingSecurityScopedResource() else {
-                    throw ImportError.inaccessibleFile
-                }
-
                 group.addTask {[unowned self] in
-                    try await processFile(url, saveInto: boardID)
-                    url.stopAccessingSecurityScopedResource()
+                    try await processFile(url, saveInto: boardID, isSecurityScoped: isSecurityScoped)
                 }
             }
 
@@ -85,15 +80,8 @@ final class ItemManager {
         }
     }
 
-    func process(_ itemProviders: [NSItemProvider], saveInto boardID: ObjectID? = nil) async throws {
-        var boardID = boardID
-        if boardID == nil {
-            boardID = defaultBoardID
-        }
-
-        guard let boardID = boardID else {
-            throw ImportError.unfoundDefaultBoard
-        }
+    func process(_ itemProviders: [NSItemProvider], saveInto boardID: ObjectID? = nil, isSecurityScoped: Bool = true) async throws {
+        let boardID = try unwrappedBoardID(of: boardID)
 
         try await withThrowingTaskGroup(of: Void.self) { group in
             for provider in itemProviders {
@@ -138,7 +126,7 @@ final class ItemManager {
 
                         Task {
                             do {
-                                try await self.processFile(url, saveInto: boardID)
+                                try await self.processFile(url, saveInto: boardID, isSecurityScoped: isSecurityScoped)
                             } catch {
                                 await errorStore.append(error)
                             }
@@ -157,6 +145,25 @@ final class ItemManager {
 
             try await group.next()
         }
+    }
+
+    func process(_ image: UIImage, saveInto boardID: ObjectID) async {
+        // TODO: throwable
+        let data = image.jpegData(compressionQuality: 1)
+
+        let thumbnail = image.preparingThumbnail(of: CGSize(width: 400, height: 400))
+        let thumbnailData = thumbnail?.pngData()
+
+        let currentTime = DateFormatter.hyphenatedDateTimeFormatter.string(from: Date())
+        let name = "Photo \(currentTime)"
+
+        addItem(
+            name: name,
+            contentType: UTType.jpeg.identifier,
+            itemData: data,
+            thumbnailData: thumbnailData,
+            boardID: boardID,
+            context: storageProvider.newTaskContext())
     }
 }
 
@@ -194,10 +201,13 @@ extension ItemManager {
         )
     }
 
-    private func processFile(_ url: URL, saveInto boardID: ObjectID) async throws {
-        guard url.startAccessingSecurityScopedResource() else {
-            throw ImportError.inaccessibleFile
+    private func processFile(_ url: URL, saveInto boardID: ObjectID, isSecurityScoped: Bool = true) async throws {
+        if isSecurityScoped {
+            guard url.startAccessingSecurityScopedResource() else {
+                throw ImportError.inaccessibleFile
+            }
         }
+
         defer { url.stopAccessingSecurityScopedResource() }
 
         var nserror: NSError?
@@ -252,6 +262,20 @@ extension ItemManager {
         if let nserror = nserror {
             throw nserror
         }
+    }
+
+    private func unwrappedBoardID(of boardID: ObjectID?) throws -> ObjectID {
+        var boardID = boardID
+
+        if boardID == nil {
+            boardID = defaultBoardID
+        }
+
+        guard let boardID = boardID else {
+            throw ImportError.unfoundDefaultBoard
+        }
+
+        return boardID
     }
 }
 
