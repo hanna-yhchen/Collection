@@ -68,6 +68,17 @@ final class ItemManager {
             context: storageProvider.newTaskContext())
     }
 
+    func updatePreviewingItem(itemID: ObjectID, url: URL) async throws {
+        let data = try Data(contentsOf: url)
+        let thumbnailData = try? await thumbnailProvider.generateThumbnailData(url: url).get()
+
+        try await updateItem(
+            itemID: itemID,
+            itemData: data,
+            thumbnailData: thumbnailData,
+            context: storageProvider.newTaskContext())
+    }
+
     func process(_ urls: [URL], saveInto boardID: ObjectID, isSecurityScoped: Bool = true) async throws {
         try await withThrowingTaskGroup(of: Void.self) { group in
             for url in urls {
@@ -347,6 +358,9 @@ extension ItemManager {
             if let boardID = boardID, let board = try context.existingObject(with: boardID) as? Board {
                 board.addToItems(item)
             }
+
+            let currentDate = Date()
+            item.updateDate = currentDate
 
             context.save(situation: .updateItem)
         }

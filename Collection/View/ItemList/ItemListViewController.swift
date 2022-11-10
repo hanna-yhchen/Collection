@@ -495,25 +495,16 @@ extension ItemListViewController: QLPreviewControllerDelegate {
     func previewController(_ controller: QLPreviewController, didUpdateContentsOf previewItem: QLPreviewItem) {
         guard
             let url = previewItem as? URL,
-            let data = try? Data(contentsOf: url),
-            let item = previewingItem,
-            let context = item.managedObjectContext,
-            let thumbnail = item.thumbnail,
-            let itemDataObject = previewingItem?.itemData
+            let itemID = previewingItem?.objectID
         else { return }
 
-        let itemID = item.objectID
-
         Task {
-            // TODO: update using itemManager
-            itemDataObject.data = data
-
-            let thumbnailProvider = ThumbnailProvider() // TODO: use shared one?
-            if let thumbnailData = try? await thumbnailProvider.generateThumbnailData(url: url).get() {
-                thumbnail.data = thumbnailData
+            do {
+                try await itemManager.updatePreviewingItem(itemID: itemID, url: url)
+            } catch {
+                print("\(#function): Failed to update changes on previewing item, \(error)")
             }
 
-            context.save(situation: .updateItem)
             reloadItems([itemID])
         }
     }
