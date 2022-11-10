@@ -14,3 +14,14 @@ extension DateFormatter {
         return formatter
     }()
 }
+
+extension DateComponentsFormatter {
+    static let audioDurationFormatter: DateComponentsFormatter = {
+        let formatter = DateComponentsFormatter()
+        formatter.allowedUnits = [.minute, .second]
+        formatter.allowsFractionalUnits = true
+        formatter.zeroFormattingBehavior = .pad
+        formatter.unitsStyle = .positional
+        return formatter
+    }()
+}

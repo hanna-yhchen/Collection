@@ -9,18 +9,13 @@ import CoreData
 import UniformTypeIdentifiers
 import UIKit
 
+typealias AudioRecord = (name: String?, url: URL, duration: TimeInterval?)
+
 enum ImportError: Error {
     case invalidData, invalidURL
     case unsupportedType
     case inaccessibleFile
     case unfoundDefaultBoard
-}
-
-actor ErrorStore {
-    var errors: [Error] = []
-    func append(_ error: Error) {
-        errors.append(error)
-    }
 }
 
 final class ItemManager {
@@ -117,34 +112,6 @@ final class ItemManager {
                     }
 
                     try await processFile(provider: provider, saveInto: boardID, isSecurityScoped: isSecurityScoped)
-//                    provider.loadFileRepresentation(forTypeIdentifier: type) { url, error in
-//                        if let error = error {
-//                            Task {
-//                                await errorStore.append(error)
-//                            }
-//                            return
-//                        }
-//
-//                        guard let url = url else {
-//                            Task {
-//                                await errorStore.append(ImportError.invalidURL)
-//                            }
-//                            return
-//                        }
-//
-//                        let innerSemaphore = DispatchSemaphore(value: 0)
-//
-//                        Task {
-//                            do {
-//                                try await self.processFile(url, saveInto: boardID, isSecurityScoped: isSecurityScoped)
-//                            } catch {
-//                                await errorStore.append(error)
-//                            }
-//                            innerSemaphore.signal()
-//                        }
-//
-//                        innerSemaphore.wait()
-//                    }
                 }
             }
 
@@ -169,6 +136,45 @@ final class ItemManager {
             thumbnailData: thumbnailData,
             boardID: boardID,
             context: storageProvider.newTaskContext())
+    }
+
+    func process(_ record: AudioRecord, saveInto boardID: ObjectID) async throws {
+        var nserror: NSError?
+        var error: Error?
+
+        NSFileCoordinator().coordinate(readingItemAt: record.url, error: &nserror) { url in
+            guard
+                let data = try? Data(contentsOf: url),
+                let values = try? url.resourceValues(forKeys: [.fileSizeKey, .contentTypeKey]),
+                let size = values.fileSize,
+                size <= 50_000_000,
+                let type = values.contentType
+            else {
+                error = ImportError.invalidData
+                return
+            }
+
+            var filename = record.name ?? ""
+            if record.name == nil {
+                let currentTime = DateFormatter.hyphenatedDateTimeFormatter.string(from: Date())
+                filename = "Voice \(currentTime)"
+            }
+
+            addItem(
+                name: filename,
+                contentType: type.identifier,
+                itemData: data,
+                boardID: boardID,
+                context: storageProvider.newTaskContext())
+        }
+
+        if let error = error {
+            throw error
+        }
+
+        if let nserror = nserror {
+            throw nserror
+        }
     }
 }
 
