@@ -101,7 +101,7 @@
 		B523E93529164B4F00180B36 /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
 		B523E93829164B4F00180B36 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/MainInterface.storyboard; sourceTree = "<group>"; };
 		B523E93A29164B4F00180B36 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		B538E9E22910255100DF5DEB /* EditorViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = EditorViewController.swift; path = Collection/View/EditorViewController.swift; sourceTree = SOURCE_ROOT; };
+		B538E9E22910255100DF5DEB /* EditorViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = EditorViewController.swift; path = Collection/View/ItemEditor/EditorViewController.swift; sourceTree = SOURCE_ROOT; };
 		B538E9E52910277300DF5DEB /* UIStoryboard+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIStoryboard+Extension.swift"; sourceTree = "<group>"; };
 		B559BE532914FACF00F342C1 /* StorageHistoryManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageHistoryManager.swift; sourceTree = "<group>"; };
 		B573118C2913B0F000AD129F /* UserDefault.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDefault.swift; sourceTree = "<group>"; };
@@ -154,7 +154,7 @@
 			children = (
 				B50E8F67291B706B00E64E36 /* NotePreviewController.swift */,
 			);
-			name = Preview;
+			path = Preview;
 			sourceTree = "<group>";
 		};
 		B50E8F6D291B848E00E64E36 /* ViewModel */ = {
@@ -171,8 +171,7 @@
 				B515D5DE29121EE100072CBC /* BoardListViewController.swift */,
 				B515D5E02912210300072CBC /* Cells */,
 			);
-			name = BoardList;
-			path = ItemList;
+			path = BoardList;
 			sourceTree = "<group>";
 		};
 		B515D5E02912210300072CBC /* Cells */ = {
@@ -190,7 +189,7 @@
 				B52203EF290FC74100F2224B /* CardItemCell.swift */,
 				B52203F0290FC74100F2224B /* CardItemCell.xib */,
 			);
-			name = Cells;
+			path = Cells;
 			sourceTree = "<group>";
 		};
 		B52203F3290FC99900F2224B /* Extension */ = {
@@ -218,12 +217,12 @@
 			path = ShareExtension;
 			sourceTree = "<group>";
 		};
-		B538E9E42910255800DF5DEB /* Editor */ = {
+		B538E9E42910255800DF5DEB /* ItemEditor */ = {
 			isa = PBXGroup;
 			children = (
 				B538E9E22910255100DF5DEB /* EditorViewController.swift */,
 			);
-			name = Editor;
+			path = ItemEditor;
 			sourceTree = "<group>";
 		};
 		B573118B2913AE8B00AD129F /* Utility */ = {
@@ -283,7 +282,7 @@
 			isa = PBXGroup;
 			children = (
 				B515D5DD29121EB300072CBC /* BoardList */,
-				B538E9E42910255800DF5DEB /* Editor */,
+				B538E9E42910255800DF5DEB /* ItemEditor */,
 				B5E50E13290F6E11006A7B22 /* ItemList */,
 				B5E50E07290BDF17006A7B22 /* LaunchScreen.storyboard */,
 				B5E50DFF290BDF16006A7B22 /* Main.storyboard */,
