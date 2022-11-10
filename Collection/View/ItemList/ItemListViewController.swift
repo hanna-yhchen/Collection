@@ -7,6 +7,7 @@
 
 import Combine
 import CoreData
+import PhotosUI
 import QuickLook
 import UniformTypeIdentifiers
 import UIKit
@@ -70,6 +71,7 @@ class ItemListViewController: UIViewController {
         super.viewDidLoad()
 
         self.title = board.name
+        addButtonStack()
         navigationController?.navigationBar.prefersLargeTitles = true
         collectionView.collectionViewLayout = createCardLayout()
         collectionView.delegate = self
@@ -104,15 +106,15 @@ class ItemListViewController: UIViewController {
 
     // MARK: - Actions
 
-    @IBAction func addFileButtonTapped() {
+    @objc private func addFileButtonTapped() {
         showDocumentPicker()
     }
 
-    @IBAction func pasteButtonTapped() {
+    @objc private func pasteButtonTapped() {
         paste(itemProviders: UIPasteboard.general.itemProviders)
     }
 
-    @IBAction func addNoteButtonTapped() {
+    @objc private func addNoteButtonTapped() {
         let editorVC = UIStoryboard.main
             .instantiateViewController(identifier: EditorViewController.storyboardID) { coder in
                 let viewModel = EditorViewModel(itemManager: self.itemManager, scenario: .create(boardID: self.boardID))
@@ -121,7 +123,44 @@ class ItemListViewController: UIViewController {
         navigationController?.pushViewController(editorVC, animated: true)
     }
 
+    @objc private func addPhotoButtonTapped() {
+        showPhotoPicker()
+    }
+
+    @objc private func cameraButtonTapped() {
+        openCamera()
+    }
+
     // MARK: - Private Methods
+
+    private func addButtonStack() {
+        let stackView = UIStackView()
+        stackView.axis = .vertical
+        stackView.alignment = .trailing
+        stackView.spacing = 8
+
+        let buttonConfigs: [(title: String, action: Selector)] = [
+            ("Camera", #selector(cameraButtonTapped)),
+            ("Add Note", #selector(addNoteButtonTapped)),
+            ("Add Files", #selector(addFileButtonTapped)),
+            ("Add Photos", #selector(addPhotoButtonTapped)),
+            ("Paste", #selector(pasteButtonTapped)),
+        ]
+
+        buttonConfigs.forEach { config in
+            let button = UIButton(type: .system)
+            button.setTitle(config.title, for: .normal)
+            button.addTarget(self, action: config.action, for: .touchUpInside)
+            stackView.addArrangedSubview(button)
+        }
+
+        view.addSubview(stackView)
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            stackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            stackView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
+        ])
+    }
 
     private func configureDataSource() {
         let cellRegistration = UICollectionView.CellRegistration<CardItemCell, NSManagedObjectID>(
@@ -162,6 +201,32 @@ class ItemListViewController: UIViewController {
         picker.allowsMultipleSelection = true
 
         present(picker, animated: true)
+    }
+
+    private func showPhotoPicker() {
+        var config = PHPickerConfiguration()
+        config.selectionLimit = 10
+        let picker = PHPickerViewController(configuration: config)
+        picker.delegate = self
+
+        present(picker, animated: true)
+    }
+
+    private func openCamera() {
+        let camera = UIImagePickerController.SourceType.camera
+        guard
+            UIImagePickerController.isSourceTypeAvailable(camera),
+            UIImagePickerController.availableMediaTypes(for: camera) != nil
+        else {
+            // TODO: show alert
+            return
+        }
+        let picker = UIImagePickerController()
+        picker.sourceType = camera
+        picker.mediaTypes = [UTType.movie.identifier, UTType.image.identifier]
+        picker.delegate = self
+
+        self.present(picker, animated: true)
     }
 
     private func showItem(id: NSManagedObjectID) {
@@ -264,7 +329,7 @@ class ItemListViewController: UIViewController {
 
             var newSnapshot = dataSource.snapshot()
             newSnapshot.reloadItems(items)
-            dataSource.apply(newSnapshot, animatingDifferences: true)
+            await dataSource.apply(newSnapshot, animatingDifferences: true)
         }
     }
 }
@@ -292,6 +357,72 @@ extension ItemListViewController: UIDocumentPickerDelegate {
             } catch {
                 print("#\(#function): Failed to process input from document picker, \(error)")
             }
+        }
+    }
+}
+
+// MARK: - PHPickerViewControllerDelegate
+
+extension ItemListViewController: PHPickerViewControllerDelegate {
+    func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
+        Task {
+            // TODO: UI reaction
+            do {
+                try await itemManager.process(results.map(\.itemProvider), saveInto: boardID, isSecurityScoped: false)
+                await MainActor.run {
+                    picker.dismiss(animated: true)
+                }
+            } catch {
+                print("#\(#function): Failed to process input from photo picker, \(error)")
+            }
+        }
+    }
+}
+
+// MARK: - UIImagePickerControllerDelegate & UINavigationControllerDelegate
+
+extension ItemListViewController: UIImagePickerControllerDelegate & UINavigationControllerDelegate {
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
+        guard
+            let typeIdentifier = info[.mediaType] as? String,
+            let type = UTType(typeIdentifier)
+        else {
+            picker.dismiss(animated: true)
+            return
+        }
+
+        // TODO: UI reaction
+        switch type {
+        case .image:
+            guard let image = info[.originalImage] as? UIImage else {
+                picker.dismiss(animated: true)
+                return
+            }
+
+            Task {
+                await itemManager.process(image, saveInto: boardID)
+                await MainActor.run {
+                    picker.dismiss(animated: true)
+                }
+            }
+        case .movie:
+            guard let movieURL = info[.mediaURL] as? URL else {
+                picker.dismiss(animated: true)
+                return
+            }
+
+            Task {
+                do {
+                    try await itemManager.process([movieURL], saveInto: boardID, isSecurityScoped: false)
+                } catch {
+                    print("#\(#function): Failed to process movie captured from image picker, \(error)")
+                }
+                await MainActor.run {
+                    picker.dismiss(animated: true)
+                }
+            }
+        default:
+            picker.dismiss(animated: true)
         }
     }
 }
@@ -330,7 +461,7 @@ extension ItemListViewController {
         Task {
             // TODO: UI reaction
             do {
-                try await itemManager.process(itemProviders)
+                try await itemManager.process(itemProviders, isSecurityScoped: false)
             } catch {
                 print("#\(#function): Failed to process input from pasteboard, \(error)")
             }
@@ -364,24 +495,16 @@ extension ItemListViewController: QLPreviewControllerDelegate {
     func previewController(_ controller: QLPreviewController, didUpdateContentsOf previewItem: QLPreviewItem) {
         guard
             let url = previewItem as? URL,
-            let data = try? Data(contentsOf: url),
-            let item = previewingItem,
-            let context = item.managedObjectContext,
-            let thumbnail = item.thumbnail,
-            let itemDataObject = previewingItem?.itemData
+            let itemID = previewingItem?.objectID
         else { return }
 
-        let itemID = item.objectID
-
         Task {
-            itemDataObject.data = data
-
-            let thumbnailProvider = ThumbnailProvider() // TODO: use shared one?
-            if let thumbnailData = try? await thumbnailProvider.generateThumbnailData(url: url).get() {
-                thumbnail.data = thumbnailData
+            do {
+                try await itemManager.updatePreviewingItem(itemID: itemID, url: url)
+            } catch {
+                print("\(#function): Failed to update changes on previewing item, \(error)")
             }
 
-            context.save(situation: .updateItem)
             reloadItems([itemID])
         }
     }

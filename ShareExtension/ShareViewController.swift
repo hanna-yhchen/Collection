@@ -33,7 +33,7 @@ class ShareViewController: SLComposeServiceViewController {
 
         Task {
             do {
-                try await ItemManager.shared.process(attachments)
+                try await ItemManager.shared.process(attachments, isSecurityScoped: false)
             } catch {
                 print("#\(#function): Failed to process attachments: \(error)")
             }

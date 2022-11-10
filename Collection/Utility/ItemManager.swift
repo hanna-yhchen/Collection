@@ -30,7 +30,7 @@ final class ItemManager {
 
     let storageProvider: StorageProvider
     let thumbnailProvider: ThumbnailProvider
-    //    let boardID: NSManagedObjectID
+
     lazy var defaultBoardID: ObjectID? = {
         guard
             let url = URL(string: UserDefaults.defaultBoardURL),
@@ -68,16 +68,22 @@ final class ItemManager {
             context: storageProvider.newTaskContext())
     }
 
-    func process(_ urls: [URL], saveInto boardID: ObjectID) async throws {
+    func updatePreviewingItem(itemID: ObjectID, url: URL) async throws {
+        let data = try Data(contentsOf: url)
+        let thumbnailData = try? await thumbnailProvider.generateThumbnailData(url: url).get()
+
+        try await updateItem(
+            itemID: itemID,
+            itemData: data,
+            thumbnailData: thumbnailData,
+            context: storageProvider.newTaskContext())
+    }
+
+    func process(_ urls: [URL], saveInto boardID: ObjectID, isSecurityScoped: Bool = true) async throws {
         try await withThrowingTaskGroup(of: Void.self) { group in
             for url in urls {
-                guard url.startAccessingSecurityScopedResource() else {
-                    throw ImportError.inaccessibleFile
-                }
-
                 group.addTask {[unowned self] in
-                    try await processFile(url, saveInto: boardID)
-                    url.stopAccessingSecurityScopedResource()
+                    try await processFile(url, saveInto: boardID, isSecurityScoped: isSecurityScoped)
                 }
             }
 
@@ -85,51 +91,37 @@ final class ItemManager {
         }
     }
 
-    func process(_ itemProviders: [NSItemProvider], saveInto boardID: ObjectID? = nil) async throws {
-        var boardID = boardID
-        if boardID == nil {
-            boardID = defaultBoardID
-        }
-
-        guard let boardID = boardID else {
-            throw ImportError.unfoundDefaultBoard
-        }
+    func process(_ itemProviders: [NSItemProvider], saveInto boardID: ObjectID? = nil, isSecurityScoped: Bool = true) async throws {
+        let boardID = try unwrappedBoardID(of: boardID)
 
         try await withThrowingTaskGroup(of: Void.self) { group in
             for provider in itemProviders {
-                print("#\(#function): start handling items with types:", provider.registeredTypeIdentifiers)
-                guard
-                    provider.hasItemConformingToTypeIdentifier(UTType.data.identifier),
-                    let type = provider.registeredTypeIdentifiers.first(where: { UTType($0) != nil })
-                else {
-                    throw ImportError.unsupportedType
-                }
-
-                if provider.hasItemConformingToTypeIdentifier(UTType.url.identifier)
-                    && !provider.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier) {
-                    group.addTask {[unowned self] in
-                        try await processURL(provider: provider, saveInto: boardID)
-                    }
-                    continue
-                }
-
-                if provider.hasItemConformingToTypeIdentifier(UTType.utf8PlainText.identifier) {
-                    group.addTask {[unowned self] in
-                        try await processText(provider: provider, saveInto: boardID)
-                    }
-                    continue
-                }
-
                 group.addTask {[unowned self] in
+                    print("#\(#function): start handling items with types:", provider.registeredTypeIdentifiers)
+                    guard
+                        provider.hasItemConformingToTypeIdentifier(UTType.data.identifier),
+                        let type = provider.registeredTypeIdentifiers.first(where: { UTType($0) != nil })
+                    else {
+                        throw ImportError.unsupportedType
+                    }
+
+                    if provider.hasItemConformingToTypeIdentifier(UTType.url.identifier)
+                        && !provider.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier) {
+                        try await processURL(provider: provider, saveInto: boardID)
+                        return
+                    }
+
+                    if provider.hasItemConformingToTypeIdentifier(UTType.utf8PlainText.identifier) {
+                        try await processText(provider: provider, saveInto: boardID)
+                        return
+                    }
+
                     // FIXME: collect error inside async block
                     let errorStore = ErrorStore()
-//                    let semaphore = DispatchSemaphore(value: 0)
-
                     provider.loadFileRepresentation(forTypeIdentifier: type) { url, error in
                         if let error = error {
                             Task {
                                 await errorStore.append(error)
-//                                semaphore.signal()
                             }
                             return
                         }
@@ -137,7 +129,6 @@ final class ItemManager {
                         guard let url = url else {
                             Task {
                                 await errorStore.append(ImportError.invalidURL)
-//                                semaphore.signal()
                             }
                             return
                         }
@@ -146,18 +137,16 @@ final class ItemManager {
 
                         Task {
                             do {
-                                try await self.processFile(url, saveInto: boardID)
+                                try await self.processFile(url, saveInto: boardID, isSecurityScoped: isSecurityScoped)
                             } catch {
                                 await errorStore.append(error)
-                                innerSemaphore.signal()
-//                                semaphore.signal()
                             }
+                            innerSemaphore.signal()
                         }
 
                         innerSemaphore.wait()
                     }
 
-//                    semaphore.wait()
 
                     if let error = await errorStore.errors.first {
                         throw error
@@ -167,6 +156,25 @@ final class ItemManager {
 
             try await group.next()
         }
+    }
+
+    func process(_ image: UIImage, saveInto boardID: ObjectID) async {
+        // TODO: throwable
+        let data = image.jpegData(compressionQuality: 1)
+
+        let thumbnail = image.preparingThumbnail(of: CGSize(width: 400, height: 400))
+        let thumbnailData = thumbnail?.pngData()
+
+        let currentTime = DateFormatter.hyphenatedDateTimeFormatter.string(from: Date())
+        let name = "Photo \(currentTime)"
+
+        addItem(
+            name: name,
+            contentType: UTType.jpeg.identifier,
+            itemData: data,
+            thumbnailData: thumbnailData,
+            boardID: boardID,
+            context: storageProvider.newTaskContext())
     }
 }
 
@@ -204,7 +212,15 @@ extension ItemManager {
         )
     }
 
-    private func processFile(_ url: URL, saveInto boardID: ObjectID) async throws {
+    private func processFile(_ url: URL, saveInto boardID: ObjectID, isSecurityScoped: Bool = true) async throws {
+        if isSecurityScoped {
+            guard url.startAccessingSecurityScopedResource() else {
+                throw ImportError.inaccessibleFile
+            }
+        }
+
+        defer { url.stopAccessingSecurityScopedResource() }
+
         var nserror: NSError?
         var error: Error?
 
@@ -257,6 +273,20 @@ extension ItemManager {
         if let nserror = nserror {
             throw nserror
         }
+    }
+
+    private func unwrappedBoardID(of boardID: ObjectID?) throws -> ObjectID {
+        var boardID = boardID
+
+        if boardID == nil {
+            boardID = defaultBoardID
+        }
+
+        guard let boardID = boardID else {
+            throw ImportError.unfoundDefaultBoard
+        }
+
+        return boardID
     }
 }
 
@@ -328,6 +358,9 @@ extension ItemManager {
             if let boardID = boardID, let board = try context.existingObject(with: boardID) as? Board {
                 board.addToItems(item)
             }
+
+            let currentDate = Date()
+            item.updateDate = currentDate
 
             context.save(situation: .updateItem)
         }
