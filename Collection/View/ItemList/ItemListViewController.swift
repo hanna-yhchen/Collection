@@ -62,7 +62,7 @@ class ItemListViewController: UIViewController {
     private var dataSource: DataSource?
     private var subscriptions: Set<AnyCancellable> = []
 
-    @IBOutlet var collectionView: UICollectionView!
+    @IBOutlet var collectionView: ItemCollectionView!
 
     // MARK: - Lifecycle
 
@@ -72,8 +72,12 @@ class ItemListViewController: UIViewController {
         self.title = board.name
         addButtonStack()
         navigationController?.navigationBar.prefersLargeTitles = true
-        collectionView.collectionViewLayout = createCardLayout()
+
+        view.layoutIfNeeded()
+        collectionView.traits = view.traitCollection
+        collectionView.setTwoColumnLayout(animated: false)
         collectionView.delegate = self
+
         previewController.dataSource = self
         previewController.delegate = self
         configureDataSource()
@@ -167,8 +171,8 @@ class ItemListViewController: UIViewController {
     }
 
     private func configureDataSource() {
-        let cellRegistration = UICollectionView.CellRegistration<CardItemCell, NSManagedObjectID>(
-            cellNib: UINib(nibName: CardItemCell.identifier, bundle: nil)
+        let cellRegistration = UICollectionView.CellRegistration<TwoColumnCell, NSManagedObjectID>(
+            cellNib: UINib(nibName: TwoColumnCell.identifier, bundle: nil)
         ) {[unowned self] cell, _, objectID in
             guard let item = try? fetchedResultsController
                 .managedObjectContext
@@ -549,5 +553,11 @@ extension ItemListViewController: QLPreviewControllerDelegate {
     func previewControllerDidDismiss(_ controller: QLPreviewController) {
         previewingItem = nil
         previewingURL = nil
+    }
+}
+
+extension ItemListViewController: UIDocumentInteractionControllerDelegate {
+    func documentInteractionControllerViewControllerForPreview(_ controller: UIDocumentInteractionController) -> UIViewController {
+        self
     }
 }
