@@ -179,7 +179,7 @@ class ItemListViewController: UIViewController {
                 .existingObject(with: objectID) as? Item
             else { fatalError("#\(#function): Failed to retrieve item by objectID") }
 
-            cell.layoutItem(item)
+            cell.configure(for: item)
         }
 
         dataSource = DataSource(collectionView: collectionView) { collectionView, indexPath, item in
@@ -275,7 +275,7 @@ class ItemListViewController: UIViewController {
 
         guard
             let item = context.object(with: id) as? Item,
-            let typeIdentifier = item.contentType,
+            let typeIdentifier = item.uti,
             let itemType = UTType(typeIdentifier)
         else {
             // TODO: show alert
@@ -409,7 +409,11 @@ extension ItemListViewController: PHPickerViewControllerDelegate {
         Task {
             // TODO: UI reaction
             do {
+                #if targetEnvironment(simulator)
+                try await itemManager.process(results.map(\.itemProvider), saveInto: boardID)
+                #else
                 try await itemManager.process(results.map(\.itemProvider), saveInto: boardID, isSecurityScoped: false)
+                #endif
                 await MainActor.run {
                     picker.dismiss(animated: true)
                 }

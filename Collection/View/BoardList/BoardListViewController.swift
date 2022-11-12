@@ -68,6 +68,11 @@ class BoardListViewController: UIViewController {
     // MARK: - Actions
 
     @IBAction func addButtonTapped() {
+//        if let board = fetchedResultsController.fetchedObjects?[0] {
+//            fetchedResultsController.managedObjectContext.delete(board)
+//            try? fetchedResultsController.managedObjectContext.save()
+//            return
+//        }
         let alert = UIAlertController(title: "New board", message: "", preferredStyle: .alert)
 
         alert.addTextField { textField in
@@ -145,7 +150,7 @@ class BoardListViewController: UIViewController {
 
         let groupSize = NSCollectionLayoutSize(
             widthDimension: .fractionalWidth(1.0),
-            heightDimension: .fractionalHeight(1.0))
+            heightDimension: .estimated(1))
         let group = NSCollectionLayoutGroup.horizontal(
             layoutSize: groupSize,
             subitem: item,

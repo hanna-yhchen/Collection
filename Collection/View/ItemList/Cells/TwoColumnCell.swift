@@ -6,10 +6,12 @@
 //
 
 import UIKit
+import UniformTypeIdentifiers
 
 class TwoColumnCell: UICollectionViewCell {
 
-    @IBOutlet var placeholderImageView: UIImageView!
+    @IBOutlet var iconImageView: UIImageView!
+    @IBOutlet var fileTypeLabel: UILabel!
     @IBOutlet var thumbnailImageView: UIImageView!
     @IBOutlet var noteTextView: UITextView!
     @IBOutlet var nameLabel: UILabel!
@@ -20,34 +22,60 @@ class TwoColumnCell: UICollectionViewCell {
     override func awakeFromNib() {
         super.awakeFromNib()
 
+        reset()
         self.layer.cornerRadius = 10
     }
 
     override func prepareForReuse() {
         super.prepareForReuse()
 
-        nameLabel.text = ""
-        thumbnailImageView.image = nil
-        noteTextView.text = ""
-        placeholderImageView.isHidden = true
-        tagStackView.removeAllArrangedSubviews()
+        reset()
     }
 
     // MARK: - Methods
 
-    func layoutItem(_ item: Item) {
-        if let name = item.name as? NSString {
-            nameLabel.text = name.deletingPathExtension
+    func configure(for item: Item) {
+        nameLabel.text = item.name
+
+        guard let displayType = DisplayType(rawValue: item.displayType) else {
+            return
         }
 
-        if let thumbnail = item.thumbnail?.data {
-            thumbnailImageView.image = UIImage(data: thumbnail)
-        } else if let note = item.note, !note.isEmpty {
-            noteTextView.text = note
-        } else {
-            placeholderImageView.isHidden = false
+        iconImageView.image = displayType.icon
+
+        switch displayType {
+        case .image:
+            if let thumbnail = item.thumbnail?.data {
+                iconImageView.image = nil
+                thumbnailImageView.image = UIImage(data: thumbnail)
+            }
+        case .video:
+            if let thumbnail = item.thumbnail?.data {
+                thumbnailImageView.image = UIImage(data: thumbnail)
+            }
+            iconImageView.tintColor = .tintColor
+            iconImageView.image = UIImage(systemName: "play.circle")
+        case .audio:
+            iconImageView.image = UIImage(systemName: "waveform")
+        case .note:
+            if let note = item.note, !note.isEmpty {
+                noteTextView.text = note
+            } else {
+                fileTypeLabel.text = "Empty note"
+            }
+        case .link:
+            // TODO: rich link presentation
+            break
+        case .file:
+            if let thumbnail = item.thumbnail?.data {
+                thumbnailImageView.image = UIImage(data: thumbnail)
+                iconImageView.image = nil
+            } else if let uti = item.uti {
+                fileTypeLabel.text = UTType(uti)?.preferredFilenameExtension
+            }
         }
 
+        // TODO: display real tag data
         configureTagViews(colors: [.systemRed, .systemCyan, .systemYellow])
     }
 
@@ -69,21 +97,33 @@ class TwoColumnCell: UICollectionViewCell {
         spacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
         tagStackView.addArrangedSubview(spacer)
     }
+
+    private func reset() {
+        iconImageView.image = nil
+        iconImageView.tintColor = .secondaryLabel
+        fileTypeLabel.text = ""
+        thumbnailImageView.image = nil
+        nameLabel.text = ""
+        noteTextView.text = ""
+        tagStackView.removeAllArrangedSubviews()
+    }
 }
 
 extension UIStackView {
 
     func removeAllArrangedSubviews() {
 
-        let removedSubviews = arrangedSubviews.reduce([]) { (allSubviews, subview) -> [UIView] in
-            self.removeArrangedSubview(subview)
-            return allSubviews + [subview]
-        }
+        arrangedSubviews.forEach { $0.removeFromSuperview() }
 
-        // Deactivate all constraints
-        NSLayoutConstraint.deactivate(removedSubviews.flatMap({ $0.constraints }))
-
-        // Remove the views from self
-        removedSubviews.forEach({ $0.removeFromSuperview() })
+//        let removedSubviews = arrangedSubviews.reduce([]) { (allSubviews, subview) -> [UIView] in
+//            self.removeArrangedSubview(subview)
+//            return allSubviews + [subview]
+//        }
+//
+//        // Deactivate all constraints
+//        NSLayoutConstraint.deactivate(removedSubviews.flatMap({ $0.constraints }))
+//
+//        // Remove the views from self
+//        removedSubviews.forEach({ $0.removeFromSuperview() })
     }
 }

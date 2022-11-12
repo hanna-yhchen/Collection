@@ -48,7 +48,7 @@ class ItemCollectionView: UICollectionView {
 //        let screenWidth = window?.screen.bounds.width
         let availableWidth = bounds.width - ((itemsPerRow + 1) * spacing)
         let widthPerItem = (availableWidth / itemsPerRow).rounded(.down)
-        let infoAreaHeight: CGFloat = 53
+        let infoAreaHeight: CGFloat = 48
         layout.itemSize = CGSize(width: widthPerItem, height: widthPerItem + infoAreaHeight)
 
         return layout
