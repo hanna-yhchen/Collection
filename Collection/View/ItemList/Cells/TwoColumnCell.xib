@@ -103,10 +103,10 @@
                                 <rect key="frame" x="0.0" y="33" width="147" height="18"/>
                                 <subviews>
                                     <stackView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="249" verticalHuggingPriority="251" alignment="center" spacing="4" translatesAutoresizingMaskIntoConstraints="NO" id="xfj-1P-kX2">
-                                        <rect key="frame" x="0.0" y="0.0" width="103" height="18"/>
+                                        <rect key="frame" x="0.0" y="0.0" width="123" height="18"/>
                                     </stackView>
-                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="fjh-Xh-CKK">
-                                        <rect key="frame" x="103" y="0.0" width="20" height="18"/>
+                                    <button hidden="YES" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="fjh-Xh-CKK">
+                                        <rect key="frame" x="123" y="0.0" width="20" height="18"/>
                                         <constraints>
                                             <constraint firstAttribute="height" constant="18" id="GA0-mL-oKP"/>
                                             <constraint firstAttribute="width" constant="20" id="ILX-V6-nXF"/>

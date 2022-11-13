@@ -93,6 +93,7 @@ class TwoColumnCell: UICollectionViewCell {
         }
 
         // TODO: display real tag data
+        guard Bool.random() else { return }
         configureTagViews(colors: [.systemRed, .systemCyan, .systemYellow])
     }
 

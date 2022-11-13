@@ -1,4 +1,4 @@
-//
+
 //  ItemListViewController.swift
 //  Collection
 //
@@ -13,7 +13,7 @@ import SafariServices
 import UniformTypeIdentifiers
 import UIKit
 
-class ItemListViewController: UIViewController {
+class ItemListViewController: UIViewController, UIPopoverPresentationControllerDelegate {
 
     typealias Snapshot = NSDiffableDataSourceSnapshot<Int, NSManagedObjectID>
     typealias DataSource = UICollectionViewDiffableDataSource<Int, NSManagedObjectID>
@@ -64,6 +64,7 @@ class ItemListViewController: UIViewController {
     private var subscriptions: Set<AnyCancellable> = []
 
     @IBOutlet var collectionView: ItemCollectionView!
+    @IBOutlet var plusButton: UIButton!
 
     // MARK: - Lifecycle
 
@@ -71,7 +72,10 @@ class ItemListViewController: UIViewController {
         super.viewDidLoad()
 
         self.title = board.name
-        addButtonStack()
+//        addButtonStack()
+        plusButton.layer.shadowColor = UIColor.black.cgColor
+        plusButton.layer.shadowOpacity = 0.7
+        plusButton.layer.shadowOffset = CGSize(width: 0, height: 2)
 
         view.layoutIfNeeded()
         collectionView.traits = view.traitCollection
@@ -108,6 +112,42 @@ class ItemListViewController: UIViewController {
     }
 
     // MARK: - Actions
+
+    @IBAction func plusButtonTapped() {
+        guard let importController = UIStoryboard.main.instantiateViewController(withIdentifier: ItemImportController.storyboardID) as? ItemImportController else { return }
+
+        importController.selectMethod
+            .receive(on: DispatchQueue.main)
+            .sink {[unowned self] method in
+                switch method {
+                case .paste:
+                    pasteButtonTapped()
+                case .photos:
+                    addPhotoButtonTapped()
+                case .camera:
+                    cameraButtonTapped()
+                case .files:
+                    addFileButtonTapped()
+                case .note:
+                    addNoteButtonTapped()
+                case .audioRecorder:
+                    voiceButtonTapped()
+                }
+            }
+            .store(in: &subscriptions)
+
+        // TODO: pop over
+        preferredContentSize = CGSize(width: view.bounds.width, height: 300)
+            if let sheet = importController.sheetPresentationController {
+                sheet.detents = [.medium()]
+                sheet.prefersScrollingExpandsWhenScrolledToEdge = false
+                sheet.prefersEdgeAttachedInCompactHeight = true
+                sheet.preferredCornerRadius = 30
+            }
+
+            present(importController, animated: true)
+        }
+
 
     @objc private func addFileButtonTapped() {
         showDocumentPicker()
