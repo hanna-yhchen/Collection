@@ -9,6 +9,7 @@ import Combine
 import CoreData
 import PhotosUI
 import QuickLook
+import SafariServices
 import UniformTypeIdentifiers
 import UIKit
 
@@ -49,7 +50,7 @@ class ItemListViewController: UIViewController {
         return controller
     }()
 
-    let previewController = QLPreviewController()
+    private lazy var previewController = QLPreviewController()
     private var previewingURL: URL? {
         didSet {
             if previewingURL != nil {
@@ -71,7 +72,6 @@ class ItemListViewController: UIViewController {
 
         self.title = board.name
         addButtonStack()
-        navigationController?.navigationBar.prefersLargeTitles = true
 
         view.layoutIfNeeded()
         collectionView.traits = view.traitCollection
@@ -275,6 +275,7 @@ class ItemListViewController: UIViewController {
 
         guard
             let item = context.object(with: id) as? Item,
+            let displayType = DisplayType(rawValue: item.displayType),
             let typeIdentifier = item.uti,
             let itemType = UTType(typeIdentifier)
         else {
@@ -282,8 +283,14 @@ class ItemListViewController: UIViewController {
             return
         }
 
-        if itemType.conforms(to: .utf8PlainText) {
+        if displayType == .note {
             showNotePreview(item)
+            return
+        }
+
+        if displayType == .link {
+            openLink(item)
+            return
         }
 
         guard
@@ -353,6 +360,21 @@ class ItemListViewController: UIViewController {
                 NotePreviewController(coder: coder, item: item, itemManager: self.itemManager)
             }
         navigationController?.pushViewController(noteVC, animated: true)
+    }
+
+    private func openLink(_ item: Item) {
+        guard
+            let data = item.itemData?.data,
+            let url = URL(dataRepresentation: data, relativeTo: nil)
+        else {
+            // TODO: show alert
+            return
+        }
+
+        let safariController = SFSafariViewController(url: url)
+        safariController.preferredControlTintColor = .tintColor
+        safariController.dismissButtonStyle = .close
+        present(safariController, animated: true)
     }
 
     private func currentBoardTransactions(from transactions: [NSPersistentHistoryTransaction]) -> [NSPersistentHistoryTransaction] {
@@ -506,7 +528,7 @@ extension ItemListViewController {
         Task {
             // TODO: UI reaction
             do {
-                try await itemManager.process(itemProviders, isSecurityScoped: false)
+                try await itemManager.process(itemProviders, saveInto: boardID, isSecurityScoped: false)
             } catch {
                 print("#\(#function): Failed to process input from pasteboard, \(error)")
             }

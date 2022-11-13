@@ -20,9 +20,13 @@ enum DisplayType: Int16 {
         case .image:
             return UIImage(systemName: "photo")
         case .video:
-            return UIImage(systemName: "play.circle")
+            let colorConfig = UIImage.SymbolConfiguration(
+                paletteColors: [.tintColor, .tertiarySystemBackground, .tertiarySystemBackground])
+            let sizeConfig = UIImage.SymbolConfiguration(pointSize: 30)
+            return UIImage(systemName: "play.circle.fill", withConfiguration: colorConfig.applying(sizeConfig))
         case .audio:
-            return UIImage(systemName: "waveform")
+            let sizeConfig = UIImage.SymbolConfiguration(pointSize: 50)
+            return UIImage(systemName: "waveform.path", withConfiguration: sizeConfig)
         case .note:
             return nil
         case .link:

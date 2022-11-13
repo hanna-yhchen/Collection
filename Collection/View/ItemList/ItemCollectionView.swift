@@ -15,7 +15,7 @@ class ItemCollectionView: UICollectionView {
         case grid
     }
 
-    var traits: UITraitCollection!
+    var traits: UITraitCollection?
 
     private let sectionInsets = UIEdgeInsets(top: 16, left: 16, bottom: 16, right: 16)
     private let spacing: CGFloat = 16
@@ -44,12 +44,10 @@ class ItemCollectionView: UICollectionView {
         layout.minimumInteritemSpacing = spacing
         layout.sectionInset = sectionInsets
 
-        let itemsPerRow: CGFloat = traits.horizontalSizeClass == .compact ? 2 : 4
-//        let screenWidth = window?.screen.bounds.width
+        let itemsPerRow: CGFloat = traits?.horizontalSizeClass == .compact ? 2 : 4
         let availableWidth = bounds.width - ((itemsPerRow + 1) * spacing)
         let widthPerItem = (availableWidth / itemsPerRow).rounded(.down)
-        let infoAreaHeight: CGFloat = 48
-        layout.itemSize = CGSize(width: widthPerItem, height: widthPerItem + infoAreaHeight)
+        layout.itemSize = CGSize(width: widthPerItem, height: widthPerItem + TwoColumnCell.bottomAreaHeight)
 
         return layout
     }()

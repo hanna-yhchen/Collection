@@ -156,9 +156,8 @@ final class ItemManager {
         // TODO: throwable
         let data = image.jpegData(compressionQuality: 1)
 
-
         let thumbnail = image.preparingThumbnail(of: CGSize(width: 400, height: 400))
-        let thumbnailData = thumbnail?.pngData()
+        let thumbnailData = thumbnail?.jpegData(compressionQuality: 1)
 
         addItem(
             displayType: .image,
@@ -263,18 +262,11 @@ extension ItemManager {
                     return
                 }
 
-                var errorIfAny: Error?
-
                 do {
                     try processFile(url, saveInto: boardID, isSecurityScoped: isSecurityScoped)
-                } catch {
-                    errorIfAny = error
-                }
-
-                if let errorIfAny = errorIfAny {
-                    continuation.resume(throwing: errorIfAny)
-                } else {
                     continuation.resume()
+                } catch {
+                    continuation.resume(throwing: error)
                 }
             }
         }
@@ -294,7 +286,7 @@ extension ItemManager {
 
         fileCoordinator.coordinate(readingItemAt: url, error: &nserror) { url in
             guard
-                let values = try? url.resourceValues(forKeys: [.fileSizeKey, .contentTypeKey]),
+                let values = try? url.resourceValues(forKeys: [.nameKey, .fileSizeKey, .contentTypeKey]),
                 let size = values.fileSize,
                 size <= 50_000_000,
                 let uti = values.contentType?.identifier,
@@ -303,6 +295,10 @@ extension ItemManager {
                 error = ImportError.invalidData
                 return
             }
+
+            let type = displayType(of: uti)
+            let keepSourceName = type == .file
+            let sourceName = values.name
 
             let semaphore = DispatchSemaphore(value: 0)
 
@@ -315,7 +311,8 @@ extension ItemManager {
                 }
 
                 addItem(
-                    displayType: displayType(of: uti),
+                    name: keepSourceName ? sourceName : nil,
+                    displayType: type,
                     uti: uti,
                     itemData: data,
                     thumbnailData: thumbnailData,
@@ -358,7 +355,7 @@ extension ItemManager {
             return .link
         } else if type.conforms(to: .audio) {
             return .audio
-        } else if type.conforms(to: .video) {
+        } else if type.conforms(to: .movie) {
             return .video
         } else {
             return .file
