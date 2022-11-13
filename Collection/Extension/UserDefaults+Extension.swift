@@ -24,4 +24,7 @@ extension UserDefaults {
 
     @UserDefault(key: "isFirstLaunch", defaultValue: true)
     static var isFirstLaunch: Bool
+
+    @UserDefault(key: "linkMetadataCache", defaultValue: [:])
+    static var linkMetadataCache: [String: Data]
 }

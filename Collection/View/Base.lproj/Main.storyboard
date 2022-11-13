@@ -5,6 +5,7 @@
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="21505"/>
         <capability name="Image references" minToolsVersion="12.0"/>
+        <capability name="Named colors" minToolsVersion="9.0"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="System colors in document resources" minToolsVersion="11.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
@@ -58,24 +59,49 @@
                         <rect key="frame" x="0.0" y="0.0" width="390" height="844"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <collectionView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" dataMode="prototypes" translatesAutoresizingMaskIntoConstraints="NO" id="0n1-d6-dPk">
+                            <collectionView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" dataMode="prototypes" translatesAutoresizingMaskIntoConstraints="NO" id="0n1-d6-dPk" customClass="ItemCollectionView" customModule="Collection" customModuleProvider="target">
                                 <rect key="frame" x="0.0" y="47" width="390" height="763"/>
-                                <color key="backgroundColor" systemColor="systemBackgroundColor"/>
-                                <collectionViewLayout key="collectionViewLayout" id="Tjg-Nb-Wjd"/>
+                                <color key="backgroundColor" systemColor="systemGroupedBackgroundColor"/>
+                                <collectionViewLayout key="collectionViewLayout" id="0z3-jW-MIq"/>
                                 <cells/>
                             </collectionView>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="tle-7M-0pr">
+                                <rect key="frame" x="326" y="746" width="48" height="48"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="48" id="Cjd-a4-r3Z"/>
+                                    <constraint firstAttribute="width" constant="48" id="ou6-M8-bVq"/>
+                                </constraints>
+                                <color key="tintColor" name="HightlightColor"/>
+                                <state key="normal" title="Button"/>
+                                <buttonConfiguration key="configuration" style="plain">
+                                    <imageReference key="image" image="plus.circle.fill" catalog="system" renderingMode="hierarchical">
+                                        <hierarchicalColors>
+                                            <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                            <color name="HightlightColor"/>
+                                            <color name="HightlightColor"/>
+                                        </hierarchicalColors>
+                                    </imageReference>
+                                    <preferredSymbolConfiguration key="preferredSymbolConfigurationForImage" configurationType="pointSize" pointSize="36"/>
+                                </buttonConfiguration>
+                                <connections>
+                                    <action selector="plusButtonTapped" destination="BYZ-38-t0r" eventType="touchUpInside" id="ZGX-QP-lg2"/>
+                                </connections>
+                            </button>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
-                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                        <color key="backgroundColor" systemColor="systemGroupedBackgroundColor"/>
                         <constraints>
                             <constraint firstItem="0n1-d6-dPk" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" id="949-KG-swU"/>
+                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="tle-7M-0pr" secondAttribute="trailing" constant="16" id="Apk-Vb-Ehb"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="0n1-d6-dPk" secondAttribute="trailing" id="BEz-7d-ahb"/>
+                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="tle-7M-0pr" secondAttribute="bottom" constant="16" id="cIp-8R-G4F"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="0n1-d6-dPk" secondAttribute="bottom" id="sCF-7J-TBM"/>
                             <constraint firstItem="0n1-d6-dPk" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" id="vjy-Pu-Kuq"/>
                         </constraints>
                     </view>
                     <connections>
                         <outlet property="collectionView" destination="0n1-d6-dPk" id="c8w-Lo-lih"/>
+                        <outlet property="plusButton" destination="tle-7M-0pr" id="5s7-eS-dKV"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
@@ -253,6 +279,57 @@
             </objects>
             <point key="canvasLocation" x="1830.7692307692307" y="138.6255924170616"/>
         </scene>
+        <!--Item Import Controller-->
+        <scene sceneID="YRc-6l-NNL">
+            <objects>
+                <viewController storyboardIdentifier="ItemImportController" modalPresentationStyle="formSheet" id="6B0-d2-fa6" customClass="ItemImportController" customModule="Collection" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="Wgt-nR-ief">
+                        <rect key="frame" x="0.0" y="0.0" width="390" height="400"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="249" verticalHuggingPriority="251" text="Add Item" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="FeJ-Q1-LxL">
+                                <rect key="frame" x="8" y="16" width="374" height="21"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="21" id="eaN-2w-cVj"/>
+                                </constraints>
+                                <fontDescription key="fontDescription" style="UICTFontTextStyleHeadline"/>
+                                <nil key="textColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <collectionView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" dataMode="prototypes" translatesAutoresizingMaskIntoConstraints="NO" id="hhq-Ht-Z9d">
+                                <rect key="frame" x="0.0" y="41" width="390" height="359"/>
+                                <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                                <collectionViewFlowLayout key="collectionViewLayout" automaticEstimatedItemSize="YES" minimumLineSpacing="10" minimumInteritemSpacing="10" id="POu-D8-N7f">
+                                    <size key="itemSize" width="128" height="128"/>
+                                    <size key="headerReferenceSize" width="0.0" height="0.0"/>
+                                    <size key="footerReferenceSize" width="0.0" height="0.0"/>
+                                    <inset key="sectionInset" minX="0.0" minY="0.0" maxX="0.0" maxY="0.0"/>
+                                </collectionViewFlowLayout>
+                                <cells/>
+                            </collectionView>
+                        </subviews>
+                        <viewLayoutGuide key="safeArea" id="HZc-Qa-7bG"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                        <constraints>
+                            <constraint firstItem="hhq-Ht-Z9d" firstAttribute="leading" secondItem="HZc-Qa-7bG" secondAttribute="leading" id="2G1-Xl-GfR"/>
+                            <constraint firstItem="FeJ-Q1-LxL" firstAttribute="leading" secondItem="Wgt-nR-ief" secondAttribute="leading" constant="8" id="FH9-0C-rEz"/>
+                            <constraint firstAttribute="trailing" secondItem="FeJ-Q1-LxL" secondAttribute="trailing" constant="8" id="Sg1-Dp-j4E"/>
+                            <constraint firstItem="HZc-Qa-7bG" firstAttribute="trailing" secondItem="hhq-Ht-Z9d" secondAttribute="trailing" id="eUv-OU-jLD"/>
+                            <constraint firstItem="HZc-Qa-7bG" firstAttribute="bottom" secondItem="hhq-Ht-Z9d" secondAttribute="bottom" id="fUe-nG-UU4"/>
+                            <constraint firstItem="hhq-Ht-Z9d" firstAttribute="top" secondItem="FeJ-Q1-LxL" secondAttribute="bottom" constant="4" id="ouO-8p-FPq"/>
+                            <constraint firstItem="FeJ-Q1-LxL" firstAttribute="top" secondItem="Wgt-nR-ief" secondAttribute="top" constant="16" id="vVX-St-gjN"/>
+                        </constraints>
+                    </view>
+                    <value key="contentSizeForViewInPopover" type="size" width="390" height="300"/>
+                    <size key="freeformSize" width="390" height="400"/>
+                    <connections>
+                        <outlet property="collectionView" destination="hhq-Ht-Z9d" id="Rfx-bC-xcq"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="JSL-iS-AYO" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-711" y="138"/>
+        </scene>
         <!--Note Preview Controller-->
         <scene sceneID="4Vj-fF-Mff">
             <objects>
@@ -309,17 +386,24 @@
         </scene>
     </scenes>
     <resources>
-        <image name="plus" catalog="system" width="32" height="32"/>
+        <image name="plus" catalog="system" width="128" height="113"/>
+        <image name="plus.circle.fill" catalog="system" width="128" height="123"/>
         <image name="record.circle" catalog="system" width="128" height="123"/>
         <image name="square.and.pencil" catalog="system" width="128" height="113"/>
         <image name="tray.and.arrow.down" catalog="system" width="128" height="111"/>
         <image name="tray.and.arrow.down.fill" catalog="system" width="128" height="115"/>
         <image name="xmark" catalog="system" width="128" height="113"/>
+        <namedColor name="HightlightColor">
+            <color red="0.34509803921568627" green="0.33725490196078434" blue="0.83921568627450982" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+        </namedColor>
         <systemColor name="labelColor">
             <color red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
         <systemColor name="systemBackgroundColor">
             <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+        </systemColor>
+        <systemColor name="systemGroupedBackgroundColor">
+            <color red="0.94901960784313721" green="0.94901960784313721" blue="0.96862745098039216" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
         <systemColor name="systemIndigoColor">
             <color red="0.34509803921568627" green="0.33725490196078434" blue="0.83921568627450982" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>

@@ -12,6 +12,10 @@ private let storageProvider = StorageProvider.shared
 
 typealias ObjectID = NSManagedObjectID
 
+enum CoreDataError: Error {
+    case unfoundObjectInContext
+}
+
 // MARK: - NSManagedObjectContext
 
 extension NSManagedObjectContext {

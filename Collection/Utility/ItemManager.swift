@@ -18,6 +18,18 @@ enum ImportError: Error {
     case unfoundDefaultBoard
 }
 
+actor TaskCounter {
+    var count = 0
+
+    func increment() {
+        count += 1
+    }
+
+    func decrement() {
+        count -= 1
+    }
+}
+
 final class ItemManager {
     static let shared = ItemManager()
 
@@ -36,6 +48,8 @@ final class ItemManager {
         return boardID
     }()
 
+    private lazy var fileCoordinator = NSFileCoordinator()
+
     // MARK: - Initializers
 
     init(storageProvider: StorageProvider = .shared, thumbnailProvider: ThumbnailProvider = ThumbnailProvider()) {
@@ -49,7 +63,8 @@ final class ItemManager {
         // TODO: throwable
         addItem(
             name: name,
-            contentType: UTType.utf8PlainText.identifier,
+            displayType: .note,
+            uti: UTType.utf8PlainText.identifier,
             note: note,
             boardID: boardID,
             context: storageProvider.newTaskContext())
@@ -76,9 +91,18 @@ final class ItemManager {
 
     func process(_ urls: [URL], saveInto boardID: ObjectID, isSecurityScoped: Bool = true) async throws {
         try await withThrowingTaskGroup(of: Void.self) { group in
+            let taskCounter = TaskCounter()
+
             for url in urls {
+                while await taskCounter.count >= 3 {
+                    try await group.next()
+                }
+
+                await taskCounter.increment()
+
                 group.addTask {[unowned self] in
-                    try await processFile(url, saveInto: boardID, isSecurityScoped: isSecurityScoped)
+                    try processFile(url, saveInto: boardID, isSecurityScoped: isSecurityScoped)
+                    await taskCounter.decrement()
                 }
             }
 
@@ -90,28 +114,37 @@ final class ItemManager {
         let boardID = try unwrappedBoardID(of: boardID)
 
         try await withThrowingTaskGroup(of: Void.self) { group in
+            let taskCounter = TaskCounter()
+
             for provider in itemProviders {
+                while await taskCounter.count >= 3 {
+                    try await group.next()
+                }
+
+                await taskCounter.increment()
+
                 group.addTask {[unowned self] in
                     print("#\(#function): start handling items with types:", provider.registeredTypeIdentifiers)
                     guard
                         provider.hasItemConformingToTypeIdentifier(UTType.data.identifier),
                         provider.registeredTypeIdentifiers.contains(where: { UTType($0) != nil })
                     else {
+                        await taskCounter.decrement()
                         throw ImportError.unsupportedType
                     }
 
                     if provider.hasItemConformingToTypeIdentifier(UTType.url.identifier)
                         && !provider.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier) {
                         try await processURL(provider: provider, saveInto: boardID)
-                        return
-                    }
-
-                    if provider.hasItemConformingToTypeIdentifier(UTType.utf8PlainText.identifier) {
+                        await taskCounter.decrement()
+                    } else if provider.hasItemConformingToTypeIdentifier(UTType.utf8PlainText.identifier) {
                         try await processText(provider: provider, saveInto: boardID)
-                        return
+                        await taskCounter.decrement()
+                    } else {
+                        try await processFile(provider: provider, saveInto: boardID, isSecurityScoped: isSecurityScoped)
                     }
 
-                    try await processFile(provider: provider, saveInto: boardID, isSecurityScoped: isSecurityScoped)
+                    await taskCounter.decrement()
                 }
             }
 
@@ -124,14 +157,11 @@ final class ItemManager {
         let data = image.jpegData(compressionQuality: 1)
 
         let thumbnail = image.preparingThumbnail(of: CGSize(width: 400, height: 400))
-        let thumbnailData = thumbnail?.pngData()
-
-        let currentTime = DateFormatter.hyphenatedDateTimeFormatter.string(from: Date())
-        let name = "Photo \(currentTime)"
+        let thumbnailData = thumbnail?.jpegData(compressionQuality: 1)
 
         addItem(
-            name: name,
-            contentType: UTType.jpeg.identifier,
+            displayType: .image,
+            uti: UTType.jpeg.identifier,
             itemData: data,
             thumbnailData: thumbnailData,
             boardID: boardID,
@@ -142,27 +172,22 @@ final class ItemManager {
         var nserror: NSError?
         var error: Error?
 
-        NSFileCoordinator().coordinate(readingItemAt: record.url, error: &nserror) { url in
+        fileCoordinator.coordinate(readingItemAt: record.url, error: &nserror) { url in
             guard
                 let data = try? Data(contentsOf: url),
                 let values = try? url.resourceValues(forKeys: [.fileSizeKey, .contentTypeKey]),
                 let size = values.fileSize,
                 size <= 50_000_000,
-                let type = values.contentType
+                let uti = values.contentType?.identifier
             else {
                 error = ImportError.invalidData
                 return
             }
 
-            var filename = record.name ?? ""
-            if record.name == nil {
-                let currentTime = DateFormatter.hyphenatedDateTimeFormatter.string(from: Date())
-                filename = "Voice \(currentTime)"
-            }
-
             addItem(
-                name: filename,
-                contentType: type.identifier,
+                name: record.name,
+                displayType: .audio,
+                uti: uti,
                 itemData: data,
                 boardID: boardID,
                 context: storageProvider.newTaskContext())
@@ -187,8 +212,8 @@ extension ItemManager {
         }
 
         addItem(
-            name: url.absoluteString,
-            contentType: UTType.url.identifier,
+            displayType: .link,
+            uti: UTType.url.identifier,
             itemData: url.dataRepresentation,
             boardID: boardID,
             context: storageProvider.newTaskContext()
@@ -200,12 +225,9 @@ extension ItemManager {
             forTypeIdentifier: UTType.utf8PlainText.identifier)
         else { throw ImportError.invalidData }
 
-        let currentTime = DateFormatter.hyphenatedDateTimeFormatter.string(from: Date())
-        let name = "Note \(currentTime)"
-
         addItem(
-            name: name,
-            contentType: UTType.utf8PlainText.identifier,
+            displayType: .note,
+            uti: UTType.utf8PlainText.identifier,
             note: String(data: data, encoding: .utf8),
             boardID: boardID,
             context: storageProvider.newTaskContext()
@@ -226,10 +248,10 @@ extension ItemManager {
         else {
             throw ImportError.unsupportedType
         }
-        print("#start process file type", typeIdentifier)
+        print("#\(#function) start process file type:", typeIdentifier)
 
         return try await withCheckedThrowingContinuation { continuation in
-            provider.loadFileRepresentation(forTypeIdentifier: typeIdentifier) { url, error in
+            provider.loadInPlaceFileRepresentation(forTypeIdentifier: typeIdentifier) {[unowned self] url, _, error in
                 if let error = error {
                     continuation.resume(throwing: error)
                     return
@@ -240,29 +262,17 @@ extension ItemManager {
                     return
                 }
 
-                let semaphore = DispatchSemaphore(value: 0)
-
-                Task {
-                    var errorIfAny: Error?
-                    do {
-                        try await self.processFile(url, saveInto: boardID, isSecurityScoped: isSecurityScoped)
-                    } catch {
-                        errorIfAny = error
-                    }
-                    if let errorIfAny = errorIfAny {
-                        continuation.resume(throwing: errorIfAny)
-                    } else {
-                        continuation.resume()
-                    }
-                    semaphore.signal()
+                do {
+                    try processFile(url, saveInto: boardID, isSecurityScoped: isSecurityScoped)
+                    continuation.resume()
+                } catch {
+                    continuation.resume(throwing: error)
                 }
-
-                semaphore.wait()
             }
         }
     }
 
-    private func processFile(_ url: URL, saveInto boardID: ObjectID, isSecurityScoped: Bool) async throws {
+    private func processFile(_ url: URL, saveInto boardID: ObjectID, isSecurityScoped: Bool) throws {
         if isSecurityScoped {
             guard url.startAccessingSecurityScopedResource() else {
                 throw ImportError.inaccessibleFile
@@ -274,38 +284,36 @@ extension ItemManager {
         var nserror: NSError?
         var error: Error?
 
-        NSFileCoordinator().coordinate(readingItemAt: url, error: &nserror) { url in
+        fileCoordinator.coordinate(readingItemAt: url, error: &nserror) { url in
             guard
                 let values = try? url.resourceValues(forKeys: [.nameKey, .fileSizeKey, .contentTypeKey]),
                 let size = values.fileSize,
                 size <= 50_000_000,
-                let type = values.contentType,
-                let name = values.name,
+                let uti = values.contentType?.identifier,
                 let data = try? Data(contentsOf: url)
             else {
                 error = ImportError.invalidData
                 return
             }
 
+            let type = displayType(of: uti)
+            let keepSourceName = type == .file
+            let sourceName = values.name
+
             let semaphore = DispatchSemaphore(value: 0)
 
             Task {
                 defer { semaphore.signal() }
 
-                let thumbnailResult = await thumbnailProvider.generateThumbnailData(url: url)
-
-                var thumbnailData: Data?
-
-                switch thumbnailResult {
-                case .success(let data):
-                    thumbnailData = data
-                case .failure(let error):
-                    print("#\(#function): Failed to generate thumbnail data, \(error)")
+                let thumbnailData = try? await thumbnailProvider.generateThumbnailData(url: url).get()
+                if thumbnailData == nil {
+                    print("#\(#function): Failed to generate thumbnail data")
                 }
 
                 addItem(
-                    name: name,
-                    contentType: type.identifier,
+                    name: keepSourceName ? sourceName : nil,
+                    displayType: type,
+                    uti: uti,
                     itemData: data,
                     thumbnailData: thumbnailData,
                     boardID: boardID,
@@ -338,14 +346,30 @@ extension ItemManager {
 
         return boardID
     }
+
+    private func displayType(of uti: String) -> DisplayType {
+        guard let type = UTType(uti) else { return .file }
+        if type.conforms(to: .image) {
+            return .image
+        } else if type.conforms(to: .url) {
+            return .link
+        } else if type.conforms(to: .audio) {
+            return .audio
+        } else if type.conforms(to: .movie) {
+            return .video
+        } else {
+            return .file
+        }
+    }
 }
 
 // MARK: - CoreData Methods
 
 extension ItemManager {
     private func addItem(
-        name: String,
-        contentType: String,
+        name: String? = nil,
+        displayType: DisplayType,
+        uti: String,
         note: String? = nil,
         itemData: Data? = nil,
         thumbnailData: Data? = nil,
@@ -355,9 +379,10 @@ extension ItemManager {
         context.perform {
             let item = Item(context: context)
             item.name = name
-            item.contentType = contentType
+            item.uti = uti
             item.note = note
             item.uuid = UUID()
+            item.displayType = displayType.rawValue
 
             let thumbnail = Thumbnail(context: context)
             thumbnail.data = thumbnailData
@@ -389,7 +414,7 @@ extension ItemManager {
         context: NSManagedObjectContext
     ) async throws {
         guard let item = try context.existingObject(with: itemID) as? Item else {
-            throw ItemError.unfoundItem
+            throw CoreDataError.unfoundObjectInContext
         }
 
         try await context.perform {

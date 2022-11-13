@@ -1,4 +1,4 @@
-//
+
 //  ItemListViewController.swift
 //  Collection
 //
@@ -9,10 +9,11 @@ import Combine
 import CoreData
 import PhotosUI
 import QuickLook
+import SafariServices
 import UniformTypeIdentifiers
 import UIKit
 
-class ItemListViewController: UIViewController {
+class ItemListViewController: UIViewController, UIPopoverPresentationControllerDelegate {
 
     typealias Snapshot = NSDiffableDataSourceSnapshot<Int, NSManagedObjectID>
     typealias DataSource = UICollectionViewDiffableDataSource<Int, NSManagedObjectID>
@@ -49,7 +50,7 @@ class ItemListViewController: UIViewController {
         return controller
     }()
 
-    let previewController = QLPreviewController()
+    private lazy var previewController = QLPreviewController()
     private var previewingURL: URL? {
         didSet {
             if previewingURL != nil {
@@ -62,7 +63,8 @@ class ItemListViewController: UIViewController {
     private var dataSource: DataSource?
     private var subscriptions: Set<AnyCancellable> = []
 
-    @IBOutlet var collectionView: UICollectionView!
+    @IBOutlet var collectionView: ItemCollectionView!
+    @IBOutlet var plusButton: UIButton!
 
     // MARK: - Lifecycle
 
@@ -70,10 +72,16 @@ class ItemListViewController: UIViewController {
         super.viewDidLoad()
 
         self.title = board.name
-        addButtonStack()
-        navigationController?.navigationBar.prefersLargeTitles = true
-        collectionView.collectionViewLayout = createCardLayout()
+//        addButtonStack()
+        plusButton.layer.shadowColor = UIColor.black.cgColor
+        plusButton.layer.shadowOpacity = 0.7
+        plusButton.layer.shadowOffset = CGSize(width: 0, height: 2)
+
+        view.layoutIfNeeded()
+        collectionView.traits = view.traitCollection
+        collectionView.setTwoColumnLayout(animated: false)
         collectionView.delegate = self
+
         previewController.dataSource = self
         previewController.delegate = self
         configureDataSource()
@@ -104,6 +112,42 @@ class ItemListViewController: UIViewController {
     }
 
     // MARK: - Actions
+
+    @IBAction func plusButtonTapped() {
+        guard let importController = UIStoryboard.main.instantiateViewController(withIdentifier: ItemImportController.storyboardID) as? ItemImportController else { return }
+
+        importController.selectMethod
+            .receive(on: DispatchQueue.main)
+            .sink {[unowned self] method in
+                switch method {
+                case .paste:
+                    pasteButtonTapped()
+                case .photos:
+                    addPhotoButtonTapped()
+                case .camera:
+                    cameraButtonTapped()
+                case .files:
+                    addFileButtonTapped()
+                case .note:
+                    addNoteButtonTapped()
+                case .audioRecorder:
+                    voiceButtonTapped()
+                }
+            }
+            .store(in: &subscriptions)
+
+        // TODO: pop over
+        preferredContentSize = CGSize(width: view.bounds.width, height: 300)
+            if let sheet = importController.sheetPresentationController {
+                sheet.detents = [.medium()]
+                sheet.prefersScrollingExpandsWhenScrolledToEdge = false
+                sheet.prefersEdgeAttachedInCompactHeight = true
+                sheet.preferredCornerRadius = 30
+            }
+
+            present(importController, animated: true)
+        }
+
 
     @objc private func addFileButtonTapped() {
         showDocumentPicker()
@@ -167,15 +211,15 @@ class ItemListViewController: UIViewController {
     }
 
     private func configureDataSource() {
-        let cellRegistration = UICollectionView.CellRegistration<CardItemCell, NSManagedObjectID>(
-            cellNib: UINib(nibName: CardItemCell.identifier, bundle: nil)
+        let cellRegistration = UICollectionView.CellRegistration<TwoColumnCell, NSManagedObjectID>(
+            cellNib: UINib(nibName: TwoColumnCell.identifier, bundle: nil)
         ) {[unowned self] cell, _, objectID in
             guard let item = try? fetchedResultsController
                 .managedObjectContext
                 .existingObject(with: objectID) as? Item
             else { fatalError("#\(#function): Failed to retrieve item by objectID") }
 
-            cell.layoutItem(item)
+            cell.configure(for: item)
         }
 
         dataSource = DataSource(collectionView: collectionView) { collectionView, indexPath, item in
@@ -271,15 +315,22 @@ class ItemListViewController: UIViewController {
 
         guard
             let item = context.object(with: id) as? Item,
-            let typeIdentifier = item.contentType,
+            let displayType = DisplayType(rawValue: item.displayType),
+            let typeIdentifier = item.uti,
             let itemType = UTType(typeIdentifier)
         else {
             // TODO: show alert
             return
         }
 
-        if itemType.conforms(to: .utf8PlainText) {
+        if displayType == .note {
             showNotePreview(item)
+            return
+        }
+
+        if displayType == .link {
+            openLink(item)
+            return
         }
 
         guard
@@ -351,6 +402,21 @@ class ItemListViewController: UIViewController {
         navigationController?.pushViewController(noteVC, animated: true)
     }
 
+    private func openLink(_ item: Item) {
+        guard
+            let data = item.itemData?.data,
+            let url = URL(dataRepresentation: data, relativeTo: nil)
+        else {
+            // TODO: show alert
+            return
+        }
+
+        let safariController = SFSafariViewController(url: url)
+        safariController.preferredControlTintColor = .tintColor
+        safariController.dismissButtonStyle = .close
+        present(safariController, animated: true)
+    }
+
     private func currentBoardTransactions(from transactions: [NSPersistentHistoryTransaction]) -> [NSPersistentHistoryTransaction] {
         transactions.filter { transaction in
             if let changes = transaction.changes {
@@ -405,7 +471,11 @@ extension ItemListViewController: PHPickerViewControllerDelegate {
         Task {
             // TODO: UI reaction
             do {
+                #if targetEnvironment(simulator)
+                try await itemManager.process(results.map(\.itemProvider), saveInto: boardID)
+                #else
                 try await itemManager.process(results.map(\.itemProvider), saveInto: boardID, isSecurityScoped: false)
+                #endif
                 await MainActor.run {
                     picker.dismiss(animated: true)
                 }
@@ -498,7 +568,7 @@ extension ItemListViewController {
         Task {
             // TODO: UI reaction
             do {
-                try await itemManager.process(itemProviders, isSecurityScoped: false)
+                try await itemManager.process(itemProviders, saveInto: boardID, isSecurityScoped: false)
             } catch {
                 print("#\(#function): Failed to process input from pasteboard, \(error)")
             }
@@ -549,5 +619,11 @@ extension ItemListViewController: QLPreviewControllerDelegate {
     func previewControllerDidDismiss(_ controller: QLPreviewController) {
         previewingItem = nil
         previewingURL = nil
+    }
+}
+
+extension ItemListViewController: UIDocumentInteractionControllerDelegate {
+    func documentInteractionControllerViewControllerForPreview(_ controller: UIDocumentInteractionController) -> UIViewController {
+        self
     }
 }
