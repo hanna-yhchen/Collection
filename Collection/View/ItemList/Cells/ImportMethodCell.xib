@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="21507" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES">
+    <device id="retina6_12" orientation="portrait" appearance="light"/>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="21505"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner"/>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <collectionViewCell opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" id="gTV-IL-0wX" customClass="ImportMethodCell" customModule="Collection" customModuleProvider="target">
+            <rect key="frame" x="0.0" y="0.0" width="137" height="165"/>
+            <autoresizingMask key="autoresizingMask"/>
+            <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center">
+                <rect key="frame" x="0.0" y="0.0" width="137" height="165"/>
+                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                <subviews>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="6wz-Y0-s9Z">
+                        <rect key="frame" x="0.0" y="125" width="137" height="40"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="40" id="U7j-8T-CG2"/>
+                        </constraints>
+                        <fontDescription key="fontDescription" type="boldSystem" pointSize="12"/>
+                        <nil key="textColor"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                    <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="bottom" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="photo.on.rectangle.angled" catalog="system" translatesAutoresizingMaskIntoConstraints="NO" id="wKN-J3-HMj">
+                        <rect key="frame" x="0.0" y="-0.6666666666666714" width="137" height="125"/>
+                        <preferredSymbolConfiguration key="preferredSymbolConfiguration" configurationType="pointSize" pointSize="32"/>
+                    </imageView>
+                </subviews>
+            </view>
+            <viewLayoutGuide key="safeArea" id="ZTg-uK-7eu"/>
+            <constraints>
+                <constraint firstItem="wKN-J3-HMj" firstAttribute="top" secondItem="gTV-IL-0wX" secondAttribute="top" id="0sg-mq-uAI"/>
+                <constraint firstAttribute="trailing" secondItem="6wz-Y0-s9Z" secondAttribute="trailing" id="D09-AC-kl9"/>
+                <constraint firstAttribute="trailing" secondItem="wKN-J3-HMj" secondAttribute="trailing" id="DGn-Gn-HPY"/>
+                <constraint firstItem="wKN-J3-HMj" firstAttribute="leading" secondItem="gTV-IL-0wX" secondAttribute="leading" id="G0i-K6-l4b"/>
+                <constraint firstItem="6wz-Y0-s9Z" firstAttribute="top" secondItem="wKN-J3-HMj" secondAttribute="bottom" id="S7r-TR-2ur"/>
+                <constraint firstAttribute="bottom" secondItem="6wz-Y0-s9Z" secondAttribute="bottom" id="TaE-N8-jHI"/>
+                <constraint firstItem="6wz-Y0-s9Z" firstAttribute="leading" secondItem="gTV-IL-0wX" secondAttribute="leading" id="srX-0r-hKc"/>
+            </constraints>
+            <size key="customSize" width="137" height="165"/>
+            <connections>
+                <outlet property="iconImageView" destination="wKN-J3-HMj" id="eSs-tr-hMz"/>
+                <outlet property="titleLabel" destination="6wz-Y0-s9Z" id="Q9c-jE-uP0"/>
+            </connections>
+            <point key="canvasLocation" x="-6.8702290076335872" y="60.211267605633807"/>
+        </collectionViewCell>
+    </objects>
+    <resources>
+        <image name="photo.on.rectangle.angled" catalog="system" width="128" height="98"/>
+    </resources>
+</document>

@@ -5,12 +5,15 @@
 //  Created by Hanna Chen on 2022/10/28.
 //
 
+import IQKeyboardManagerSwift
 import UIKit
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        IQKeyboardManager.shared.enable = true
+
         prepareForFirstLaunch()
 
         return true
