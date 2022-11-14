@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B50E0A8C2922372300E00432 /* PreviewItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = B50E0A8B2922372300E00432 /* PreviewItem.swift */; };
 		B50E7C052910B32B0027B56A /* ThumbnailProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = B50E7C042910B32B0027B56A /* ThumbnailProvider.swift */; };
 		B50E8F68291B706B00E64E36 /* NotePreviewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B50E8F67291B706B00E64E36 /* NotePreviewController.swift */; };
 		B50E8F6F291B84A000E64E36 /* EditorViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B50E8F6E291B84A000E64E36 /* EditorViewModel.swift */; };
@@ -91,6 +92,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		B50E0A8B2922372300E00432 /* PreviewItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewItem.swift; sourceTree = "<group>"; };
 		B50E7C042910B32B0027B56A /* ThumbnailProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThumbnailProvider.swift; sourceTree = "<group>"; };
 		B50E8F67291B706B00E64E36 /* NotePreviewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotePreviewController.swift; sourceTree = "<group>"; };
 		B50E8F6E291B84A000E64E36 /* EditorViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorViewModel.swift; sourceTree = "<group>"; };
@@ -167,6 +169,7 @@
 			children = (
 				B573118C2913B0F000AD129F /* UserDefault.swift */,
 				B5DE8850291F728D009B0957 /* DisplayType.swift */,
+				B50E0A8B2922372300E00432 /* PreviewItem.swift */,
 			);
 			path = Model;
 			sourceTree = "<group>";
@@ -524,6 +527,7 @@
 				B515D5E82912215400072CBC /* BoardCell.swift in Sources */,
 				B559BE542914FACF00F342C1 /* StorageHistoryManager.swift in Sources */,
 				B55B1388292164D200607345 /* ImportMethodCell.swift in Sources */,
+				B50E0A8C2922372300E00432 /* PreviewItem.swift in Sources */,
 				B5E50E1A290F7A31006A7B22 /* CoreDataHelper.swift in Sources */,
 				B5DEA41E291CC8900068CFE0 /* AudioRecorderController.swift in Sources */,
 				B538E9E62910277300DF5DEB /* UIStoryboard+Extension.swift in Sources */,
@@ -608,7 +612,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 0.2.0;
+				MARKETING_VERSION = 0.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.yhchen.Collection.ShareExtension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -638,7 +642,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 0.2.0;
+				MARKETING_VERSION = 0.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.yhchen.Collection.ShareExtension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -788,7 +792,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.2.0;
+				MARKETING_VERSION = 0.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.yhchen.Collection;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -826,7 +830,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.2.0;
+				MARKETING_VERSION = 0.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.yhchen.Collection;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
