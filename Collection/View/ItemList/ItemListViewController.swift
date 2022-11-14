@@ -1,4 +1,4 @@
-
+//
 //  ItemListViewController.swift
 //  Collection
 //
@@ -50,16 +50,7 @@ class ItemListViewController: UIViewController, UIPopoverPresentationControllerD
         return controller
     }()
 
-    private lazy var previewController = QLPreviewController()
-    private var previewingURL: URL? {
-        didSet {
-            if previewingURL != nil {
-                previewController.reloadData()
-            }
-        }
-    }
-    private var previewingItem: Item?
-
+    private var previewingItem: PreviewItem?
     private var dataSource: DataSource?
     private var subscriptions: Set<AnyCancellable> = []
 
@@ -72,7 +63,6 @@ class ItemListViewController: UIViewController, UIPopoverPresentationControllerD
         super.viewDidLoad()
 
         self.title = board.name
-//        addButtonStack()
         plusButton.layer.shadowColor = UIColor.black.cgColor
         plusButton.layer.shadowOpacity = 0.7
         plusButton.layer.shadowOffset = CGSize(width: 0, height: 2)
@@ -82,10 +72,14 @@ class ItemListViewController: UIViewController, UIPopoverPresentationControllerD
         collectionView.setTwoColumnLayout(animated: false)
         collectionView.delegate = self
 
-        previewController.dataSource = self
-        previewController.delegate = self
         configureDataSource()
         addObservers()
+    }
+
+    override func viewWillLayoutSubviews() {
+        super.viewWillLayoutSubviews()
+
+        collectionView.collectionViewLayout.invalidateLayout()
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -114,7 +108,9 @@ class ItemListViewController: UIViewController, UIPopoverPresentationControllerD
     // MARK: - Actions
 
     @IBAction func plusButtonTapped() {
-        guard let importController = UIStoryboard.main.instantiateViewController(withIdentifier: ItemImportController.storyboardID) as? ItemImportController else { return }
+        guard let importController = UIStoryboard.main.instantiateViewController(
+            withIdentifier: ItemImportController.storyboardID) as? ItemImportController
+        else { return }
 
         importController.selectMethod
             .receive(on: DispatchQueue.main)
@@ -136,18 +132,17 @@ class ItemListViewController: UIViewController, UIPopoverPresentationControllerD
             }
             .store(in: &subscriptions)
 
-        // TODO: pop over
-        preferredContentSize = CGSize(width: view.bounds.width, height: 300)
-            if let sheet = importController.sheetPresentationController {
-                sheet.detents = [.medium()]
-                sheet.prefersScrollingExpandsWhenScrolledToEdge = false
-                sheet.prefersEdgeAttachedInCompactHeight = true
-                sheet.preferredCornerRadius = 30
-            }
-
-            present(importController, animated: true)
+        importController.modalPresentationStyle = .formSheet
+        importController.preferredContentSize = CGSize(width: 300, height: 400)
+        if let sheet = importController.sheetPresentationController {
+            sheet.detents = [.medium()]
+            sheet.prefersScrollingExpandsWhenScrolledToEdge = false
+            sheet.prefersEdgeAttachedInCompactHeight = true
+            sheet.preferredCornerRadius = 30
         }
 
+        present(importController, animated: true)
+    }
 
     @objc private func addFileButtonTapped() {
         showDocumentPicker()
@@ -179,36 +174,6 @@ class ItemListViewController: UIViewController, UIPopoverPresentationControllerD
     }
 
     // MARK: - Private Methods
-
-    private func addButtonStack() {
-        let stackView = UIStackView()
-        stackView.axis = .vertical
-        stackView.alignment = .trailing
-        stackView.spacing = 8
-
-        let buttonConfigs: [(title: String, action: Selector)] = [
-            ("Camera", #selector(cameraButtonTapped)),
-            ("Voice", #selector(voiceButtonTapped)),
-            ("Add Note", #selector(addNoteButtonTapped)),
-            ("Add Files", #selector(addFileButtonTapped)),
-            ("Add Photos", #selector(addPhotoButtonTapped)),
-            ("Paste", #selector(pasteButtonTapped)),
-        ]
-
-        buttonConfigs.forEach { config in
-            let button = UIButton(type: .system)
-            button.setTitle(config.title, for: .normal)
-            button.addTarget(self, action: config.action, for: .touchUpInside)
-            stackView.addArrangedSubview(button)
-        }
-
-        view.addSubview(stackView)
-        stackView.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            stackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            stackView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
-        ])
-    }
 
     private func configureDataSource() {
         let cellRegistration = UICollectionView.CellRegistration<TwoColumnCell, NSManagedObjectID>(
@@ -333,9 +298,36 @@ class ItemListViewController: UIViewController, UIPopoverPresentationControllerD
             return
         }
 
+        showQuickLook(item)
+    }
+
+    private func createCardLayout() -> UICollectionViewLayout {
+        let itemSize = NSCollectionLayoutSize(
+            widthDimension: .fractionalWidth(1.0),
+            heightDimension: .fractionalHeight(1.0))
+        let item = NSCollectionLayoutItem(layoutSize: itemSize)
+
+        let groupSize = NSCollectionLayoutSize(
+            widthDimension: .fractionalWidth(1.0),
+            heightDimension: .fractionalWidth(0.5))
+        let group = NSCollectionLayoutGroup.horizontal(
+            layoutSize: groupSize,
+            subitem: item,
+            count: 1)
+
+        let section = NSCollectionLayoutSection(group: group)
+        section.interGroupSpacing = 8
+        section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16)
+
+        return UICollectionViewCompositionalLayout(section: section)
+    }
+
+    private func showQuickLook(_ item: Item) {
         guard
-            let data = item.itemData?.data, // Note item will filtered out here
+            let data = item.itemData?.data,
             let uuid = item.uuid,
+            let typeIdentifier = item.uti,
+            let itemType = UTType(typeIdentifier),
             let filenameExtension = itemType.preferredFilenameExtension
         else {
             // TODO: show alert
@@ -368,30 +360,13 @@ class ItemListViewController: UIViewController, UIPopoverPresentationControllerD
             return
         }
 
-        self.previewingItem = item
-        self.previewingURL = fileURL
+        self.previewingItem = PreviewItem(objectID: item.objectID, previewItemURL: fileURL, previewItemTitle: item.name)
+
+        let previewController = QLPreviewController()
+        previewController.dataSource = self
+        previewController.delegate = self
+        previewController.navigationItem.largeTitleDisplayMode = .never
         navigationController?.pushViewController(previewController, animated: true)
-    }
-
-    private func createCardLayout() -> UICollectionViewLayout {
-        let itemSize = NSCollectionLayoutSize(
-            widthDimension: .fractionalWidth(1.0),
-            heightDimension: .fractionalHeight(1.0))
-        let item = NSCollectionLayoutItem(layoutSize: itemSize)
-
-        let groupSize = NSCollectionLayoutSize(
-            widthDimension: .fractionalWidth(1.0),
-            heightDimension: .fractionalWidth(0.5))
-        let group = NSCollectionLayoutGroup.horizontal(
-            layoutSize: groupSize,
-            subitem: item,
-            count: 1)
-
-        let section = NSCollectionLayoutSection(group: group)
-        section.interGroupSpacing = 8
-        section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16)
-
-        return UICollectionViewCompositionalLayout(section: section)
     }
 
     private func showNotePreview(_ item: Item) {
@@ -448,6 +423,11 @@ extension ItemListViewController: UICollectionViewDelegate {
     }
 }
 
+extension ItemListViewController: UICollectionViewDelegateFlowLayout {
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        self.collectionView.calculateItemSize()
+    }
+}
 
 // MARK: - UIDocumentPickerDelegate
 
@@ -580,11 +560,11 @@ extension ItemListViewController {
 
 extension ItemListViewController: QLPreviewControllerDataSource {
     func numberOfPreviewItems(in controller: QLPreviewController) -> Int {
-        previewingURL == nil ? 0 : 1
+        previewingItem == nil ? 0 : 1
     }
 
     func previewController(_ controller: QLPreviewController, previewItemAt index: Int) -> QLPreviewItem {
-        guard let previewItem = previewingURL as? QLPreviewItem else {
+        guard let previewItem = previewingItem else {
             fatalError("#\(#function): there should exist a non-nil preview item but not")
         }
 
@@ -601,9 +581,11 @@ extension ItemListViewController: QLPreviewControllerDelegate {
 
     func previewController(_ controller: QLPreviewController, didUpdateContentsOf previewItem: QLPreviewItem) {
         guard
-            let url = previewItem as? URL,
-            let itemID = previewingItem?.objectID
+            let previewItem = previewItem as? PreviewItem,
+            let url = previewItem.previewItemURL
         else { return }
+
+        let itemID = previewItem.objectID
 
         Task {
             do {
@@ -618,7 +600,6 @@ extension ItemListViewController: QLPreviewControllerDelegate {
 
     func previewControllerDidDismiss(_ controller: QLPreviewController) {
         previewingItem = nil
-        previewingURL = nil
     }
 }
 
