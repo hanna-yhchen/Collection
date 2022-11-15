@@ -9,7 +9,7 @@ import Combine
 import UIKit
 import UniformTypeIdentifiers
 
-class TwoColumnCell: UICollectionViewCell {
+class TwoColumnCell: UICollectionViewCell, ItemCollectionViewCell {
 
     static let bottomAreaHeight: CGFloat = 4 + 17 + 14 + 2 + 18 + 4
 
@@ -74,6 +74,7 @@ class TwoColumnCell: UICollectionViewCell {
                 noteLabel.text = "(empty)"
             }
             noteStackView.isHidden = false
+            iconImageView.image = nil
         case .link:
             if let data = item.itemData?.data, let url = URL(dataRepresentation: data, relativeTo: nil) {
                 configureRichLink(for: url)

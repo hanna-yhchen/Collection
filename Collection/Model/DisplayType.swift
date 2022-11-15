@@ -28,7 +28,7 @@ enum DisplayType: Int16 {
             let sizeConfig = UIImage.SymbolConfiguration(pointSize: 50)
             return UIImage(systemName: "waveform.path", withConfiguration: sizeConfig)
         case .note:
-            return nil
+            return UIImage(systemName: "textformat")
         case .link:
             return UIImage(systemName: "link")
         case .file:
