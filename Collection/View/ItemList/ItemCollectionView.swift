@@ -36,8 +36,8 @@ class ItemCollectionView: UICollectionView {
             UINib(nibName: GridCell.identifier, bundle: nil),
             forCellWithReuseIdentifier: GridCell.identifier)
         register(
-            UINib(nibName: TwoColumnCell.identifier, bundle: nil),
-            forCellWithReuseIdentifier: TwoColumnCell.identifier)
+            UINib(nibName: SmallCardCell.identifier, bundle: nil),
+            forCellWithReuseIdentifier: SmallCardCell.identifier)
     }
 
     required init?(coder: NSCoder) {
@@ -61,7 +61,7 @@ class ItemCollectionView: UICollectionView {
             itemsPerRow = 1
         case .smallCard:
             itemsPerRow = traits?.horizontalSizeClass == .compact ? 2 : 4
-            heightOffset = TwoColumnCell.bottomAreaHeight
+            heightOffset = SmallCardCell.bottomAreaHeight
         case .grid:
             itemsPerRow = traits?.horizontalSizeClass == .compact ? 3 : 5
         }

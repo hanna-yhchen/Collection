@@ -39,7 +39,7 @@ enum ItemLayout: CaseIterable {
         case .largeCard:
             return ""
         case .smallCard:
-            return TwoColumnCell.identifier
+            return SmallCardCell.identifier
         case .grid:
             return GridCell.identifier
         }

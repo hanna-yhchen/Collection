@@ -1,5 +1,5 @@
 //
-//  TwoColumnCell.swift
+//  SmallCardCell.swift
 //  Collection
 //
 //  Created by Hanna Chen on 2022/11/11.
@@ -9,7 +9,7 @@ import Combine
 import UIKit
 import UniformTypeIdentifiers
 
-class TwoColumnCell: UICollectionViewCell, ItemCollectionViewCell {
+class SmallCardCell: UICollectionViewCell, ItemCollectionViewCell {
 
     static let bottomAreaHeight: CGFloat = 4 + 17 + 14 + 2 + 18 + 4
 
