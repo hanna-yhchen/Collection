@@ -117,17 +117,17 @@ class ItemListViewController: UIViewController, UIPopoverPresentationControllerD
             .sink {[unowned self] method in
                 switch method {
                 case .paste:
-                    pasteButtonTapped()
+                    paste(itemProviders: UIPasteboard.general.itemProviders)
                 case .photos:
-                    addPhotoButtonTapped()
+                    showPhotoPicker()
                 case .camera:
-                    cameraButtonTapped()
+                    openCamera()
                 case .files:
-                    addFileButtonTapped()
+                    showDocumentPicker()
                 case .note:
-                    addNoteButtonTapped()
+                    showNoteEditor()
                 case .audioRecorder:
-                    voiceButtonTapped()
+                    showAudioRecorder()
                 }
             }
             .store(in: &subscriptions)
@@ -142,35 +142,6 @@ class ItemListViewController: UIViewController, UIPopoverPresentationControllerD
         }
 
         present(importController, animated: true)
-    }
-
-    @objc private func addFileButtonTapped() {
-        showDocumentPicker()
-    }
-
-    @objc private func pasteButtonTapped() {
-        paste(itemProviders: UIPasteboard.general.itemProviders)
-    }
-
-    @objc private func addNoteButtonTapped() {
-        let editorVC = UIStoryboard.main
-            .instantiateViewController(identifier: EditorViewController.storyboardID) { coder in
-                let viewModel = EditorViewModel(itemManager: self.itemManager, scenario: .create(boardID: self.boardID))
-                return EditorViewController(coder: coder, viewModel: viewModel)
-            }
-        navigationController?.pushViewController(editorVC, animated: true)
-    }
-
-    @objc private func addPhotoButtonTapped() {
-        showPhotoPicker()
-    }
-
-    @objc private func cameraButtonTapped() {
-        openCamera()
-    }
-
-    @objc private func voiceButtonTapped() {
-        showAudioRecorder()
     }
 
     // MARK: - Private Methods
@@ -207,7 +178,6 @@ class ItemListViewController: UIViewController, UIPopoverPresentationControllerD
             .store(in: &subscriptions)
     }
 
-
     private func showDocumentPicker() {
         let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.data])
         picker.delegate = self
@@ -240,6 +210,15 @@ class ItemListViewController: UIViewController, UIPopoverPresentationControllerD
         picker.delegate = self
 
         self.present(picker, animated: true)
+    }
+
+    private func showNoteEditor() {
+        let editorVC = UIStoryboard.main
+            .instantiateViewController(identifier: EditorViewController.storyboardID) { coder in
+                let viewModel = EditorViewModel(itemManager: self.itemManager, scenario: .create(boardID: self.boardID))
+                return EditorViewController(coder: coder, viewModel: viewModel)
+            }
+        navigationController?.pushViewController(editorVC, animated: true)
     }
 
     private func showAudioRecorder() {
@@ -280,25 +259,20 @@ class ItemListViewController: UIViewController, UIPopoverPresentationControllerD
 
         guard
             let item = context.object(with: id) as? Item,
-            let displayType = DisplayType(rawValue: item.displayType),
-            let typeIdentifier = item.uti,
-            let itemType = UTType(typeIdentifier)
+            let displayType = DisplayType(rawValue: item.displayType)
         else {
             // TODO: show alert
             return
         }
 
-        if displayType == .note {
+        switch displayType {
+        case .note:
             showNotePreview(item)
-            return
-        }
-
-        if displayType == .link {
+        case .link:
             openLink(item)
-            return
+        default:
+            showQuickLook(item)
         }
-
-        showQuickLook(item)
     }
 
     private func createCardLayout() -> UICollectionViewLayout {

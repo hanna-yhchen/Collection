@@ -21,8 +21,6 @@
 		B515D5EF291371D700072CBC /* UserDefaults+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = B515D5EE291371D700072CBC /* UserDefaults+Extension.swift */; };
 		B51968C3291CB90F003CBDD0 /* UTType+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = B51968C2291CB90F003CBDD0 /* UTType+Extension.swift */; };
 		B51968C4291CBA38003CBDD0 /* UTType+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = B51968C2291CB90F003CBDD0 /* UTType+Extension.swift */; };
-		B52203F1290FC74100F2224B /* CardItemCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = B52203EF290FC74100F2224B /* CardItemCell.swift */; };
-		B52203F2290FC74100F2224B /* CardItemCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = B52203F0290FC74100F2224B /* CardItemCell.xib */; };
 		B52203F5290FCA2200F2224B /* UICollectionViewCell+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = B52203F4290FCA2200F2224B /* UICollectionViewCell+Extension.swift */; };
 		B52203F729101C7100F2224B /* DateFormatter+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = B52203F629101C7100F2224B /* DateFormatter+Extension.swift */; };
 		B523E93629164B4F00180B36 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B523E93529164B4F00180B36 /* ShareViewController.swift */; };
@@ -105,8 +103,6 @@
 		B515D5EA29124CC400072CBC /* StorageProvider+Board.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "StorageProvider+Board.swift"; sourceTree = "<group>"; };
 		B515D5EE291371D700072CBC /* UserDefaults+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UserDefaults+Extension.swift"; sourceTree = "<group>"; };
 		B51968C2291CB90F003CBDD0 /* UTType+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UTType+Extension.swift"; sourceTree = "<group>"; };
-		B52203EF290FC74100F2224B /* CardItemCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardItemCell.swift; sourceTree = "<group>"; };
-		B52203F0290FC74100F2224B /* CardItemCell.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = CardItemCell.xib; sourceTree = "<group>"; };
 		B52203F4290FCA2200F2224B /* UICollectionViewCell+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UICollectionViewCell+Extension.swift"; sourceTree = "<group>"; };
 		B52203F629101C7100F2224B /* DateFormatter+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DateFormatter+Extension.swift"; sourceTree = "<group>"; };
 		B523E93329164B4F00180B36 /* ShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -211,8 +207,6 @@
 		B52203EE290FC72B00F2224B /* Cells */ = {
 			isa = PBXGroup;
 			children = (
-				B52203EF290FC74100F2224B /* CardItemCell.swift */,
-				B52203F0290FC74100F2224B /* CardItemCell.xib */,
 				B55B1386292164D200607345 /* ImportMethodCell.swift */,
 				B55B1387292164D200607345 /* ImportMethodCell.xib */,
 				B5DE8846291E2556009B0957 /* TwoColumnCell.swift */,
@@ -463,7 +457,6 @@
 			files = (
 				B5E50E09290BDF17006A7B22 /* LaunchScreen.storyboard in Resources */,
 				B5E50E06290BDF17006A7B22 /* Assets.xcassets in Resources */,
-				B52203F2290FC74100F2224B /* CardItemCell.xib in Resources */,
 				B515D5E92912215400072CBC /* BoardCell.xib in Resources */,
 				B5DE8849291E2556009B0957 /* TwoColumnCell.xib in Resources */,
 				B5E50E01290BDF16006A7B22 /* Main.storyboard in Resources */,
@@ -547,7 +540,6 @@
 				B5E50E18290F72F2006A7B22 /* StorageProvider.swift in Sources */,
 				B515D5EB29124CC400072CBC /* StorageProvider+Board.swift in Sources */,
 				B515D5DF29121EE100072CBC /* BoardListViewController.swift in Sources */,
-				B52203F1290FC74100F2224B /* CardItemCell.swift in Sources */,
 				B573118D2913B0F000AD129F /* UserDefault.swift in Sources */,
 				B515D5EF291371D700072CBC /* UserDefaults+Extension.swift in Sources */,
 				B50E8F73291BB14900E64E36 /* UITextField+Extension.swift in Sources */,
