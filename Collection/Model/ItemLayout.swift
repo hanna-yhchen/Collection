@@ -7,7 +7,7 @@
 
 import UIKit
 
-enum ItemLayout: CaseIterable {
+enum ItemLayout: Int, CaseIterable {
     case largeCard
     case smallCard
     case grid
@@ -42,6 +42,17 @@ enum ItemLayout: CaseIterable {
             return SmallCardCell.identifier
         case .grid:
             return GridCell.identifier
+        }
+    }
+
+    var title: String {
+        switch self {
+        case .largeCard:
+            return "Details"
+        case .smallCard:
+            return "Summary"
+        case .grid:
+            return "Grid"
         }
     }
 

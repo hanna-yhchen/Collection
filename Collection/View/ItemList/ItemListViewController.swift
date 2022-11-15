@@ -55,6 +55,18 @@ class ItemListViewController: UIViewController {
     private var subscriptions: Set<AnyCancellable> = []
 
     private var currentLayout: ItemLayout = .smallCard
+    private lazy var layoutActions: [UIAction] = {
+        let actions = ItemLayout.allCases.map { layout in
+            UIAction(
+                title: layout.title,
+                image: layout.buttonIcon
+            ) { _ in
+                self.changeLayout(layout)
+            }
+        }
+        actions[1].state = .on
+        return actions
+    }()
 
     private lazy var collectionView = ItemCollectionView(frame: view.bounds, traits: view.traitCollection)
 
@@ -74,6 +86,8 @@ class ItemListViewController: UIViewController {
         view.insertSubview(collectionView, belowSubview: plusButton)
         collectionView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         collectionView.delegate = self
+
+        layoutButton.menu = layoutMenu(selectedIndex: ItemLayout.smallCard.rawValue)
 
         addObservers()
     }
@@ -150,14 +164,21 @@ class ItemListViewController: UIViewController {
 
     @IBAction func layoutButtonTapped() {
         let newLayout = currentLayout.next
-        layoutButton.image = newLayout.buttonIcon
+        changeLayout(newLayout)
+    }
 
-        currentLayout = newLayout
+    func changeLayout(_ layout: ItemLayout) {
+        guard layout != currentLayout else { return }
+
+        layoutButton.image = layout.buttonIcon
+
+        layoutButton.menu = layoutMenu(selectedIndex: layout.rawValue)
+        currentLayout = layout
 
         var snapshot = dataSource.snapshot()
         snapshot.reloadItems(snapshot.itemIdentifiers)
         dataSource.applySnapshotUsingReloadData(snapshot) {
-            self.collectionView.setLayout(newLayout, animated: true)
+            self.collectionView.setLayout(layout, animated: true)
         }
     }
 
@@ -374,12 +395,20 @@ class ItemListViewController: UIViewController {
 
     private func reloadItems(_ items: [NSManagedObjectID]) {
         Task { @MainActor in
-//            guard let dataSource = dataSource else { return }
-
             var newSnapshot = dataSource.snapshot()
             newSnapshot.reloadItems(items)
             await dataSource.apply(newSnapshot, animatingDifferences: true)
         }
+    }
+
+    private func layoutMenu(selectedIndex: Int) -> UIMenu {
+        for (index, action) in layoutActions.enumerated() {
+            action.state = index == selectedIndex ? .on : .off
+        }
+
+        return UIMenu(
+            title: "Display Mode",
+            children: layoutActions)
     }
 }
 
