@@ -32,7 +32,7 @@ class LargeCardCell: UICollectionViewCell, ItemCell, ItemActionSendable {
 
     var objectID: ObjectID?
 
-    var actionSubject = PassthroughSubject<(ItemAction, ObjectID), Never>()
+    lazy var actionSubject = PassthroughSubject<(ItemAction, ObjectID), Never>()
     lazy var subscriptions = Set<AnyCancellable>()
 
     override func awakeFromNib() {

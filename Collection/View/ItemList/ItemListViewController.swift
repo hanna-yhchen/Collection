@@ -198,7 +198,38 @@ class ItemListViewController: UIViewController {
 
             cell.configure(for: item)
 
+            if var sender = cell as? ItemActionSendable {
+                sender.actionPublisher
+                    .sink { itemAction, itemID in
+                        self.perform(itemAction, itemID: itemID)
+                    }
+                    .store(in: &sender.subscriptions)
+            }
+
             return cell
+        }
+    }
+
+    private func perform(_ action: ItemAction, itemID: ObjectID) {
+        switch action {
+        case .rename:
+            break
+        case .comments:
+            break
+        case .move:
+            break
+        case .copy:
+            break
+        case .delete:
+            Task {
+                do {
+                    try await itemManager.deleteItem(
+                        itemID: itemID,
+                        context: fetchedResultsController.managedObjectContext)
+                } catch {
+                    print("#\(#function): Failed to delete item, \(error)")
+                }
+            }
         }
     }
 
