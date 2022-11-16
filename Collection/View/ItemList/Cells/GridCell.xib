@@ -26,6 +26,27 @@
                         <color key="tintColor" systemColor="secondaryLabelColor"/>
                         <preferredSymbolConfiguration key="preferredSymbolConfiguration" configurationType="pointSize" pointSize="30"/>
                     </imageView>
+                    <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" translatesAutoresizingMaskIntoConstraints="NO" id="a6K-XV-qUV" userLabel="Note Stack View">
+                        <rect key="frame" x="4" y="4" width="82" height="82"/>
+                        <subviews>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" minimumFontSize="10" translatesAutoresizingMaskIntoConstraints="NO" id="gqk-BE-dA1">
+                                <rect key="frame" x="0.0" y="0.0" width="82" height="14.333333333333334"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="12"/>
+                                <color key="textColor" systemColor="secondaryLabelColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <view contentMode="scaleToFill" verticalHuggingPriority="249" translatesAutoresizingMaskIntoConstraints="NO" id="xKJ-Ro-AA9" userLabel="Spacer">
+                                <rect key="frame" x="0.0" y="14.333333333333332" width="82" height="53.333333333333343"/>
+                            </view>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" verticalCompressionResistancePriority="751" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="QpM-gg-uhL" userLabel="Title Label">
+                                <rect key="frame" x="0.0" y="67.666666666666671" width="82" height="14.333333333333329"/>
+                                <fontDescription key="fontDescription" type="system" weight="medium" pointSize="12"/>
+                                <nil key="textColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                        </subviews>
+                        <viewLayoutGuide key="safeArea" id="6TE-zQ-wnh"/>
+                    </stackView>
                 </subviews>
             </view>
             <viewLayoutGuide key="safeArea" id="ZTg-uK-7eu"/>
@@ -34,14 +55,21 @@
                 <constraint firstItem="Wqh-V7-X9p" firstAttribute="centerX" secondItem="gTV-IL-0wX" secondAttribute="centerX" id="6B0-DW-xnZ"/>
                 <constraint firstItem="Wqh-V7-X9p" firstAttribute="centerY" secondItem="gTV-IL-0wX" secondAttribute="centerY" id="7Y0-kn-Edu"/>
                 <constraint firstAttribute="trailing" secondItem="Mnf-Ka-ajI" secondAttribute="trailing" id="DTE-xx-tSp"/>
+                <constraint firstItem="a6K-XV-qUV" firstAttribute="leading" secondItem="gTV-IL-0wX" secondAttribute="leading" constant="4" id="LAW-sh-ADd"/>
                 <constraint firstItem="Mnf-Ka-ajI" firstAttribute="top" secondItem="gTV-IL-0wX" secondAttribute="top" id="Noe-jU-3Nj"/>
                 <constraint firstItem="Mnf-Ka-ajI" firstAttribute="leading" secondItem="gTV-IL-0wX" secondAttribute="leading" id="P68-wW-XY8"/>
+                <constraint firstAttribute="trailing" secondItem="a6K-XV-qUV" secondAttribute="trailing" constant="4" id="aKE-AO-5Pl"/>
                 <constraint firstAttribute="bottom" secondItem="Mnf-Ka-ajI" secondAttribute="bottom" id="bkw-LO-2Q2"/>
+                <constraint firstAttribute="bottom" secondItem="a6K-XV-qUV" secondAttribute="bottom" constant="4" id="stX-eU-cD0"/>
+                <constraint firstItem="a6K-XV-qUV" firstAttribute="top" secondItem="gTV-IL-0wX" secondAttribute="top" constant="4" id="tYW-8M-YDs"/>
             </constraints>
             <size key="customSize" width="131" height="137"/>
             <connections>
                 <outlet property="iconImageView" destination="Wqh-V7-X9p" id="U1W-cX-6Nn"/>
+                <outlet property="noteLabel" destination="gqk-BE-dA1" id="KJ1-fK-QmO"/>
+                <outlet property="noteStackView" destination="a6K-XV-qUV" id="aHY-Ib-sQz"/>
                 <outlet property="thumbnailImageView" destination="Mnf-Ka-ajI" id="gw4-kU-VfJ"/>
+                <outlet property="titleLabel" destination="QpM-gg-uhL" id="njM-ue-qmC"/>
             </connections>
             <point key="canvasLocation" x="200" y="50.70422535211268"/>
         </collectionViewCell>

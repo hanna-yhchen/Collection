@@ -12,6 +12,9 @@ class GridCell: UICollectionViewCell, ItemCell {
 
     @IBOutlet var iconImageView: UIImageView!
     @IBOutlet var thumbnailImageView: UIImageView!
+    @IBOutlet var noteStackView: UIStackView!
+    @IBOutlet var titleLabel: UILabel!
+    @IBOutlet var noteLabel: UILabel!
 
     private var richLinkSubscription: AnyCancellable?
 
@@ -28,22 +31,37 @@ class GridCell: UICollectionViewCell, ItemCell {
     }
 
     func configure(for item: Item) {
-        guard let displayType = DisplayType(rawValue: item.displayType) else {
-            return
+        iconImageView.image = item.type.icon
+        if let name = item.name {
+            titleLabel.text = "\(name)"
+            titleLabel.isHidden = false
+        }
+        if let filenameExtension = item.filenameExtension {
+            noteLabel.text = filenameExtension
         }
 
-        iconImageView.image = displayType.icon
-
-        if displayType == .link {
+        switch item.type {
+        case .link:
             if let data = item.itemData?.data, let url = URL(dataRepresentation: data, relativeTo: nil) {
                 configureLinkPreview(for: url)
+                return
             }
-            return
+        case .note:
+            if let note = item.note, !note.isEmpty {
+                noteLabel.text = note
+            } else {
+                noteLabel.text = "(empty)\n"
+            }
+            iconImageView.image = nil
+        default:
+            break
         }
 
         if let thumbnail = item.thumbnail?.data, let thumbnailImage = UIImage(data: thumbnail) {
             thumbnailImageView.image = thumbnailImage
-            if displayType != .video {
+            titleLabel.isHidden = true
+            noteLabel.text = nil
+            if item.type != .video {
                 iconImageView.image = nil
             }
         }
@@ -62,6 +80,9 @@ class GridCell: UICollectionViewCell, ItemCell {
                 if let thumbnail = richLink.image {
                     self.thumbnailImageView.image = thumbnail
                     self.iconImageView.image = nil
+                } else {
+                    self.titleLabel.text = richLink.title
+                    self.titleLabel.isHidden = false
                 }
             }
     }
@@ -73,5 +94,10 @@ class GridCell: UICollectionViewCell, ItemCell {
         iconImageView.tintColor = .secondaryLabel
 
         thumbnailImageView.image = nil
+
+        noteLabel.text = nil
+
+        titleLabel.text = nil
+        titleLabel.isHidden = true
     }
 }
