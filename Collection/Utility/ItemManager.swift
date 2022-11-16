@@ -478,7 +478,7 @@ extension ItemManager {
         }
     }
 
-    private func deleteItem(
+    func deleteItem(
         itemID: NSManagedObjectID,
         context: NSManagedObjectContext
     ) async throws {

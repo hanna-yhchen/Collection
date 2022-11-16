@@ -147,6 +147,7 @@
             </constraints>
             <size key="customSize" width="383" height="469"/>
             <connections>
+                <outlet property="actionButton" destination="wVj-ZG-aZ7" id="kYW-PO-Ehi"/>
                 <outlet property="fileTypeLabel" destination="jcP-FE-QlJ" id="F1T-lt-tXg"/>
                 <outlet property="hostLabel" destination="IPR-4h-uTS" id="p8q-Cr-k7d"/>
                 <outlet property="iconImageView" destination="eoD-FO-L6m" id="vtT-h6-My0"/>

@@ -8,8 +8,7 @@
 import Combine
 import UIKit
 
-class SmallCardCell: UICollectionViewCell, ItemCell {
-
+class SmallCardCell: UICollectionViewCell, ItemCell, ItemActionSendable {
     static let bottomAreaHeight: CGFloat = 4 + 17 + 14 + 2 + 18 + 4
 
     @IBOutlet var iconImageView: UIImageView!
@@ -21,8 +20,12 @@ class SmallCardCell: UICollectionViewCell, ItemCell {
     @IBOutlet var titleLabel: UILabel!
     @IBOutlet var hostLabel: UILabel!
     @IBOutlet var tagStackView: UIStackView!
+    @IBOutlet var actionButton: UIButton!
 
-    private var richLinkSubscription: AnyCancellable?
+    var objectID: ObjectID?
+
+    var actionSubject = PassthroughSubject<(ItemAction, ObjectID), Never>()
+    lazy var subscriptions = Set<AnyCancellable>()
 
     // MARK: - Lifecycle
 
@@ -30,6 +33,7 @@ class SmallCardCell: UICollectionViewCell, ItemCell {
         super.awakeFromNib()
 
         reset()
+        addActionMenu(for: actionButton)
         self.layer.cornerRadius = 10
     }
 
@@ -42,6 +46,8 @@ class SmallCardCell: UICollectionViewCell, ItemCell {
     // MARK: - Methods
 
     func configure(for item: Item) { // swiftlint:disable:this cyclomatic_complexity
+        objectID = item.objectID
+
         if let name = item.name, !name.isEmpty {
             titleLabel.text = name
             titleStackView.isHidden = false
@@ -92,7 +98,7 @@ class SmallCardCell: UICollectionViewCell, ItemCell {
     }
 
     private func configureLinkPreview(for url: URL) {
-        richLinkSubscription = RichLinkProvider.shared.fetchMetadata(for: url)
+        RichLinkProvider.shared.fetchMetadata(for: url)
             .receive(on: DispatchQueue.main)
             .catch { error -> Just<RichLinkProvider.RichLink> in
                 print("#\(#function): Failed to fetch, \(error)")
@@ -110,6 +116,7 @@ class SmallCardCell: UICollectionViewCell, ItemCell {
                     self.iconImageView.image = nil
                 }
             }
+            .store(in: &subscriptions)
     }
 
     private func configureTagViews(colors: [UIColor]) {
@@ -132,7 +139,7 @@ class SmallCardCell: UICollectionViewCell, ItemCell {
     }
 
     private func reset() {
-        richLinkSubscription?.cancel()
+        subscriptions.removeAll()
 
         iconImageView.image = nil
         iconImageView.tintColor = .secondaryLabel

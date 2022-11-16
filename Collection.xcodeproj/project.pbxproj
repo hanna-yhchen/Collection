@@ -39,6 +39,7 @@
 		B55B1388292164D200607345 /* ImportMethodCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = B55B1386292164D200607345 /* ImportMethodCell.swift */; };
 		B55B1389292164D200607345 /* ImportMethodCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = B55B1387292164D200607345 /* ImportMethodCell.xib */; };
 		B573118D2913B0F000AD129F /* UserDefault.swift in Sources */ = {isa = PBXBuildFile; fileRef = B573118C2913B0F000AD129F /* UserDefault.swift */; };
+		B59544102924E3C700665868 /* ItemAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = B595440F2924E3C700665868 /* ItemAction.swift */; };
 		B59BE4062923475600E50B30 /* GridCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = B59BE4042923475600E50B30 /* GridCell.swift */; };
 		B59BE4072923475600E50B30 /* GridCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = B59BE4052923475600E50B30 /* GridCell.xib */; };
 		B59BE4092923643F00E50B30 /* ItemLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = B59BE4082923643F00E50B30 /* ItemLayout.swift */; };
@@ -128,6 +129,7 @@
 		B55B1386292164D200607345 /* ImportMethodCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportMethodCell.swift; sourceTree = "<group>"; };
 		B55B1387292164D200607345 /* ImportMethodCell.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = ImportMethodCell.xib; sourceTree = "<group>"; };
 		B573118C2913B0F000AD129F /* UserDefault.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDefault.swift; sourceTree = "<group>"; };
+		B595440F2924E3C700665868 /* ItemAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemAction.swift; sourceTree = "<group>"; };
 		B59BE4042923475600E50B30 /* GridCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GridCell.swift; sourceTree = "<group>"; };
 		B59BE4052923475600E50B30 /* GridCell.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = GridCell.xib; sourceTree = "<group>"; };
 		B59BE4082923643F00E50B30 /* ItemLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemLayout.swift; sourceTree = "<group>"; };
@@ -178,6 +180,7 @@
 			isa = PBXGroup;
 			children = (
 				B5DE8850291F728D009B0957 /* DisplayType.swift */,
+				B595440F2924E3C700665868 /* ItemAction.swift */,
 				B59BE4082923643F00E50B30 /* ItemLayout.swift */,
 				B50E0A8B2922372300E00432 /* PreviewItem.swift */,
 				B573118C2913B0F000AD129F /* UserDefault.swift */,
@@ -565,6 +568,7 @@
 				B50E8F6F291B84A000E64E36 /* EditorViewModel.swift in Sources */,
 				B5B64E062917A52A002183FA /* ItemManager.swift in Sources */,
 				B5E50E04290BDF16006A7B22 /* Collection.xcdatamodeld in Sources */,
+				B59544102924E3C700665868 /* ItemAction.swift in Sources */,
 				B5E50E18290F72F2006A7B22 /* StorageProvider.swift in Sources */,
 				B515D5EB29124CC400072CBC /* StorageProvider+Board.swift in Sources */,
 				B515D5DF29121EE100072CBC /* BoardListViewController.swift in Sources */,
