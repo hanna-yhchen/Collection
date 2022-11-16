@@ -74,8 +74,8 @@ class LargeCardCell: UICollectionViewCell, ItemCell {
             break
         }
 
-        if let name = item.name as? NSString {
-            titleLabel.text = name.deletingPathExtension
+        if let name = item.name {
+            titleLabel.text = name
         } else {
             titleLabel.isHidden = true
         }

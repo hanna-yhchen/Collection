@@ -43,17 +43,13 @@ class SmallCardCell: UICollectionViewCell, ItemCell {
 
     func configure(for item: Item) { // swiftlint:disable:this cyclomatic_complexity
         if let name = item.name, !name.isEmpty {
-            titleLabel.text = (name as NSString).deletingPathExtension
+            titleLabel.text = name
             titleStackView.isHidden = false
         }
 
-        guard let displayType = DisplayType(rawValue: item.displayType) else {
-            return
-        }
+        iconImageView.image = item.type.icon
 
-        iconImageView.image = displayType.icon
-
-        switch displayType {
+        switch item.type {
         case .image:
             if let thumbnail = item.thumbnail?.data, let thumbnailImage = UIImage(data: thumbnail) {
                 thumbnailImageView.image = thumbnailImage

@@ -298,7 +298,7 @@ extension ItemManager {
 
             let type = displayType(of: uti)
             let keepSourceName = type == .file
-            let sourceName = values.name
+            let sourceName = (values.name as? NSString)?.deletingPathExtension
 
             let semaphore = DispatchSemaphore(value: 0)
 
