@@ -8,7 +8,7 @@
 import Combine
 import UIKit
 
-class GridCell: UICollectionViewCell, ItemCollectionViewCell {
+class GridCell: UICollectionViewCell, ItemCell {
 
     @IBOutlet var iconImageView: UIImageView!
     @IBOutlet var thumbnailImageView: UIImageView!

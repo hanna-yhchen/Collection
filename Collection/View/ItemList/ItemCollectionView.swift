@@ -7,7 +7,7 @@
 
 import UIKit
 
-protocol ItemCollectionViewCell: UICollectionViewCell {
+protocol ItemCell: UICollectionViewCell {
     func configure(for item: Item)
 }
 
@@ -38,6 +38,9 @@ class ItemCollectionView: UICollectionView {
         register(
             UINib(nibName: SmallCardCell.identifier, bundle: nil),
             forCellWithReuseIdentifier: SmallCardCell.identifier)
+        register(
+            UINib(nibName: LargeCardCell.identifier, bundle: nil),
+            forCellWithReuseIdentifier: LargeCardCell.identifier)
     }
 
     required init?(coder: NSCoder) {
@@ -71,6 +74,11 @@ class ItemCollectionView: UICollectionView {
             - (sectionInsets.left + sectionInsets.right)
         let widthPerItem = (availableWidth / itemsPerRow).rounded(.down)
 
-        return CGSize(width: widthPerItem, height: widthPerItem + heightOffset)
+        var height = widthPerItem + heightOffset
+        if layout == .largeCard {
+            height = max(widthPerItem * 0.4 * 4 / 3, LargeCardCell.minHeight)
+        }
+
+        return CGSize(width: widthPerItem, height: height)
     }
 }

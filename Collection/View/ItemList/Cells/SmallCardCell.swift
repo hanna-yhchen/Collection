@@ -7,9 +7,8 @@
 
 import Combine
 import UIKit
-import UniformTypeIdentifiers
 
-class SmallCardCell: UICollectionViewCell, ItemCollectionViewCell {
+class SmallCardCell: UICollectionViewCell, ItemCell {
 
     static let bottomAreaHeight: CGFloat = 4 + 17 + 14 + 2 + 18 + 4
 
@@ -32,7 +31,6 @@ class SmallCardCell: UICollectionViewCell, ItemCollectionViewCell {
 
         reset()
         self.layer.cornerRadius = 10
-        iconImageView.preferredSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 30)
     }
 
     override func prepareForReuse() {
@@ -77,7 +75,7 @@ class SmallCardCell: UICollectionViewCell, ItemCollectionViewCell {
             iconImageView.image = nil
         case .link:
             if let data = item.itemData?.data, let url = URL(dataRepresentation: data, relativeTo: nil) {
-                configureRichLink(for: url)
+                configureLinkPreview(for: url)
             } else {
                 fileTypeLabel.isHidden = false
                 fileTypeLabel.text = "Wrong data"
@@ -86,10 +84,9 @@ class SmallCardCell: UICollectionViewCell, ItemCollectionViewCell {
             if let thumbnail = item.thumbnail?.data, let thumbnailImage = UIImage(data: thumbnail) {
                 thumbnailImageView.image = thumbnailImage
                 iconImageView.image = nil
-            } else if let uti = item.uti {
-                thumbnailImageView.isHidden = true
+            } else {
                 fileTypeLabel.isHidden = false
-                fileTypeLabel.text = UTType(uti)?.preferredFilenameExtension
+                fileTypeLabel.text = item.filenameExtension
             }
         }
 
@@ -98,7 +95,7 @@ class SmallCardCell: UICollectionViewCell, ItemCollectionViewCell {
         configureTagViews(colors: [.systemRed, .systemCyan, .systemYellow])
     }
 
-    private func configureRichLink(for url: URL) {
+    private func configureLinkPreview(for url: URL) {
         richLinkSubscription = RichLinkProvider.shared.fetchMetadata(for: url)
             .receive(on: DispatchQueue.main)
             .catch { error -> Just<RichLinkProvider.RichLink> in
@@ -143,10 +140,10 @@ class SmallCardCell: UICollectionViewCell, ItemCollectionViewCell {
 
         iconImageView.image = nil
         iconImageView.tintColor = .secondaryLabel
+        iconImageView.preferredSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 30)
 
         fileTypeLabel.isHidden = true
 
-        thumbnailImageView.isHidden = false
         thumbnailImageView.image = nil
 
         titleStackView.isHidden = true

@@ -10,7 +10,7 @@ import Foundation
 extension DateFormatter {
     static let hyphenatedDateTimeFormatter: DateFormatter = {
         let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        formatter.dateFormat = "yyyy-MM-dd HH:mm"
         return formatter
     }()
 }

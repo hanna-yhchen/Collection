@@ -37,7 +37,7 @@ enum ItemLayout: Int, CaseIterable {
     var cellIdentifier: String {
         switch self {
         case .largeCard:
-            return ""
+            return LargeCardCell.identifier
         case .smallCard:
             return SmallCardCell.identifier
         case .grid:

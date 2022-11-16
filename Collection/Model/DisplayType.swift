@@ -22,8 +22,7 @@ enum DisplayType: Int16 {
         case .video:
             let colorConfig = UIImage.SymbolConfiguration(
                 paletteColors: [.tintColor, .tertiarySystemBackground, .tertiarySystemBackground])
-            let sizeConfig = UIImage.SymbolConfiguration(pointSize: 30)
-            return UIImage(systemName: "play.circle.fill", withConfiguration: colorConfig.applying(sizeConfig))
+            return UIImage(systemName: "play.circle.fill", withConfiguration: colorConfig)
         case .audio:
             let sizeConfig = UIImage.SymbolConfiguration(pointSize: 50)
             return UIImage(systemName: "waveform.path", withConfiguration: sizeConfig)

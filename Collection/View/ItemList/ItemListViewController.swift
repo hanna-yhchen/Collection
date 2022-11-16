@@ -188,7 +188,7 @@ class ItemListViewController: UIViewController {
         DataSource(collectionView: collectionView) {[unowned self] collectionView, indexPath, objectID in
             guard let cell = collectionView.dequeueReusableCell(
                 withReuseIdentifier: self.currentLayout.cellIdentifier,
-                for: indexPath) as? ItemCollectionViewCell
+                for: indexPath) as? ItemCell
             else { fatalError("#\(#function): Failed to dequeue ItemCollectionViewCell") }
 
             guard let item = try? fetchedResultsController
