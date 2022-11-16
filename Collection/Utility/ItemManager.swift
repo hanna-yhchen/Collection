@@ -440,6 +440,57 @@ extension ItemManager {
             context.save(situation: .updateItem)
         }
     }
+
+    private func copyItem(
+        itemID: NSManagedObjectID,
+        toBoardID boardID: NSManagedObjectID,
+        context: NSManagedObjectContext
+    ) async throws {
+        guard let item = try context.existingObject(with: itemID) as? Item else {
+            throw CoreDataError.unfoundObjectInContext
+        }
+
+        try await context.perform {
+            let copy = Item(context: context)
+            copy.name = item.name
+            copy.uti = item.uti
+            copy.note = item.note
+            copy.uuid = UUID()
+            copy.displayType = item.displayType
+
+            let thumbnail = Thumbnail(context: context)
+            thumbnail.data = item.thumbnail?.data
+            thumbnail.item = copy
+
+            let itemDataObject = ItemData(context: context)
+            itemDataObject.data = item.itemData?.data
+            itemDataObject.item = copy
+
+            let currentDate = Date()
+            copy.creationDate = currentDate
+            copy.updateDate = currentDate
+
+            if let board = try context.existingObject(with: boardID) as? Board {
+                board.addToItems(copy)
+            }
+
+            context.save(situation: .copyItem)
+        }
+    }
+
+    private func deleteItem(
+        itemID: NSManagedObjectID,
+        context: NSManagedObjectContext
+    ) async throws {
+        guard let item = try context.existingObject(with: itemID) as? Item else {
+            throw CoreDataError.unfoundObjectInContext
+        }
+
+        await context.perform {
+            context.delete(item)
+            context.save(situation: .deleteItem)
+        }
+    }
 }
 
 // MARK: - NSItemProvider+Sendable
