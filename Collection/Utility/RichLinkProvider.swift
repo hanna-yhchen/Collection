@@ -100,8 +100,7 @@ class RichLinkProvider {
 
         do {
             return try NSKeyedUnarchiver.unarchivedObject(ofClass: LPLinkMetadata.self, from: cachedData)
-        }
-        catch {
+        } catch {
             print("Failed to unarchive metadata with error \(error as NSError)")
             return nil
         }

@@ -59,12 +59,6 @@
                         <rect key="frame" x="0.0" y="0.0" width="390" height="844"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <collectionView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" dataMode="prototypes" translatesAutoresizingMaskIntoConstraints="NO" id="0n1-d6-dPk" customClass="ItemCollectionView" customModule="Collection" customModuleProvider="target">
-                                <rect key="frame" x="0.0" y="47" width="390" height="763"/>
-                                <color key="backgroundColor" systemColor="systemGroupedBackgroundColor"/>
-                                <collectionViewLayout key="collectionViewLayout" id="0z3-jW-MIq"/>
-                                <cells/>
-                            </collectionView>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="tle-7M-0pr">
                                 <rect key="frame" x="326" y="746" width="48" height="48"/>
                                 <constraints>
@@ -91,16 +85,21 @@
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                         <color key="backgroundColor" systemColor="systemGroupedBackgroundColor"/>
                         <constraints>
-                            <constraint firstItem="0n1-d6-dPk" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" id="949-KG-swU"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="tle-7M-0pr" secondAttribute="trailing" constant="16" id="Apk-Vb-Ehb"/>
-                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="0n1-d6-dPk" secondAttribute="trailing" id="BEz-7d-ahb"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="tle-7M-0pr" secondAttribute="bottom" constant="16" id="cIp-8R-G4F"/>
-                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="0n1-d6-dPk" secondAttribute="bottom" id="sCF-7J-TBM"/>
-                            <constraint firstItem="0n1-d6-dPk" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" id="vjy-Pu-Kuq"/>
                         </constraints>
                     </view>
+                    <toolbarItems/>
+                    <navigationItem key="navigationItem" id="Ogh-qN-4uA">
+                        <barButtonItem key="rightBarButtonItem" title="Item" image="square.grid.2x2" catalog="system" id="TGF-Kr-a7w">
+                            <connections>
+                                <action selector="layoutButtonTapped" destination="BYZ-38-t0r" id="ieX-Sl-zAI"/>
+                            </connections>
+                        </barButtonItem>
+                    </navigationItem>
+                    <simulatedNavigationBarMetrics key="simulatedTopBarMetrics" prompted="NO"/>
                     <connections>
-                        <outlet property="collectionView" destination="0n1-d6-dPk" id="c8w-Lo-lih"/>
+                        <outlet property="layoutButton" destination="TGF-Kr-a7w" id="kpV-Uv-DZK"/>
                         <outlet property="plusButton" destination="tle-7M-0pr" id="5s7-eS-dKV"/>
                     </connections>
                 </viewController>
@@ -284,7 +283,7 @@
             <objects>
                 <viewController storyboardIdentifier="ItemImportController" modalPresentationStyle="formSheet" id="6B0-d2-fa6" customClass="ItemImportController" customModule="Collection" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="Wgt-nR-ief">
-                        <rect key="frame" x="0.0" y="0.0" width="390" height="400"/>
+                        <rect key="frame" x="0.0" y="0.0" width="390" height="399"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="249" verticalHuggingPriority="251" text="Add Item" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="FeJ-Q1-LxL">
@@ -297,7 +296,7 @@
                                 <nil key="highlightedColor"/>
                             </label>
                             <collectionView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" dataMode="prototypes" translatesAutoresizingMaskIntoConstraints="NO" id="hhq-Ht-Z9d">
-                                <rect key="frame" x="0.0" y="41" width="390" height="359"/>
+                                <rect key="frame" x="0.0" y="41" width="390" height="358"/>
                                 <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                                 <collectionViewFlowLayout key="collectionViewLayout" automaticEstimatedItemSize="YES" minimumLineSpacing="10" minimumInteritemSpacing="10" id="POu-D8-N7f">
                                     <size key="itemSize" width="128" height="128"/>
@@ -321,14 +320,14 @@
                         </constraints>
                     </view>
                     <value key="contentSizeForViewInPopover" type="size" width="390" height="300"/>
-                    <size key="freeformSize" width="390" height="400"/>
+                    <size key="freeformSize" width="390" height="399"/>
                     <connections>
                         <outlet property="collectionView" destination="hhq-Ht-Z9d" id="Rfx-bC-xcq"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="JSL-iS-AYO" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-711" y="138"/>
+            <point key="canvasLocation" x="-712.30769230769226" y="137.91469194312796"/>
         </scene>
         <!--Note Preview Controller-->
         <scene sceneID="4Vj-fF-Mff">
@@ -390,6 +389,7 @@
         <image name="plus.circle.fill" catalog="system" width="128" height="123"/>
         <image name="record.circle" catalog="system" width="128" height="123"/>
         <image name="square.and.pencil" catalog="system" width="128" height="113"/>
+        <image name="square.grid.2x2" catalog="system" width="128" height="114"/>
         <image name="tray.and.arrow.down" catalog="system" width="128" height="111"/>
         <image name="tray.and.arrow.down.fill" catalog="system" width="128" height="115"/>
         <image name="xmark" catalog="system" width="128" height="113"/>

@@ -8,6 +8,15 @@
         "revision" : "9ab144a1a6c6ae8dad25840610c072709b15d8b5",
         "version" : "6.5.10"
       }
+    },
+    {
+      "identity" : "ttgtagcollectionview",
+      "kind" : "remoteSourceControl",
+      "location" : "git@github.com:zekunyan/TTGTagCollectionView.git",
+      "state" : {
+        "revision" : "8f05eded6a02086ac8a152e494c535bc4ccc23bc",
+        "version" : "2.3.0"
+      }
     }
   ],
   "version" : 2

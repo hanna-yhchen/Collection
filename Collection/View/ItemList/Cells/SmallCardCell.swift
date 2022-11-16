@@ -1,5 +1,5 @@
 //
-//  TwoColumnCell.swift
+//  SmallCardCell.swift
 //  Collection
 //
 //  Created by Hanna Chen on 2022/11/11.
@@ -7,9 +7,8 @@
 
 import Combine
 import UIKit
-import UniformTypeIdentifiers
 
-class TwoColumnCell: UICollectionViewCell {
+class SmallCardCell: UICollectionViewCell, ItemCell {
 
     static let bottomAreaHeight: CGFloat = 4 + 17 + 14 + 2 + 18 + 4
 
@@ -32,7 +31,6 @@ class TwoColumnCell: UICollectionViewCell {
 
         reset()
         self.layer.cornerRadius = 10
-        iconImageView.preferredSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 30)
     }
 
     override func prepareForReuse() {
@@ -45,17 +43,13 @@ class TwoColumnCell: UICollectionViewCell {
 
     func configure(for item: Item) { // swiftlint:disable:this cyclomatic_complexity
         if let name = item.name, !name.isEmpty {
-            titleLabel.text = (name as NSString).deletingPathExtension
+            titleLabel.text = name
             titleStackView.isHidden = false
         }
 
-        guard let displayType = DisplayType(rawValue: item.displayType) else {
-            return
-        }
+        iconImageView.image = item.type.icon
 
-        iconImageView.image = displayType.icon
-
-        switch displayType {
+        switch item.type {
         case .image:
             if let thumbnail = item.thumbnail?.data, let thumbnailImage = UIImage(data: thumbnail) {
                 thumbnailImageView.image = thumbnailImage
@@ -74,9 +68,10 @@ class TwoColumnCell: UICollectionViewCell {
                 noteLabel.text = "(empty)"
             }
             noteStackView.isHidden = false
+            iconImageView.image = nil
         case .link:
             if let data = item.itemData?.data, let url = URL(dataRepresentation: data, relativeTo: nil) {
-                configureRichLink(for: url)
+                configureLinkPreview(for: url)
             } else {
                 fileTypeLabel.isHidden = false
                 fileTypeLabel.text = "Wrong data"
@@ -85,10 +80,9 @@ class TwoColumnCell: UICollectionViewCell {
             if let thumbnail = item.thumbnail?.data, let thumbnailImage = UIImage(data: thumbnail) {
                 thumbnailImageView.image = thumbnailImage
                 iconImageView.image = nil
-            } else if let uti = item.uti {
-                thumbnailImageView.isHidden = true
+            } else {
                 fileTypeLabel.isHidden = false
-                fileTypeLabel.text = UTType(uti)?.preferredFilenameExtension
+                fileTypeLabel.text = item.filenameExtension
             }
         }
 
@@ -97,7 +91,7 @@ class TwoColumnCell: UICollectionViewCell {
         configureTagViews(colors: [.systemRed, .systemCyan, .systemYellow])
     }
 
-    private func configureRichLink(for url: URL) {
+    private func configureLinkPreview(for url: URL) {
         richLinkSubscription = RichLinkProvider.shared.fetchMetadata(for: url)
             .receive(on: DispatchQueue.main)
             .catch { error -> Just<RichLinkProvider.RichLink> in
@@ -142,10 +136,10 @@ class TwoColumnCell: UICollectionViewCell {
 
         iconImageView.image = nil
         iconImageView.tintColor = .secondaryLabel
+        iconImageView.preferredSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 30)
 
         fileTypeLabel.isHidden = true
 
-        thumbnailImageView.isHidden = false
         thumbnailImageView.image = nil
 
         titleStackView.isHidden = true

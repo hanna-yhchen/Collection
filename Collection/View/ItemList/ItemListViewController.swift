@@ -13,7 +13,7 @@ import SafariServices
 import UniformTypeIdentifiers
 import UIKit
 
-class ItemListViewController: UIViewController, UIPopoverPresentationControllerDelegate {
+class ItemListViewController: UIViewController {
 
     typealias Snapshot = NSDiffableDataSourceSnapshot<Int, NSManagedObjectID>
     typealias DataSource = UICollectionViewDiffableDataSource<Int, NSManagedObjectID>
@@ -51,11 +51,27 @@ class ItemListViewController: UIViewController, UIPopoverPresentationControllerD
     }()
 
     private var previewingItem: PreviewItem?
-    private var dataSource: DataSource?
+    private lazy var dataSource = createDataSource()
     private var subscriptions: Set<AnyCancellable> = []
 
-    @IBOutlet var collectionView: ItemCollectionView!
+    private var currentLayout: ItemLayout = .smallCard
+    private lazy var layoutActions: [UIAction] = {
+        let actions = ItemLayout.allCases.map { layout in
+            UIAction(
+                title: layout.title,
+                image: layout.buttonIcon
+            ) { _ in
+                self.changeLayout(layout)
+            }
+        }
+        actions[1].state = .on
+        return actions
+    }()
+
+    private lazy var collectionView = ItemCollectionView(frame: view.bounds, traits: view.traitCollection)
+
     @IBOutlet var plusButton: UIButton!
+    @IBOutlet var layoutButton: UIBarButtonItem!
 
     // MARK: - Lifecycle
 
@@ -67,12 +83,12 @@ class ItemListViewController: UIViewController, UIPopoverPresentationControllerD
         plusButton.layer.shadowOpacity = 0.7
         plusButton.layer.shadowOffset = CGSize(width: 0, height: 2)
 
-        view.layoutIfNeeded()
-        collectionView.traits = view.traitCollection
-        collectionView.setTwoColumnLayout(animated: false)
+        view.insertSubview(collectionView, belowSubview: plusButton)
+        collectionView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         collectionView.delegate = self
 
-        configureDataSource()
+        layoutButton.menu = layoutMenu(selectedIndex: ItemLayout.smallCard.rawValue)
+
         addObservers()
     }
 
@@ -85,6 +101,7 @@ class ItemListViewController: UIViewController, UIPopoverPresentationControllerD
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
 
+        collectionView.setLayout(currentLayout, animated: false)
         try? fetchedResultsController.performFetch()
     }
 
@@ -117,17 +134,17 @@ class ItemListViewController: UIViewController, UIPopoverPresentationControllerD
             .sink {[unowned self] method in
                 switch method {
                 case .paste:
-                    pasteButtonTapped()
+                    paste(itemProviders: UIPasteboard.general.itemProviders)
                 case .photos:
-                    addPhotoButtonTapped()
+                    showPhotoPicker()
                 case .camera:
-                    cameraButtonTapped()
+                    openCamera()
                 case .files:
-                    addFileButtonTapped()
+                    showDocumentPicker()
                 case .note:
-                    addNoteButtonTapped()
+                    showNoteEditor()
                 case .audioRecorder:
-                    voiceButtonTapped()
+                    showAudioRecorder()
                 }
             }
             .store(in: &subscriptions)
@@ -144,51 +161,44 @@ class ItemListViewController: UIViewController, UIPopoverPresentationControllerD
         present(importController, animated: true)
     }
 
-    @objc private func addFileButtonTapped() {
-        showDocumentPicker()
+
+    @IBAction func layoutButtonTapped() {
+        let newLayout = currentLayout.next
+        changeLayout(newLayout)
     }
 
-    @objc private func pasteButtonTapped() {
-        paste(itemProviders: UIPasteboard.general.itemProviders)
-    }
+    func changeLayout(_ layout: ItemLayout) {
+        guard layout != currentLayout else { return }
 
-    @objc private func addNoteButtonTapped() {
-        let editorVC = UIStoryboard.main
-            .instantiateViewController(identifier: EditorViewController.storyboardID) { coder in
-                let viewModel = EditorViewModel(itemManager: self.itemManager, scenario: .create(boardID: self.boardID))
-                return EditorViewController(coder: coder, viewModel: viewModel)
-            }
-        navigationController?.pushViewController(editorVC, animated: true)
-    }
+        layoutButton.image = layout.buttonIcon
 
-    @objc private func addPhotoButtonTapped() {
-        showPhotoPicker()
-    }
+        layoutButton.menu = layoutMenu(selectedIndex: layout.rawValue)
+        currentLayout = layout
 
-    @objc private func cameraButtonTapped() {
-        openCamera()
-    }
-
-    @objc private func voiceButtonTapped() {
-        showAudioRecorder()
+        var snapshot = dataSource.snapshot()
+        snapshot.reloadItems(snapshot.itemIdentifiers)
+        dataSource.applySnapshotUsingReloadData(snapshot) {
+            self.collectionView.setLayout(layout, animated: true)
+        }
     }
 
     // MARK: - Private Methods
 
-    private func configureDataSource() {
-        let cellRegistration = UICollectionView.CellRegistration<TwoColumnCell, NSManagedObjectID>(
-            cellNib: UINib(nibName: TwoColumnCell.identifier, bundle: nil)
-        ) {[unowned self] cell, _, objectID in
+    private func createDataSource() -> DataSource {
+        DataSource(collectionView: collectionView) {[unowned self] collectionView, indexPath, objectID in
+            guard let cell = collectionView.dequeueReusableCell(
+                withReuseIdentifier: self.currentLayout.cellIdentifier,
+                for: indexPath) as? ItemCell
+            else { fatalError("#\(#function): Failed to dequeue ItemCollectionViewCell") }
+
             guard let item = try? fetchedResultsController
                 .managedObjectContext
                 .existingObject(with: objectID) as? Item
             else { fatalError("#\(#function): Failed to retrieve item by objectID") }
 
             cell.configure(for: item)
-        }
 
-        dataSource = DataSource(collectionView: collectionView) { collectionView, indexPath, item in
-            collectionView.dequeueConfiguredReusableCell(using: cellRegistration, for: indexPath, item: item)
+            return cell
         }
     }
 
@@ -206,7 +216,6 @@ class ItemListViewController: UIViewController, UIPopoverPresentationControllerD
             }
             .store(in: &subscriptions)
     }
-
 
     private func showDocumentPicker() {
         let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.data])
@@ -240,6 +249,15 @@ class ItemListViewController: UIViewController, UIPopoverPresentationControllerD
         picker.delegate = self
 
         self.present(picker, animated: true)
+    }
+
+    private func showNoteEditor() {
+        let editorVC = UIStoryboard.main
+            .instantiateViewController(identifier: EditorViewController.storyboardID) { coder in
+                let viewModel = EditorViewModel(itemManager: self.itemManager, scenario: .create(boardID: self.boardID))
+                return EditorViewController(coder: coder, viewModel: viewModel)
+            }
+        navigationController?.pushViewController(editorVC, animated: true)
     }
 
     private func showAudioRecorder() {
@@ -280,46 +298,20 @@ class ItemListViewController: UIViewController, UIPopoverPresentationControllerD
 
         guard
             let item = context.object(with: id) as? Item,
-            let displayType = DisplayType(rawValue: item.displayType),
-            let typeIdentifier = item.uti,
-            let itemType = UTType(typeIdentifier)
+            let displayType = DisplayType(rawValue: item.displayType)
         else {
             // TODO: show alert
             return
         }
 
-        if displayType == .note {
+        switch displayType {
+        case .note:
             showNotePreview(item)
-            return
-        }
-
-        if displayType == .link {
+        case .link:
             openLink(item)
-            return
+        default:
+            showQuickLook(item)
         }
-
-        showQuickLook(item)
-    }
-
-    private func createCardLayout() -> UICollectionViewLayout {
-        let itemSize = NSCollectionLayoutSize(
-            widthDimension: .fractionalWidth(1.0),
-            heightDimension: .fractionalHeight(1.0))
-        let item = NSCollectionLayoutItem(layoutSize: itemSize)
-
-        let groupSize = NSCollectionLayoutSize(
-            widthDimension: .fractionalWidth(1.0),
-            heightDimension: .fractionalWidth(0.5))
-        let group = NSCollectionLayoutGroup.horizontal(
-            layoutSize: groupSize,
-            subitem: item,
-            count: 1)
-
-        let section = NSCollectionLayoutSection(group: group)
-        section.interGroupSpacing = 8
-        section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16)
-
-        return UICollectionViewCompositionalLayout(section: section)
     }
 
     private func showQuickLook(_ item: Item) {
@@ -403,12 +395,20 @@ class ItemListViewController: UIViewController, UIPopoverPresentationControllerD
 
     private func reloadItems(_ items: [NSManagedObjectID]) {
         Task { @MainActor in
-            guard let dataSource = dataSource else { return }
-
             var newSnapshot = dataSource.snapshot()
             newSnapshot.reloadItems(items)
             await dataSource.apply(newSnapshot, animatingDifferences: true)
         }
+    }
+
+    private func layoutMenu(selectedIndex: Int) -> UIMenu {
+        for (index, action) in layoutActions.enumerated() {
+            action.state = index == selectedIndex ? .on : .off
+        }
+
+        return UIMenu(
+            title: "Display Mode",
+            children: layoutActions)
     }
 }
 
@@ -417,7 +417,7 @@ class ItemListViewController: UIViewController, UIPopoverPresentationControllerD
 extension ItemListViewController: UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         collectionView.deselectItem(at: indexPath, animated: true)
-        guard let itemID = dataSource?.itemIdentifier(for: indexPath) else { return }
+        guard let itemID = dataSource.itemIdentifier(for: indexPath) else { return }
 
         showItem(id: itemID)
     }
@@ -425,7 +425,7 @@ extension ItemListViewController: UICollectionViewDelegate {
 
 extension ItemListViewController: UICollectionViewDelegateFlowLayout {
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        self.collectionView.calculateItemSize()
+        self.collectionView.itemSize(for: currentLayout)
     }
 }
 
@@ -518,7 +518,7 @@ extension ItemListViewController: UIImagePickerControllerDelegate & UINavigation
 
 extension ItemListViewController: NSFetchedResultsControllerDelegate {
     func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChangeContentWith snapshot: NSDiffableDataSourceSnapshotReference) {
-        guard let dataSource = dataSource else { fatalError("#\(#function): Failed to unwrap data source") }
+//        guard let dataSource = dataSource else { fatalError("#\(#function): Failed to unwrap data source") }
 
         var newSnapshot = snapshot as Snapshot
         let currentSnapshot = dataSource.snapshot()
