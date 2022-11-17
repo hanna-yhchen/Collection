@@ -9,7 +9,7 @@ import Combine
 import TTGTags
 import UIKit
 
-class LargeCardCell: UICollectionViewCell, ItemCell {
+class LargeCardCell: UICollectionViewCell, ItemCell, ItemActionSendable {
 
     static let minHeight: CGFloat = {
         let spacing: CGFloat = 4
@@ -26,16 +26,21 @@ class LargeCardCell: UICollectionViewCell, ItemCell {
     @IBOutlet var creationDateLabel: UILabel!
     @IBOutlet var updateDateLabel: UILabel!
     @IBOutlet var tagContainerView: UIView!
+    @IBOutlet var actionButton: UIButton!
 
     private var tagView: TTGTextTagCollectionView?
 
-    private var richLinkSubscription: AnyCancellable?
+    var objectID: ObjectID?
+
+    lazy var actionSubject = PassthroughSubject<(ItemAction, ObjectID), Never>()
+    lazy var subscriptions = Set<AnyCancellable>()
 
     override func awakeFromNib() {
         super.awakeFromNib()
 
         self.layer.cornerRadius = 10
         reset()
+        addActionMenu(for: actionButton)
     }
 
     override func prepareForReuse() {
@@ -45,6 +50,8 @@ class LargeCardCell: UICollectionViewCell, ItemCell {
     }
 
     func configure(for item: Item) {
+        objectID = item.objectID
+
         iconImageView.image = item.type.icon
 
         if let creationDate = item.creationDate, let updateDate = item.updateDate {
@@ -90,7 +97,7 @@ class LargeCardCell: UICollectionViewCell, ItemCell {
     }
 
     private func configureLinkPreview(for url: URL) {
-        richLinkSubscription = RichLinkProvider.shared.fetchMetadata(for: url)
+        RichLinkProvider.shared.fetchMetadata(for: url)
             .receive(on: DispatchQueue.main)
             .catch { error -> Just<RichLinkProvider.RichLink> in
                 print("#\(#function): Failed to fetch, \(error)")
@@ -106,6 +113,7 @@ class LargeCardCell: UICollectionViewCell, ItemCell {
                     self.iconImageView.image = nil
                 }
             }
+            .store(in: &subscriptions)
     }
     // TODO: use Tag object
     private func configureTagView(tags: [String]) {
@@ -151,7 +159,7 @@ class LargeCardCell: UICollectionViewCell, ItemCell {
     }
 
     private func reset() {
-        richLinkSubscription?.cancel()
+        subscriptions.removeAll()
 
         if let tagView = tagView {
             tagView.removeAllTags()

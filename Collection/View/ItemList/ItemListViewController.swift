@@ -198,7 +198,72 @@ class ItemListViewController: UIViewController {
 
             cell.configure(for: item)
 
+            if var sender = cell as? ItemActionSendable {
+                sender.actionPublisher
+                    .sink { itemAction, itemID in
+                        self.perform(itemAction, itemID: itemID)
+                    }
+                    .store(in: &sender.subscriptions)
+            }
+
             return cell
+        }
+    }
+
+    private func perform(_ action: ItemAction, itemID: ObjectID) {
+        switch action {
+        case .rename:
+            guard let nameEditorVC = UIStoryboard.main.instantiateViewController(
+                withIdentifier: NameEditorViewController.storyboardID) as? NameEditorViewController
+            else { fatalError("#\(#function): Failed downcast to NameEditorViewController") }
+
+            nameEditorVC.modalPresentationStyle = .overCurrentContext
+            nameEditorVC.cancellable = nameEditorVC.newNamePublisher
+                .sink {[unowned self] newName in
+                    Task {
+                        do {
+                            try await itemManager.updateItem(
+                                itemID: itemID,
+                                name: newName,
+                                context: fetchedResultsController.managedObjectContext)
+                            await MainActor.run {
+                                nameEditorVC.animateDismissSheet()
+                            }
+                        } catch {
+                            print("#\(#function): Failed to rename item, \(error)")
+                        }
+                    }
+                }
+
+            present(nameEditorVC, animated: false)
+        case .comments:
+            break
+        case .move:
+            let selectorVC = UIStoryboard.main
+                .instantiateViewController(identifier: BoardSelectorViewController.storyboardID) { coder in
+                    let viewModel = BoardSelectorViewModel(scenario: .move(itemID))
+                    return BoardSelectorViewController(coder: coder, viewModel: viewModel)
+                }
+
+            present(selectorVC, animated: true)
+        case .copy:
+            let selectorVC = UIStoryboard.main
+                .instantiateViewController(identifier: BoardSelectorViewController.storyboardID) { coder in
+                    let viewModel = BoardSelectorViewModel(scenario: .copy(itemID))
+                    return BoardSelectorViewController(coder: coder, viewModel: viewModel)
+                }
+
+            present(selectorVC, animated: true)
+        case .delete:
+            Task {
+                do {
+                    try await itemManager.deleteItem(
+                        itemID: itemID,
+                        context: fetchedResultsController.managedObjectContext)
+                } catch {
+                    print("#\(#function): Failed to delete item, \(error)")
+                }
+            }
         }
     }
 

@@ -157,6 +157,7 @@
             </constraints>
             <size key="customSize" width="437" height="250"/>
             <connections>
+                <outlet property="actionButton" destination="tGP-zQ-Rcy" id="jTw-vR-5Tu"/>
                 <outlet property="creationDateLabel" destination="vPf-hO-ysC" id="4a3-jP-22P"/>
                 <outlet property="iconImageView" destination="yi5-dg-kbm" id="Bxu-pa-ZZ2"/>
                 <outlet property="noteLabel" destination="kS7-AD-sbD" id="40z-oh-2Dj"/>

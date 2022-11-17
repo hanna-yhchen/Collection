@@ -35,10 +35,10 @@ final class ItemManager {
 
     // MARK: - Properties
 
-    let storageProvider: StorageProvider
-    let thumbnailProvider: ThumbnailProvider
+    private let storageProvider: StorageProvider
+    private let thumbnailProvider: ThumbnailProvider
 
-    lazy var defaultBoardID: ObjectID? = {
+    private lazy var defaultBoardID: ObjectID? = {
         guard
             let url = URL(string: UserDefaults.defaultBoardURL),
             let boardID = storageProvider.persistentContainer.persistentStoreCoordinator
@@ -59,6 +59,7 @@ final class ItemManager {
 
     // MARK: - Methods
 
+    // TODO: could be replaced by general core data method?
     func addNote(name: String, note: String, saveInto boardID: ObjectID) async throws {
         // TODO: throwable
         addItem(
@@ -404,15 +405,17 @@ extension ItemManager {
         }
     }
 
-    private func updateItem(
+    func updateItem(
         itemID: NSManagedObjectID,
         name: String? = nil,
         note: String? = nil,
         itemData: Data? = nil,
         thumbnailData: Data? = nil,
         boardID: NSManagedObjectID? = nil,
-        context: NSManagedObjectContext
+        context: NSManagedObjectContext? = nil
     ) async throws {
+        let context = context ?? storageProvider.newTaskContext()
+
         guard let item = try context.existingObject(with: itemID) as? Item else {
             throw CoreDataError.unfoundObjectInContext
         }
@@ -438,6 +441,59 @@ extension ItemManager {
             item.updateDate = currentDate
 
             context.save(situation: .updateItem)
+        }
+    }
+
+    func copyItem(
+        itemID: NSManagedObjectID,
+        toBoardID boardID: NSManagedObjectID,
+        context: NSManagedObjectContext? = nil
+    ) async throws {
+        let context = context ?? storageProvider.newTaskContext()
+
+        guard let item = try context.existingObject(with: itemID) as? Item else {
+            throw CoreDataError.unfoundObjectInContext
+        }
+
+        try await context.perform {
+            let copy = Item(context: context)
+            copy.name = item.name
+            copy.uti = item.uti
+            copy.note = item.note
+            copy.uuid = UUID()
+            copy.displayType = item.displayType
+
+            let thumbnail = Thumbnail(context: context)
+            thumbnail.data = item.thumbnail?.data
+            thumbnail.item = copy
+
+            let itemDataObject = ItemData(context: context)
+            itemDataObject.data = item.itemData?.data
+            itemDataObject.item = copy
+
+            let currentDate = Date()
+            copy.creationDate = currentDate
+            copy.updateDate = currentDate
+
+            if let board = try context.existingObject(with: boardID) as? Board {
+                board.addToItems(copy)
+            }
+
+            context.save(situation: .copyItem)
+        }
+    }
+
+    func deleteItem(
+        itemID: NSManagedObjectID,
+        context: NSManagedObjectContext
+    ) async throws {
+        guard let item = try context.existingObject(with: itemID) as? Item else {
+            throw CoreDataError.unfoundObjectInContext
+        }
+
+        await context.perform {
+            context.delete(item)
+            context.save(situation: .deleteItem)
         }
     }
 }
