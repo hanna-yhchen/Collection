@@ -9,20 +9,6 @@ import UIKit
 
 class EditorViewController: UIViewController {
 
-    enum Situation {
-        case create
-        case update(Item)
-
-        var title: String {
-            switch self {
-            case .create:
-                return "New note"
-            case .update:
-                return "Edit note"
-            }
-        }
-    }
-
     let viewModel: EditorViewModel
     private lazy var subscriptions = CancellableSet()
 
