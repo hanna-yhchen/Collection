@@ -59,6 +59,7 @@ final class ItemManager {
 
     // MARK: - Methods
 
+    // TODO: could be replaced by general core data method?
     func addNote(name: String, note: String, saveInto boardID: ObjectID) async throws {
         // TODO: throwable
         addItem(
@@ -404,7 +405,7 @@ extension ItemManager {
         }
     }
 
-    private func updateItem(
+    func updateItem(
         itemID: NSManagedObjectID,
         name: String? = nil,
         note: String? = nil,

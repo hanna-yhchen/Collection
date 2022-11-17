@@ -71,8 +71,8 @@
                                     <imageReference key="image" image="plus.circle.fill" catalog="system" renderingMode="hierarchical">
                                         <hierarchicalColors>
                                             <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                            <color name="HightlightColor"/>
-                                            <color name="HightlightColor"/>
+                                            <color name="HighlightColor"/>
+                                            <color name="HighlightColor"/>
                                         </hierarchicalColors>
                                     </imageReference>
                                     <preferredSymbolConfiguration key="preferredSymbolConfigurationForImage" configurationType="pointSize" pointSize="36"/>
@@ -232,7 +232,7 @@
                                     <constraint firstAttribute="height" constant="75" id="4RP-ff-SzZ"/>
                                     <constraint firstAttribute="width" constant="75" id="mhQ-lj-rgG"/>
                                 </constraints>
-                                <color key="tintColor" systemColor="systemIndigoColor"/>
+                                <color key="tintColor" name="HighlightColor"/>
                                 <inset key="imageEdgeInsets" minX="0.0" minY="0.0" maxX="2.2250738585072014e-308" maxY="0.0"/>
                                 <state key="normal">
                                     <imageReference key="image" image="record.circle" catalog="system" variableValue="5.5511151231257827e-17"/>
@@ -277,6 +277,91 @@
                 <placeholder placeholderIdentifier="IBFirstResponder" id="NhM-BI-Ni0" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="1830.7692307692307" y="138.6255924170616"/>
+        </scene>
+        <!--Name Editor View Controller-->
+        <scene sceneID="B9b-NA-9us">
+            <objects>
+                <viewController storyboardIdentifier="NameEditorViewController" id="gXA-K1-ajd" customClass="NameEditorViewController" customModule="Collection" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="nfO-mb-bnP">
+                        <rect key="frame" x="0.0" y="0.0" width="390" height="844"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <view alpha="0.0" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" translatesAutoresizingMaskIntoConstraints="NO" id="bkp-q3-NLt">
+                                <rect key="frame" x="0.0" y="0.0" width="390" height="844"/>
+                                <color key="backgroundColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                            </view>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="xxw-Sh-ais">
+                                <rect key="frame" x="0.0" y="712.66666666666663" width="390" height="131.33333333333337"/>
+                                <subviews>
+                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="CUY-DX-mYL">
+                                        <rect key="frame" x="16" y="16" width="20" height="32"/>
+                                        <constraints>
+                                            <constraint firstAttribute="width" constant="20" id="U65-zZ-qo0"/>
+                                        </constraints>
+                                        <state key="normal" title="Button"/>
+                                        <buttonConfiguration key="configuration" style="plain" imagePlacement="leading">
+                                            <imageReference key="image" image="xmark" catalog="system" variableValue="0.0"/>
+                                            <preferredSymbolConfiguration key="preferredSymbolConfigurationForImage" configurationType="pointSize" pointSize="15"/>
+                                        </buttonConfiguration>
+                                        <connections>
+                                            <action selector="cancelButtonTapped" destination="3R5-MC-QGV" eventType="touchUpInside" id="HS1-pW-chc"/>
+                                            <action selector="closeButtonTapped" destination="gXA-K1-ajd" eventType="touchUpInside" id="NCw-aD-Vrx"/>
+                                        </connections>
+                                    </button>
+                                    <textField opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="248" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="Add a name" textAlignment="natural" minimumFontSize="17" clearButtonMode="whileEditing" translatesAutoresizingMaskIntoConstraints="NO" id="Mh0-Rf-aaT">
+                                        <rect key="frame" x="16" y="64" width="358" height="35.333333333333343"/>
+                                        <fontDescription key="fontDescription" type="system" weight="medium" pointSize="28"/>
+                                        <textInputTraits key="textInputTraits" enablesReturnKeyAutomatically="YES"/>
+                                    </textField>
+                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="1mX-mC-l5G">
+                                        <rect key="frame" x="354" y="16" width="20" height="32"/>
+                                        <constraints>
+                                            <constraint firstAttribute="width" constant="20" id="Az7-YW-e5b"/>
+                                        </constraints>
+                                        <state key="normal" title="Button" image="tray.and.arrow.down" catalog="system"/>
+                                        <buttonConfiguration key="configuration" style="plain" image="tray.and.arrow.down.fill" catalog="system" imagePlacement="trailing">
+                                            <preferredSymbolConfiguration key="preferredSymbolConfigurationForImage" configurationType="pointSize" pointSize="15"/>
+                                        </buttonConfiguration>
+                                        <connections>
+                                            <action selector="saveButtonTapped" destination="3R5-MC-QGV" eventType="touchUpInside" id="fiu-5k-s83"/>
+                                            <action selector="saveButtonTapped" destination="gXA-K1-ajd" eventType="touchUpInside" id="pik-ds-RTW"/>
+                                        </connections>
+                                    </button>
+                                </subviews>
+                                <color key="backgroundColor" systemColor="tertiarySystemBackgroundColor"/>
+                                <constraints>
+                                    <constraint firstItem="Mh0-Rf-aaT" firstAttribute="top" secondItem="CUY-DX-mYL" secondAttribute="bottom" constant="16" id="2bA-TL-nZC"/>
+                                    <constraint firstAttribute="trailing" secondItem="Mh0-Rf-aaT" secondAttribute="trailing" constant="16" id="EU4-eF-2rJ"/>
+                                    <constraint firstItem="1mX-mC-l5G" firstAttribute="top" secondItem="CUY-DX-mYL" secondAttribute="top" id="HQf-rZ-u70"/>
+                                    <constraint firstItem="CUY-DX-mYL" firstAttribute="top" secondItem="xxw-Sh-ais" secondAttribute="top" constant="16" id="NiY-P3-wA3"/>
+                                    <constraint firstItem="Mh0-Rf-aaT" firstAttribute="leading" secondItem="CUY-DX-mYL" secondAttribute="leading" id="W68-uC-fQJ"/>
+                                    <constraint firstAttribute="trailing" secondItem="1mX-mC-l5G" secondAttribute="trailing" constant="16" id="WhV-Jo-ITS"/>
+                                    <constraint firstAttribute="bottom" secondItem="Mh0-Rf-aaT" secondAttribute="bottom" constant="32" id="gyn-H0-ebq"/>
+                                    <constraint firstItem="CUY-DX-mYL" firstAttribute="leading" secondItem="xxw-Sh-ais" secondAttribute="leading" constant="16" id="jCt-WR-msB"/>
+                                </constraints>
+                            </view>
+                        </subviews>
+                        <viewLayoutGuide key="safeArea" id="Ej9-3k-dVO"/>
+                        <constraints>
+                            <constraint firstAttribute="trailing" secondItem="bkp-q3-NLt" secondAttribute="trailing" id="2fJ-PH-0bB"/>
+                            <constraint firstItem="xxw-Sh-ais" firstAttribute="bottom" secondItem="nfO-mb-bnP" secondAttribute="bottom" id="7Ad-ac-ifS"/>
+                            <constraint firstItem="bkp-q3-NLt" firstAttribute="leading" secondItem="nfO-mb-bnP" secondAttribute="leading" id="Eil-Hf-7tb"/>
+                            <constraint firstItem="xxw-Sh-ais" firstAttribute="leading" secondItem="Ej9-3k-dVO" secondAttribute="leading" id="NPD-in-f2O"/>
+                            <constraint firstItem="bkp-q3-NLt" firstAttribute="top" secondItem="nfO-mb-bnP" secondAttribute="top" id="XlK-TD-klj"/>
+                            <constraint firstItem="xxw-Sh-ais" firstAttribute="trailing" secondItem="Ej9-3k-dVO" secondAttribute="trailing" id="i4b-KY-din"/>
+                            <constraint firstItem="bkp-q3-NLt" firstAttribute="bottom" secondItem="nfO-mb-bnP" secondAttribute="bottom" id="zyW-XW-ESA"/>
+                        </constraints>
+                    </view>
+                    <connections>
+                        <outlet property="dimmedView" destination="bkp-q3-NLt" id="aXR-BD-o0e"/>
+                        <outlet property="nameTextField" destination="Mh0-Rf-aaT" id="Sa6-mW-b3P"/>
+                        <outlet property="sheetBottomConstraint" destination="7Ad-ac-ifS" id="89z-92-sLj"/>
+                        <outlet property="sheetView" destination="xxw-Sh-ais" id="8dc-D9-cQ5"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="WZL-GW-4Jl" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-715.38461538461536" y="718.72037914691941"/>
         </scene>
         <!--Item Import Controller-->
         <scene sceneID="YRc-6l-NNL">
@@ -393,6 +478,9 @@
         <image name="tray.and.arrow.down" catalog="system" width="128" height="111"/>
         <image name="tray.and.arrow.down.fill" catalog="system" width="128" height="115"/>
         <image name="xmark" catalog="system" width="128" height="113"/>
+        <namedColor name="HighlightColor">
+            <color red="0.34509803921568627" green="0.33725490196078434" blue="0.83921568627450982" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+        </namedColor>
         <namedColor name="HightlightColor">
             <color red="0.34509803921568627" green="0.33725490196078434" blue="0.83921568627450982" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </namedColor>
@@ -405,8 +493,8 @@
         <systemColor name="systemGroupedBackgroundColor">
             <color red="0.94901960784313721" green="0.94901960784313721" blue="0.96862745098039216" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
-        <systemColor name="systemIndigoColor">
-            <color red="0.34509803921568627" green="0.33725490196078434" blue="0.83921568627450982" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+        <systemColor name="tertiarySystemBackgroundColor">
+            <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
         </systemColor>
     </resources>
 </document>

@@ -213,7 +213,29 @@ class ItemListViewController: UIViewController {
     private func perform(_ action: ItemAction, itemID: ObjectID) {
         switch action {
         case .rename:
-            break
+            guard let nameEditorVC = UIStoryboard.main.instantiateViewController(
+                withIdentifier: NameEditorViewController.storyboardID) as? NameEditorViewController
+            else { fatalError("#\(#function): Failed downcast to NameEditorViewController") }
+
+            nameEditorVC.modalPresentationStyle = .overCurrentContext
+            nameEditorVC.cancellable = nameEditorVC.newNamePublisher
+                .sink {[unowned self] newName in
+                    Task {
+                        do {
+                            try await itemManager.updateItem(
+                                itemID: itemID,
+                                name: newName,
+                                context: fetchedResultsController.managedObjectContext)
+                            await MainActor.run {
+                                nameEditorVC.animateDismissSheet()
+                            }
+                        } catch {
+                            print("#\(#function): Failed to rename item, \(error)")
+                        }
+                    }
+                }
+
+            present(nameEditorVC, animated: false)
         case .comments:
             break
         case .move:
