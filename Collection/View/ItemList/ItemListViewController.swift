@@ -239,9 +239,21 @@ class ItemListViewController: UIViewController {
         case .comments:
             break
         case .move:
-            break
+            let selectorVC = UIStoryboard.main
+                .instantiateViewController(identifier: BoardSelectorViewController.storyboardID) { coder in
+                    let viewModel = BoardSelectorViewModel(scenario: .move(itemID))
+                    return BoardSelectorViewController(coder: coder, viewModel: viewModel)
+                }
+
+            present(selectorVC, animated: true)
         case .copy:
-            break
+            let selectorVC = UIStoryboard.main
+                .instantiateViewController(identifier: BoardSelectorViewController.storyboardID) { coder in
+                    let viewModel = BoardSelectorViewModel(scenario: .copy(itemID))
+                    return BoardSelectorViewController(coder: coder, viewModel: viewModel)
+                }
+
+            present(selectorVC, animated: true)
         case .delete:
             Task {
                 do {

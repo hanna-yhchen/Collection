@@ -35,10 +35,10 @@ final class ItemManager {
 
     // MARK: - Properties
 
-    let storageProvider: StorageProvider
-    let thumbnailProvider: ThumbnailProvider
+    private let storageProvider: StorageProvider
+    private let thumbnailProvider: ThumbnailProvider
 
-    lazy var defaultBoardID: ObjectID? = {
+    private lazy var defaultBoardID: ObjectID? = {
         guard
             let url = URL(string: UserDefaults.defaultBoardURL),
             let boardID = storageProvider.persistentContainer.persistentStoreCoordinator
@@ -412,8 +412,10 @@ extension ItemManager {
         itemData: Data? = nil,
         thumbnailData: Data? = nil,
         boardID: NSManagedObjectID? = nil,
-        context: NSManagedObjectContext
+        context: NSManagedObjectContext? = nil
     ) async throws {
+        let context = context ?? storageProvider.newTaskContext()
+
         guard let item = try context.existingObject(with: itemID) as? Item else {
             throw CoreDataError.unfoundObjectInContext
         }
@@ -442,11 +444,13 @@ extension ItemManager {
         }
     }
 
-    private func copyItem(
+    func copyItem(
         itemID: NSManagedObjectID,
         toBoardID boardID: NSManagedObjectID,
-        context: NSManagedObjectContext
+        context: NSManagedObjectContext? = nil
     ) async throws {
+        let context = context ?? storageProvider.newTaskContext()
+
         guard let item = try context.existingObject(with: itemID) as? Item else {
             throw CoreDataError.unfoundObjectInContext
         }

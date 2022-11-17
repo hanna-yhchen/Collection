@@ -286,7 +286,7 @@
                         <rect key="frame" x="0.0" y="0.0" width="390" height="844"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <view alpha="0.0" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" translatesAutoresizingMaskIntoConstraints="NO" id="bkp-q3-NLt">
+                            <view contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" translatesAutoresizingMaskIntoConstraints="NO" id="bkp-q3-NLt">
                                 <rect key="frame" x="0.0" y="0.0" width="390" height="844"/>
                                 <color key="backgroundColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                             </view>
@@ -324,7 +324,6 @@
                                         </buttonConfiguration>
                                         <connections>
                                             <action selector="saveButtonTapped" destination="3R5-MC-QGV" eventType="touchUpInside" id="fiu-5k-s83"/>
-                                            <action selector="saveButtonTapped" destination="gXA-K1-ajd" eventType="touchUpInside" id="pik-ds-RTW"/>
                                         </connections>
                                     </button>
                                 </subviews>
@@ -362,6 +361,65 @@
                 <placeholder placeholderIdentifier="IBFirstResponder" id="WZL-GW-4Jl" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="-715.38461538461536" y="718.72037914691941"/>
+        </scene>
+        <!--Board Selector View Controller-->
+        <scene sceneID="1qh-FE-vM0">
+            <objects>
+                <viewController storyboardIdentifier="BoardSelectorViewController" id="mNt-SG-zaz" customClass="BoardSelectorViewController" customModule="Collection" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="a6d-O5-XnC">
+                        <rect key="frame" x="0.0" y="0.0" width="390" height="787"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <collectionView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" dataMode="prototypes" translatesAutoresizingMaskIntoConstraints="NO" id="pSY-F8-pFb">
+                                <rect key="frame" x="0.0" y="64" width="390" height="723"/>
+                                <collectionViewLayout key="collectionViewLayout" id="IHa-0T-6M8"/>
+                                <cells/>
+                            </collectionView>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Ybv-iI-Wei">
+                                <rect key="frame" x="16" y="16" width="20" height="32"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="20" id="0yZ-Mk-iMs"/>
+                                </constraints>
+                                <state key="normal" title="Button"/>
+                                <buttonConfiguration key="configuration" style="plain" imagePlacement="leading">
+                                    <imageReference key="image" image="xmark" catalog="system" variableValue="0.0"/>
+                                    <preferredSymbolConfiguration key="preferredSymbolConfigurationForImage" configurationType="pointSize" pointSize="15"/>
+                                </buttonConfiguration>
+                                <connections>
+                                    <action selector="cancelButtonTapped" destination="3R5-MC-QGV" eventType="touchUpInside" id="4aQ-Ue-wfz"/>
+                                    <action selector="closeButtonTapped" destination="mNt-SG-zaz" eventType="touchUpInside" id="oUD-uP-WX1"/>
+                                    <action selector="closeButtonTapped" destination="gXA-K1-ajd" eventType="touchUpInside" id="yLW-tZ-JQU"/>
+                                </connections>
+                            </button>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="249" verticalHuggingPriority="251" text="Move to ..." textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="hQk-KW-5gS">
+                                <rect key="frame" x="153.66666666666666" y="21.666666666666671" width="82.666666666666657" height="21"/>
+                                <fontDescription key="fontDescription" style="UICTFontTextStyleHeadline"/>
+                                <nil key="textColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                        </subviews>
+                        <viewLayoutGuide key="safeArea" id="UZi-Qv-Xib"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                        <constraints>
+                            <constraint firstItem="Ybv-iI-Wei" firstAttribute="leading" secondItem="a6d-O5-XnC" secondAttribute="leading" constant="16" id="55L-gF-J85"/>
+                            <constraint firstItem="pSY-F8-pFb" firstAttribute="top" secondItem="Ybv-iI-Wei" secondAttribute="bottom" constant="16" id="9Fc-LB-sO5"/>
+                            <constraint firstItem="pSY-F8-pFb" firstAttribute="leading" secondItem="UZi-Qv-Xib" secondAttribute="leading" id="CyA-RQ-4Hn"/>
+                            <constraint firstItem="UZi-Qv-Xib" firstAttribute="trailing" secondItem="pSY-F8-pFb" secondAttribute="trailing" id="TfJ-Gm-76R"/>
+                            <constraint firstItem="hQk-KW-5gS" firstAttribute="centerX" secondItem="a6d-O5-XnC" secondAttribute="centerX" id="WTV-b0-he2"/>
+                            <constraint firstItem="UZi-Qv-Xib" firstAttribute="bottom" secondItem="pSY-F8-pFb" secondAttribute="bottom" id="cHq-ao-ryA"/>
+                            <constraint firstItem="hQk-KW-5gS" firstAttribute="centerY" secondItem="Ybv-iI-Wei" secondAttribute="centerY" id="kPX-MJ-Oly"/>
+                            <constraint firstItem="Ybv-iI-Wei" firstAttribute="top" secondItem="a6d-O5-XnC" secondAttribute="top" constant="16" id="zdT-qI-IF7"/>
+                        </constraints>
+                    </view>
+                    <modalPageSheetSimulatedSizeMetrics key="simulatedDestinationMetrics"/>
+                    <connections>
+                        <outlet property="collectionView" destination="pSY-F8-pFb" id="ZYl-Lz-m4K"/>
+                        <outlet property="titleLabel" destination="hQk-KW-5gS" id="jxx-x8-e1V"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="WYC-5l-Nr5" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-1620" y="138.6255924170616"/>
         </scene>
         <!--Item Import Controller-->
         <scene sceneID="YRc-6l-NNL">
