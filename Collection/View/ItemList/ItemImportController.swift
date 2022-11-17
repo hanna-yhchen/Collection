@@ -28,14 +28,6 @@ class ItemImportController: UIViewController {
         collectionView.collectionViewLayout = flowLayout()
     }
 
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-
-        self.preferredContentSize = self.view.systemLayoutSizeFitting(
-            UIView.layoutFittingCompressedSize
-        )
-    }
-
     private func flowLayout() -> UICollectionViewFlowLayout {
         let layout = UICollectionViewFlowLayout()
 
@@ -43,7 +35,11 @@ class ItemImportController: UIViewController {
         layout.minimumInteritemSpacing = 16
 
         let itemsPerRow: CGFloat = 4
-        let availableWidth = view.bounds.width - ((itemsPerRow + 1) * 20)
+        var fullWidth = view.bounds.width
+        if view.traitCollection.horizontalSizeClass == .regular {
+            fullWidth = 300
+        }
+        let availableWidth = fullWidth - ((itemsPerRow + 1) * 20)
         let widthPerItem = (availableWidth / itemsPerRow).rounded(.down)
         layout.itemSize = CGSize(width: widthPerItem, height: widthPerItem + 30)
 

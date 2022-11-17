@@ -81,9 +81,6 @@ class AudioRecorderController: UIViewController {
         resetButton.isEnabled = false
         resetTimerLabel()
 
-        let tapAround = UITapGestureRecognizer(target: self, action: #selector(hideKeyboard))
-        view.addGestureRecognizer(tapAround)
-
         do {
             try session.setCategory(.playAndRecord, mode: .default)
             try session.setActive(true)
@@ -194,10 +191,6 @@ class AudioRecorderController: UIViewController {
 
     private func resetTimerLabel() {
         timerLebel.text = "00:00"
-    }
-
-    @objc private func hideKeyboard() {
-        view.endEditing(true)
     }
 
     // MARK: - Actions
