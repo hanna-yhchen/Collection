@@ -9,9 +9,9 @@ import CoreData
 
 extension StorageProvider {
     func addTag(
-        name: String,
+        name: String?,
         color: TagColor,
-        context: NSManagedObjectContext?
+        context: NSManagedObjectContext? = nil
     ) async throws {
         let context = context ?? newTaskContext()
 
@@ -30,7 +30,7 @@ extension StorageProvider {
     func toggleTagging(
         itemID: ObjectID,
         tagID: ObjectID,
-        context: NSManagedObjectContext?
+        context: NSManagedObjectContext? = nil
     ) async throws {
         let context = context ?? newTaskContext()
 
@@ -43,7 +43,7 @@ extension StorageProvider {
         }
 
         await context.perform {
-            if let tags = item.tags, tags.contains(item) {
+            if let tags = item.tags, tags.contains(tag) {
                 item.removeFromTags(tag)
             } else {
                 item.addToTags(tag)
@@ -56,7 +56,7 @@ extension StorageProvider {
         tagID: ObjectID,
         name: String?,
         color: TagColor?,
-        context: NSManagedObjectContext?
+        context: NSManagedObjectContext? = nil
     ) async throws {
         let context = context ?? newTaskContext()
 
@@ -71,7 +71,7 @@ extension StorageProvider {
         tag: Tag,
         name: String?,
         color: TagColor?,
-        context: NSManagedObjectContext?
+        context: NSManagedObjectContext? = nil
     ) async {
         let context = context ?? newTaskContext()
 
@@ -90,7 +90,7 @@ extension StorageProvider {
 
     func deleteTag(
         tagID: ObjectID,
-        context: NSManagedObjectContext?
+        context: NSManagedObjectContext? = nil
     ) async throws {
         let context = context ?? newTaskContext()
 
@@ -103,7 +103,7 @@ extension StorageProvider {
 
     func deleteTag(
         tag: Tag,
-        context: NSManagedObjectContext?
+        context: NSManagedObjectContext? = nil
     ) async {
         let context = context ?? newTaskContext()
 

@@ -61,7 +61,9 @@ class LargeCardCell: UICollectionViewCell, ItemCell, ItemActionSendable {
                 + DateFormatter.hyphenatedDateTimeFormatter.string(from: updateDate)
         }
 
-        configureTagView(tags: ["key", "family", "urgent", "key", "family", "urgent", "key", "family", "urgent"])
+        if let tags = item.tags?.allObjects as? [Tag] {
+            configureTagView(tags: tags)
+        }
 
         switch item.type {
         case .link:
@@ -116,7 +118,7 @@ class LargeCardCell: UICollectionViewCell, ItemCell, ItemActionSendable {
             .store(in: &subscriptions)
     }
     // TODO: use Tag object
-    private func configureTagView(tags: [String]) {
+    private func configureTagView(tags: [Tag]) {
         guard let tagView = tagView else {
             let tagView = TTGTextTagCollectionView()
             tagView.contentInset = .zero
@@ -142,13 +144,14 @@ class LargeCardCell: UICollectionViewCell, ItemCell, ItemActionSendable {
         tagStyle.cornerRadius = 5
         tagStyle.borderWidth = 0
         tagStyle.shadowOpacity = 0
-        tagStyle.backgroundColor = .systemRed
         tagStyle.extraSpace = CGSize(width: 8, height: 4)
 
-        let textTags = tags.map { text in
-            TTGTextTag(
+        let textTags = tags.map { tag in
+            tagStyle.backgroundColor = TagColor(rawValue: tag.color)?.color ?? .clear
+
+            return TTGTextTag(
                 content: TTGTextTagStringContent(
-                    text: text,
+                    text: tag.name ?? "   ",
                     textFont: .systemFont(ofSize: 10),
                     textColor: .white),
                 style: tagStyle)

@@ -96,8 +96,8 @@ class BoardSelectorViewController: UIViewController {
     private func createDataSource() -> DataSource {
         let cellRegistration = UICollectionView.CellRegistration(handler: cellRegistrationHandler)
 
-        return DataSource(collectionView: collectionView) { collectionView, indexPath, boardID in
-            return collectionView.dequeueConfiguredReusableCell(using: cellRegistration, for: indexPath, item: boardID)
+        return DataSource(collectionView: collectionView) { collectionView, indexPath, board in
+            return collectionView.dequeueConfiguredReusableCell(using: cellRegistration, for: indexPath, item: board)
         }
     }
 
@@ -108,7 +108,7 @@ class BoardSelectorViewController: UIViewController {
         cell.contentConfiguration = content
 
         let backgroundView = UIView()
-        backgroundView.backgroundColor = .label.withAlphaComponent(0.3)
+        backgroundView.backgroundColor = .label.withAlphaComponent(0.12)
         cell.selectedBackgroundView = backgroundView
     }
 }
