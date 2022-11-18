@@ -92,9 +92,14 @@ class SmallCardCell: UICollectionViewCell, ItemCell, ItemActionSendable {
             }
         }
 
-        // TODO: display real tag data
-        guard Bool.random() else { return }
-        configureTagViews(colors: [.systemRed, .systemCyan, .systemYellow])
+        if let tags = item.tags?.allObjects as? [Tag] {
+            let tagColors = tags
+                .compactMap { tag in
+                    return TagColor(rawValue: tag.color)
+                }
+                .map(\.color)
+            configureTagViews(colors: tagColors)
+        }
     }
 
     private func configureLinkPreview(for url: URL) {

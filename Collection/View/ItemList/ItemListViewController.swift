@@ -236,6 +236,21 @@ class ItemListViewController: UIViewController {
                 }
 
             present(nameEditorVC, animated: false)
+        case .tags:
+            let selectorVC = UIStoryboard.main
+                .instantiateViewController(identifier: TagSelectorViewController.storyboardID) { coder in
+                    let viewModel = TagSelectorViewModel(storageProvider: self.storageProvider, itemID: itemID)
+                    return TagSelectorViewController(coder: coder, viewModel: viewModel)
+                }
+
+            let nav = UINavigationController(rootViewController: selectorVC)
+            if let sheet = nav.sheetPresentationController {
+                sheet.detents = [.medium(), .large()]
+                sheet.prefersEdgeAttachedInCompactHeight = true
+                sheet.preferredCornerRadius = 30
+            }
+
+            present(nav, animated: true)
         case .comments:
             break
         case .move:
@@ -583,8 +598,6 @@ extension ItemListViewController: UIImagePickerControllerDelegate & UINavigation
 
 extension ItemListViewController: NSFetchedResultsControllerDelegate {
     func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChangeContentWith snapshot: NSDiffableDataSourceSnapshotReference) {
-//        guard let dataSource = dataSource else { fatalError("#\(#function): Failed to unwrap data source") }
-
         var newSnapshot = snapshot as Snapshot
         let currentSnapshot = dataSource.snapshot()
 
@@ -665,11 +678,5 @@ extension ItemListViewController: QLPreviewControllerDelegate {
 
     func previewControllerDidDismiss(_ controller: QLPreviewController) {
         previewingItem = nil
-    }
-}
-
-extension ItemListViewController: UIDocumentInteractionControllerDelegate {
-    func documentInteractionControllerViewControllerForPreview(_ controller: UIDocumentInteractionController) -> UIViewController {
-        self
     }
 }
