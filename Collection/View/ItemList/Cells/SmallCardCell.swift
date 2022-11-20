@@ -1,5 +1,5 @@
 //
-//  TwoColumnCell.swift
+//  SmallCardCell.swift
 //  Collection
 //
 //  Created by Hanna Chen on 2022/11/11.
@@ -7,10 +7,8 @@
 
 import Combine
 import UIKit
-import UniformTypeIdentifiers
 
-class TwoColumnCell: UICollectionViewCell {
-
+class SmallCardCell: UICollectionViewCell, ItemCell, ItemActionSendable {
     static let bottomAreaHeight: CGFloat = 4 + 17 + 14 + 2 + 18 + 4
 
     @IBOutlet var iconImageView: UIImageView!
@@ -22,8 +20,12 @@ class TwoColumnCell: UICollectionViewCell {
     @IBOutlet var titleLabel: UILabel!
     @IBOutlet var hostLabel: UILabel!
     @IBOutlet var tagStackView: UIStackView!
+    @IBOutlet var actionButton: UIButton!
 
-    private var richLinkSubscription: AnyCancellable?
+    var objectID: ObjectID?
+
+    lazy var actionSubject = PassthroughSubject<(ItemAction, ObjectID), Never>()
+    lazy var subscriptions = Set<AnyCancellable>()
 
     // MARK: - Lifecycle
 
@@ -31,8 +33,8 @@ class TwoColumnCell: UICollectionViewCell {
         super.awakeFromNib()
 
         reset()
+        addActionMenu(for: actionButton)
         self.layer.cornerRadius = 10
-        iconImageView.preferredSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 30)
     }
 
     override func prepareForReuse() {
@@ -44,18 +46,16 @@ class TwoColumnCell: UICollectionViewCell {
     // MARK: - Methods
 
     func configure(for item: Item) { // swiftlint:disable:this cyclomatic_complexity
+        objectID = item.objectID
+
         if let name = item.name, !name.isEmpty {
-            titleLabel.text = (name as NSString).deletingPathExtension
+            titleLabel.text = name
             titleStackView.isHidden = false
         }
 
-        guard let displayType = DisplayType(rawValue: item.displayType) else {
-            return
-        }
+        iconImageView.image = item.type.icon
 
-        iconImageView.image = displayType.icon
-
-        switch displayType {
+        switch item.type {
         case .image:
             if let thumbnail = item.thumbnail?.data, let thumbnailImage = UIImage(data: thumbnail) {
                 thumbnailImageView.image = thumbnailImage
@@ -74,9 +74,10 @@ class TwoColumnCell: UICollectionViewCell {
                 noteLabel.text = "(empty)"
             }
             noteStackView.isHidden = false
+            iconImageView.image = nil
         case .link:
             if let data = item.itemData?.data, let url = URL(dataRepresentation: data, relativeTo: nil) {
-                configureRichLink(for: url)
+                configureLinkPreview(for: url)
             } else {
                 fileTypeLabel.isHidden = false
                 fileTypeLabel.text = "Wrong data"
@@ -85,20 +86,24 @@ class TwoColumnCell: UICollectionViewCell {
             if let thumbnail = item.thumbnail?.data, let thumbnailImage = UIImage(data: thumbnail) {
                 thumbnailImageView.image = thumbnailImage
                 iconImageView.image = nil
-            } else if let uti = item.uti {
-                thumbnailImageView.isHidden = true
+            } else {
                 fileTypeLabel.isHidden = false
-                fileTypeLabel.text = UTType(uti)?.preferredFilenameExtension
+                fileTypeLabel.text = item.filenameExtension
             }
         }
 
-        // TODO: display real tag data
-        guard Bool.random() else { return }
-        configureTagViews(colors: [.systemRed, .systemCyan, .systemYellow])
+        if let tags = item.tags?.allObjects as? [Tag] {
+            let tagColors = tags
+                .compactMap { tag in
+                    return TagColor(rawValue: tag.color)
+                }
+                .map(\.color)
+            configureTagViews(colors: tagColors)
+        }
     }
 
-    private func configureRichLink(for url: URL) {
-        richLinkSubscription = RichLinkProvider.shared.fetchMetadata(for: url)
+    private func configureLinkPreview(for url: URL) {
+        RichLinkProvider.shared.fetchMetadata(for: url)
             .receive(on: DispatchQueue.main)
             .catch { error -> Just<RichLinkProvider.RichLink> in
                 print("#\(#function): Failed to fetch, \(error)")
@@ -116,6 +121,7 @@ class TwoColumnCell: UICollectionViewCell {
                     self.iconImageView.image = nil
                 }
             }
+            .store(in: &subscriptions)
     }
 
     private func configureTagViews(colors: [UIColor]) {
@@ -138,14 +144,14 @@ class TwoColumnCell: UICollectionViewCell {
     }
 
     private func reset() {
-        richLinkSubscription?.cancel()
+        subscriptions.removeAll()
 
         iconImageView.image = nil
         iconImageView.tintColor = .secondaryLabel
+        iconImageView.preferredSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 30)
 
         fileTypeLabel.isHidden = true
 
-        thumbnailImageView.isHidden = false
         thumbnailImageView.image = nil
 
         titleStackView.isHidden = true

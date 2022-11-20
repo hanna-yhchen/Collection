@@ -12,8 +12,7 @@ import UIKit
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        IQKeyboardManager.shared.enable = true
-
+        configureKeyboardManager()
         prepareForFirstLaunch()
 
         return true
@@ -35,6 +34,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 }
 
 extension AppDelegate {
+    private func configureKeyboardManager() {
+        let manager = IQKeyboardManager.shared
+        manager.enable = true
+        manager.shouldShowToolbarPlaceholder = false
+        manager.shouldResignOnTouchOutside = true
+        manager.disabledToolbarClasses = [NameEditorViewController.self]
+        manager.disabledTouchResignedClasses = [NameEditorViewController.self]
+    }
+
     private func prepareForFirstLaunch() {
         if UserDefaults.isFirstLaunch {
             let viewContext = StorageProvider.shared.persistentContainer.viewContext

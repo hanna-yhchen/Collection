@@ -15,13 +15,6 @@ class ImportMethodCell: UICollectionViewCell {
     override func awakeFromNib() {
         super.awakeFromNib()
         // Initialization code
-        
-    }
-
-    override func layoutSubviews() {
-        super.layoutSubviews()
-
-//        iconImageView.layer.cornerRadius = bounds.width / 2
     }
 
     func configure(for method: ItemImportController.ImportMethod) {

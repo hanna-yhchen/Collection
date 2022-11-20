@@ -7,48 +7,78 @@
 
 import UIKit
 
-class ItemCollectionView: UICollectionView {
+protocol ItemCell: UICollectionViewCell {
+    func configure(for item: Item)
+}
 
-    enum Layout {
-        case detailedCard
-        case conciseCard
-        case grid
-    }
+class ItemCollectionView: UICollectionView {
 
     var traits: UITraitCollection?
 
-    private let sectionInsets = UIEdgeInsets(top: 16, left: 16, bottom: 16, right: 16)
-    private let spacing: CGFloat = 16
+    lazy var flowLayouts: [ItemLayout: UICollectionViewFlowLayout] = {
+        var flowLayouts: [ItemLayout: UICollectionViewFlowLayout] = [:]
+        ItemLayout.allCases.forEach { itemLayout in
+            flowLayouts.updateValue(itemLayout.flowLayout(), forKey: itemLayout)
+        }
+        return flowLayouts
+    }()
 
-    func setTwoColumnLayout(animated: Bool) {
-        setCollectionViewLayout(twoColumnLayout, animated: animated)
-    }
+    // MARK: - Initializers
 
     init(frame: CGRect, traits: UITraitCollection) {
         self.traits = traits
 
-        super.init(frame: frame, collectionViewLayout: UICollectionViewLayout())
+        super.init(frame: frame, collectionViewLayout: UICollectionViewFlowLayout())
 
-        backgroundColor = .clear
-        self.contentInset = sectionInsets
+        backgroundColor = .systemGroupedBackground
+
+        register(
+            UINib(nibName: GridCell.identifier, bundle: nil),
+            forCellWithReuseIdentifier: GridCell.identifier)
+        register(
+            UINib(nibName: SmallCardCell.identifier, bundle: nil),
+            forCellWithReuseIdentifier: SmallCardCell.identifier)
+        register(
+            UINib(nibName: LargeCardCell.identifier, bundle: nil),
+            forCellWithReuseIdentifier: LargeCardCell.identifier)
     }
 
     required init?(coder: NSCoder) {
-        super.init(coder: coder)
+        fatalError("init(coder:) has not been implemented")
     }
 
-    private lazy var twoColumnLayout: UICollectionViewLayout = {
-        let layout = UICollectionViewFlowLayout()
+    // MARK: - Methods
 
-        layout.minimumLineSpacing = spacing
-        layout.minimumInteritemSpacing = spacing
-        layout.sectionInset = sectionInsets
+    func setLayout(_ layout: ItemLayout, animated: Bool) {
+        guard let flowLayout = flowLayouts[layout] else { return }
+        setCollectionViewLayout(flowLayout, animated: animated)
+    }
 
-        let itemsPerRow: CGFloat = traits?.horizontalSizeClass == .compact ? 2 : 4
-        let availableWidth = bounds.width - ((itemsPerRow + 1) * spacing)
+    func itemSize(for layout: ItemLayout) -> CGSize {
+        let sectionInsets = layout.sectionInsets
+        var itemsPerRow: CGFloat = 1
+        var heightOffset: CGFloat = 0
+
+        switch layout {
+        case .largeCard:
+            itemsPerRow = 1
+        case .smallCard:
+            itemsPerRow = traits?.horizontalSizeClass == .compact ? 2 : 4
+            heightOffset = SmallCardCell.bottomAreaHeight
+        case .grid:
+            itemsPerRow = traits?.horizontalSizeClass == .compact ? 3 : 5
+        }
+
+        let availableWidth = bounds.width
+            - ((itemsPerRow - 1) * layout.spacing)
+            - (sectionInsets.left + sectionInsets.right)
         let widthPerItem = (availableWidth / itemsPerRow).rounded(.down)
-        layout.itemSize = CGSize(width: widthPerItem, height: widthPerItem + TwoColumnCell.bottomAreaHeight)
 
-        return layout
-    }()
+        var height = widthPerItem + heightOffset
+        if layout == .largeCard {
+            height = max(widthPerItem * 0.4 * 4 / 3, LargeCardCell.minHeight)
+        }
+
+        return CGSize(width: widthPerItem, height: height)
+    }
 }
