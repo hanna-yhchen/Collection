@@ -437,8 +437,7 @@ class ItemListViewController: UIViewController {
         let previewController = QLPreviewController()
         previewController.dataSource = self
         previewController.delegate = self
-        previewController.navigationItem.largeTitleDisplayMode = .never
-        navigationController?.pushViewController(previewController, animated: true)
+        present(previewController, animated: true)
     }
 
     private func showNotePreview(_ item: Item) {
