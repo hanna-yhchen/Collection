@@ -152,7 +152,11 @@ class ItemListViewController: UIViewController {
         importController.modalPresentationStyle = .formSheet
         importController.preferredContentSize = CGSize(width: 300, height: 400)
         if let sheet = importController.sheetPresentationController {
-            sheet.detents = [.medium()]
+            if #available(iOS 16.0, *) {
+                sheet.detents = [.custom { _ in 240 }]
+            } else {
+                sheet.detents = [.medium()]
+            }
             sheet.prefersScrollingExpandsWhenScrolledToEdge = false
             sheet.prefersEdgeAttachedInCompactHeight = true
             sheet.preferredCornerRadius = 30
