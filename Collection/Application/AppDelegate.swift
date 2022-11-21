@@ -41,6 +41,7 @@ extension AppDelegate {
         manager.shouldResignOnTouchOutside = true
         manager.disabledToolbarClasses = [NameEditorViewController.self]
         manager.disabledTouchResignedClasses = [NameEditorViewController.self]
+        manager.disabledDistanceHandlingClasses = [NoteEditorViewController.self]
     }
 
     private func prepareForFirstLaunch() {

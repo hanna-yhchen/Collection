@@ -5,7 +5,6 @@
 //  Created by Hanna Chen on 2022/10/28.
 //
 
-import Combine
 import CoreData
 import PhotosUI
 import QuickLook
@@ -52,7 +51,7 @@ class ItemListViewController: UIViewController {
 
     private var previewingItem: PreviewItem?
     private lazy var dataSource = createDataSource()
-    private var subscriptions: Set<AnyCancellable> = []
+    private var subscriptions = CancellableSet()
 
     private var currentLayout: ItemLayout = .smallCard
     private lazy var layoutActions: [UIAction] = {
@@ -337,11 +336,19 @@ class ItemListViewController: UIViewController {
 
     private func showNoteEditor() {
         let editorVC = UIStoryboard.main
-            .instantiateViewController(identifier: EditorViewController.storyboardID) { coder in
-                let viewModel = EditorViewModel(itemManager: self.itemManager, scenario: .create(boardID: self.boardID))
-                return EditorViewController(coder: coder, viewModel: viewModel)
+            .instantiateViewController(identifier: NoteEditorViewController.storyboardID) { coder in
+                let viewModel = NoteEditorViewModel(itemManager: self.itemManager, scenario: .create(boardID: self.boardID))
+                return NoteEditorViewController(coder: coder, viewModel: viewModel)
             }
-        navigationController?.pushViewController(editorVC, animated: true)
+
+
+        if let sheet = editorVC.sheetPresentationController {
+            sheet.detents = [.medium(), .large()]
+            sheet.prefersEdgeAttachedInCompactHeight = true
+            sheet.preferredCornerRadius = 30
+        }
+
+        present(editorVC, animated: true)
     }
 
     private func showAudioRecorder() {

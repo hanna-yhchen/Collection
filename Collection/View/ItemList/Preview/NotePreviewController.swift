@@ -44,10 +44,10 @@ class NotePreviewController: UIViewController {
 
     @IBAction func editButtonTapped() {
         let editorVC = UIStoryboard.main
-            .instantiateViewController(identifier: EditorViewController.storyboardID) { coder in
-                let viewModel = EditorViewModel(itemManager: self.itemManager, scenario: .update(item: self.item))
-                return EditorViewController(coder: coder, viewModel: viewModel)
+            .instantiateViewController(identifier: NoteEditorViewController.storyboardID) { coder in
+                let viewModel = NoteEditorViewModel(itemManager: self.itemManager, scenario: .update(item: self.item))
+                return NoteEditorViewController(coder: coder, viewModel: viewModel)
             }
-        navigationController?.pushViewController(editorVC, animated: true)
+        present(editorVC, animated: true)
     }
 }
