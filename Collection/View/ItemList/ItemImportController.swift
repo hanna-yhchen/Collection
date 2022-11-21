@@ -14,25 +14,18 @@ class ItemImportController: UIViewController {
 
     lazy var selectMethod = PassthroughSubject<ImportMethod, Never>()
 
-    var selectHandler: ((ImportMethod) -> Void)?
+    lazy var sheetHeight: CGFloat = titleBarHeight
+        + flowLayout.itemSize.height * 2
+        + spacing * 2
 
-    override func viewDidLoad() {
-        super.viewDidLoad()
+    private let titleBarHeight: CGFloat = 46
+    private let spacing: CGFloat = 16
 
-        collectionView.dataSource = self
-        collectionView.delegate = self
-        collectionView.contentInset = UIEdgeInsets(top: 0, left: 20, bottom: 0, right: 20)
-        collectionView.register(
-            UINib(nibName: ImportMethodCell.identifier, bundle: nil),
-            forCellWithReuseIdentifier: ImportMethodCell.identifier)
-        collectionView.collectionViewLayout = flowLayout()
-    }
-
-    private func flowLayout() -> UICollectionViewFlowLayout {
+    private lazy var flowLayout: UICollectionViewFlowLayout = {
         let layout = UICollectionViewFlowLayout()
 
-        layout.minimumLineSpacing = 16
-        layout.minimumInteritemSpacing = 16
+        layout.minimumLineSpacing = spacing
+        layout.minimumInteritemSpacing = spacing
 
         let itemsPerRow: CGFloat = 4
         var fullWidth = view.bounds.width
@@ -44,8 +37,26 @@ class ItemImportController: UIViewController {
         layout.itemSize = CGSize(width: widthPerItem, height: widthPerItem + 30)
 
         return layout
+    }()
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+
+        configureCollectionView()
+    }
+
+    private func configureCollectionView() {
+        collectionView.dataSource = self
+        collectionView.delegate = self
+        collectionView.contentInset = UIEdgeInsets(top: 0, left: 20, bottom: 0, right: 20)
+        collectionView.register(
+            UINib(nibName: ImportMethodCell.identifier, bundle: nil),
+            forCellWithReuseIdentifier: ImportMethodCell.identifier)
+        collectionView.collectionViewLayout = flowLayout
     }
 }
+
+// MARK: - UICollectionViewDataSource
 
 extension ItemImportController: UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
@@ -65,6 +76,8 @@ extension ItemImportController: UICollectionViewDataSource {
         return cell
     }
 }
+
+// MARK: - UICollectionViewDelegate
 
 extension ItemImportController: UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
