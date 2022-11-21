@@ -153,7 +153,7 @@ class ItemListViewController: UIViewController {
         importController.preferredContentSize = CGSize(width: 300, height: 400)
         if let sheet = importController.sheetPresentationController {
             if #available(iOS 16.0, *) {
-                sheet.detents = [.custom { _ in 240 }]
+                sheet.detents = [.custom { _ in importController.sheetHeight }]
             } else {
                 sheet.detents = [.medium()]
             }
