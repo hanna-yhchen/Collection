@@ -1,5 +1,5 @@
 //
-//  EditorViewModel.swift
+//  NoteEditorViewModel.swift
 //  Collection
 //
 //  Created by Hanna Chen on 2022/11/9.
@@ -7,7 +7,7 @@
 
 import Combine
 
-final class EditorViewModel {
+final class NoteEditorViewModel {
 
     enum Scenario {
         case create(boardID: ObjectID)
@@ -28,8 +28,21 @@ final class EditorViewModel {
     private let itemManager: ItemManager
     let scenario: Scenario
 
-    var name: String = ""
-    var note: String = ""
+    @Published var name = ""
+    @Published var note = ""
+
+    private(set) lazy var canSave = Publishers.CombineLatest($name, $note)
+        .map { !($0.isEmpty && $1.isEmpty) }
+        .eraseToAnyPublisher()
+
+    var hasChanges: Bool {
+        switch scenario {
+        case .create:
+            return !(name.isEmpty && note.isEmpty)
+        case .update(let item):
+            return item.name != name || item.note != note
+        }
+    }
 
     // MARK: - Initializers
 
