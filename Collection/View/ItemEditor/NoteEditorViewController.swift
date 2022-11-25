@@ -43,6 +43,7 @@ class NoteEditorViewController: UIViewController {
         titleTextField.text = viewModel.name
         noteTextView.text = viewModel.note
         sheetTitleLabel.text = viewModel.scenario.title
+        placeholderLabel.isHidden = !viewModel.note.isEmpty
     }
 
     private func addBindings() {
@@ -83,11 +84,17 @@ class NoteEditorViewController: UIViewController {
     // MARK: - Actions
 
     @IBAction private func saveButtonTapped() {
+        HUD.showProgressing()
         Task {
-            // TODO: handle error 
-            try? await viewModel.save()
-            await MainActor.run {
-                _ = navigationController?.popViewController(animated: true)
+            do {
+                try await viewModel.save()
+                dismiss(animated: true) {
+                    HUD.showSucceeded()
+                }
+            } catch {
+                // TODO: handle error
+                print("#\(#function): Failed to save new note, \(error)")
+                HUD.showFailed()
             }
         }
     }
