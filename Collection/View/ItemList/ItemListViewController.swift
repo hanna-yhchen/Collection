@@ -355,6 +355,8 @@ class ItemListViewController: UIViewController {
         let recorderVC = UIStoryboard.main
             .instantiateViewController(identifier: AudioRecorderController.storyboardID) { coder in
                 return AudioRecorderController(coder: coder) {[unowned self] result in
+                    HUD.showProgressing()
+
                     switch result {
                     case .success(let record):
                         Task {
@@ -363,13 +365,11 @@ class ItemListViewController: UIViewController {
                             } catch {
                                 print("#\(#function): Failed to save new record, \(error)")
                             }
-                            await MainActor.run {
-                                dismiss(animated: true)
-                            }
+                            dismissForSuccess()
                         }
                     case .failure(let error):
                         print("#\(#function): Failed to record new void memo, \(error)")
-                        dismiss(animated: true)
+                        dismissForFailure()
                     }
                 }
             }
@@ -392,6 +392,7 @@ class ItemListViewController: UIViewController {
             let displayType = DisplayType(rawValue: item.displayType)
         else {
             // TODO: show alert
+            HUD.showFailed()
             return
         }
 
@@ -414,6 +415,7 @@ class ItemListViewController: UIViewController {
             let filenameExtension = itemType.preferredFilenameExtension
         else {
             // TODO: show alert
+            HUD.showFailed()
             return
         }
 
@@ -434,12 +436,14 @@ class ItemListViewController: UIViewController {
 
         guard writingError == nil && coordinatingError == nil else {
             // TODO: show alert
+            HUD.showFailed()
             return
         }
 
 
         guard QLPreviewController.canPreview(fileURL as QLPreviewItem) else {
             // TODO: show alert
+            HUD.showFailed()
             return
         }
 
@@ -465,6 +469,7 @@ class ItemListViewController: UIViewController {
             let url = URL(dataRepresentation: data, relativeTo: nil)
         else {
             // TODO: show alert
+            HUD.showFailed()
             return
         }
 
@@ -523,12 +528,17 @@ extension ItemListViewController: UICollectionViewDelegateFlowLayout {
 
 extension ItemListViewController: UIDocumentPickerDelegate {
     func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+        HUD.showImporting()
+
         Task {
-            // TODO: UI reaction
             do {
                 try await itemManager.process(urls, saveInto: boardID)
+                DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(200)) {
+                    HUD.showSucceeded()
+                }
             } catch {
                 print("#\(#function): Failed to process input from document picker, \(error)")
+                HUD.showFailed()
             }
         }
     }
@@ -538,19 +548,23 @@ extension ItemListViewController: UIDocumentPickerDelegate {
 
 extension ItemListViewController: PHPickerViewControllerDelegate {
     func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
+        picker.dismiss(animated: true)
+        guard !results.isEmpty else { return }
+
+        HUD.showImporting()
+
         Task {
-            // TODO: UI reaction
             do {
                 #if targetEnvironment(simulator)
                 try await itemManager.process(results.map(\.itemProvider), saveInto: boardID)
                 #else
                 try await itemManager.process(results.map(\.itemProvider), saveInto: boardID, isSecurityScoped: false)
                 #endif
-                await MainActor.run {
-                    picker.dismiss(animated: true)
-                }
+
+                HUD.showSucceeded()
             } catch {
                 print("#\(#function): Failed to process input from photo picker, \(error)")
+                dismissForFailure()
             }
         }
     }
@@ -560,46 +574,44 @@ extension ItemListViewController: PHPickerViewControllerDelegate {
 
 extension ItemListViewController: UIImagePickerControllerDelegate & UINavigationControllerDelegate {
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
+        HUD.showProgressing()
+
         guard
             let typeIdentifier = info[.mediaType] as? String,
             let type = UTType(typeIdentifier)
         else {
-            picker.dismiss(animated: true)
+            dismissForFailure()
             return
         }
 
-        // TODO: UI reaction
         switch type {
         case .image:
             guard let image = info[.originalImage] as? UIImage else {
-                picker.dismiss(animated: true)
+                dismissForFailure()
                 return
             }
 
             Task {
                 await itemManager.process(image, saveInto: boardID)
-                await MainActor.run {
-                    picker.dismiss(animated: true)
-                }
+                dismissForSuccess()
             }
         case .movie:
             guard let movieURL = info[.mediaURL] as? URL else {
-                picker.dismiss(animated: true)
+                dismissForFailure()
                 return
             }
 
             Task {
                 do {
                     try await itemManager.process([movieURL], saveInto: boardID, isSecurityScoped: false)
+                    dismissForSuccess()
                 } catch {
                     print("#\(#function): Failed to process movie captured from image picker, \(error)")
-                }
-                await MainActor.run {
-                    picker.dismiss(animated: true)
+                    dismissForFailure()
                 }
             }
         default:
-            picker.dismiss(animated: true)
+            dismissForFailure()
         }
     }
 }
@@ -633,12 +645,15 @@ extension ItemListViewController: NSFetchedResultsControllerDelegate {
 
 extension ItemListViewController {
     override func paste(itemProviders: [NSItemProvider]) {
+        HUD.showImporting()
+
         Task {
-            // TODO: UI reaction
             do {
                 try await itemManager.process(itemProviders, saveInto: boardID, isSecurityScoped: false)
+                HUD.showSucceeded()
             } catch {
                 print("#\(#function): Failed to process input from pasteboard, \(error)")
+                HUD.showFailed()
             }
         }
     }
