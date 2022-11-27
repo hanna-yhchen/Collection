@@ -30,13 +30,15 @@
                         <nil key="textColor"/>
                         <nil key="highlightedColor"/>
                     </label>
-                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="1uY-4k-vTV">
-                        <rect key="frame" x="220" y="49.333333333333336" width="57" height="28.333333333333336"/>
-                        <fontDescription key="fontDescription" style="UICTFontTextStyleCaption1"/>
+                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="1uY-4k-vTV">
+                        <rect key="frame" x="253" y="46.333333333333336" width="24" height="32.000000000000007"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="24" id="Q2S-C0-qOy"/>
+                        </constraints>
                         <inset key="imageEdgeInsets" minX="0.0" minY="0.0" maxX="2.2250738585072014e-308" maxY="0.0"/>
-                        <state key="normal" title="Share"/>
-                        <buttonConfiguration key="configuration" style="plain" title="Share">
-                            <fontDescription key="titleFontDescription" style="UICTFontTextStyleCaption1"/>
+                        <state key="normal" image="ellipsis" catalog="system"/>
+                        <buttonConfiguration key="configuration" style="plain" image="ellipsis" catalog="system">
+                            <preferredSymbolConfiguration key="preferredSymbolConfigurationForImage" configurationType="pointSize" pointSize="15"/>
                         </buttonConfiguration>
                         <connections>
                             <action selector="shareButtonTapped" destination="gTV-IL-0wX" eventType="touchUpInside" id="STy-Zq-5Hj"/>
@@ -51,7 +53,7 @@
                 </subviews>
             </view>
             <viewLayoutGuide key="safeArea" id="ZTg-uK-7eu"/>
-            <color key="backgroundColor" systemColor="secondarySystemBackgroundColor"/>
+            <color key="backgroundColor" systemColor="tertiarySystemBackgroundColor"/>
             <constraints>
                 <constraint firstItem="Vng-Rb-Rz1" firstAttribute="top" secondItem="glS-LM-Tfs" secondAttribute="bottom" constant="8" id="0A3-Uz-WpF"/>
                 <constraint firstAttribute="bottom" relation="greaterThanOrEqual" secondItem="Vng-Rb-Rz1" secondAttribute="bottom" constant="8" id="7x0-Ol-jmb"/>
@@ -66,6 +68,7 @@
             </constraints>
             <size key="customSize" width="285" height="100"/>
             <connections>
+                <outlet property="actionButton" destination="1uY-4k-vTV" id="Ipg-wQ-X8p"/>
                 <outlet property="boardNameLabel" destination="8h9-7b-JcX" id="2OG-RV-u3Q"/>
                 <outlet property="itemCountLabel" destination="glS-LM-Tfs" id="M6j-18-Rv7"/>
                 <outlet property="ownerNameLabel" destination="Vng-Rb-Rz1" id="PCR-U7-OGa"/>
@@ -74,8 +77,9 @@
         </collectionViewCell>
     </objects>
     <resources>
-        <systemColor name="secondarySystemBackgroundColor">
-            <color red="0.94901960784313721" green="0.94901960784313721" blue="0.96862745098039216" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+        <image name="ellipsis" catalog="system" width="128" height="37"/>
+        <systemColor name="tertiarySystemBackgroundColor">
+            <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
         </systemColor>
     </resources>
 </document>

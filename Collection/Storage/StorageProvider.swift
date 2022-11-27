@@ -63,7 +63,7 @@ class StorageProvider {
 
         if actor == .mainApp {
             self.historyManager = StorageHistoryManager(storageProvider: self, actor: actor)
-            fetchCurrentUser()
+//            fetchCurrentUser()
         }
     }
 
@@ -76,20 +76,20 @@ class StorageProvider {
         return context
     }
 
-    func fetchCurrentUser() {
-        Task {
-            do {
-                let authStatus = try await cloudKitContainer.requestApplicationPermission(.userDiscoverability)
-                if authStatus == .granted {
-                    let userRecordID = try await cloudKitContainer.userRecordID()
-                    let userIdentity = try await cloudKitContainer.userIdentity(forUserRecordID: userRecordID)
-                    UserDefaults.username = userIdentity?.nameComponents?.formatted() ?? "You"
-                }
-            } catch {
-                print("#\(#function): Failed to fetch user, \(error)")
-            }
-        }
-    }
+//    func fetchCurrentUser() {
+//        Task {
+//            do {
+//                let authStatus = try await cloudKitContainer.requestApplicationPermission(.userDiscoverability)
+//                if authStatus == .granted {
+//                    let userRecordID = try await cloudKitContainer.userRecordID()
+//                    let userIdentity = try await cloudKitContainer.userIdentity(forUserRecordID: userRecordID)
+//                    UserDefaults.username = userIdentity?.nameComponents?.formatted() ?? "You"
+//                }
+//            } catch {
+//                print("#\(#function): Failed to fetch user, \(error)")
+//            }
+//        }
+//    }
 
     func mergeTransactions(_ transactions: [NSPersistentHistoryTransaction], to context: NSManagedObjectContext) {
         context.perform {

@@ -54,16 +54,39 @@ extension NSManagedObject {
 
     var isShared: Bool { persistentStore == storageProvider.sharedPersistentStore }
 
-    var ownerName: String? {
-        if isPrivate {
-            return UserDefaults.username
-        }
-
-        // FIXME: failed to fetch shares owned by others at first launch
+    var shareRecord: CKShare? {
         guard
             let matchedShares = try? storageProvider.persistentContainer.fetchShares(matching: [objectID]),
-            let share = matchedShares[objectID],
-            let owner = share.participants.first(where: { $0.role == .owner }),
+            let shareRecord = matchedShares[objectID]
+        else { return nil }
+
+        return shareRecord
+    }
+
+    var owner: CKShare.Participant? {
+        guard
+            let shareRecord = shareRecord,
+            let owner = shareRecord.participants.first(where: { $0.role == .owner })
+        else { return nil }
+
+        return owner
+    }
+
+    var isOwnedByCurrentUser: Bool {
+        guard isShared else { return true }
+
+        guard
+            let shareRecord = shareRecord,
+            let currentUser = shareRecord.currentUserParticipant
+        else { return false }
+
+        return currentUser.role == .owner
+    }
+
+    var ownerName: String {
+        // FIXME: failed to fetch shares owned by others at first launch
+        guard
+            let owner = owner,
             let name = owner.userIdentity.nameComponents?.formatted()
         else { return "Unknown" }
 

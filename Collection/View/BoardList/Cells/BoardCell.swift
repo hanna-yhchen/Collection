@@ -12,6 +12,7 @@ class BoardCell: UICollectionViewCell {
     @IBOutlet var boardNameLabel: UILabel!
     @IBOutlet var itemCountLabel: UILabel!
     @IBOutlet var ownerNameLabel: UILabel!
+    @IBOutlet var actionButton: UIButton!
 
     var shareHandler: (() -> Void)?
 
@@ -41,7 +42,16 @@ class BoardCell: UICollectionViewCell {
     func layoutBoard(_ board: Board) {
         boardNameLabel.text = board.name
         itemCountLabel.text = "\(board.itemCount) items"
-        ownerNameLabel.text = board.ownerName
+
+        var shareInfo = ""
+        if board.isPrivate && board.shareRecord == nil {
+            shareInfo = "Private"
+        } else if board.isOwnedByCurrentUser {
+            shareInfo = "Shared"
+        } else {
+            shareInfo = "Shared by \(board.ownerName)"
+        }
+        ownerNameLabel.text = shareInfo
     }
 
     private func setInitialLayout() {
