@@ -173,12 +173,23 @@ class BoardListViewController: UIViewController {
         }
 
         Task {
-            guard let share = await newShare(board: board) else {
-                // TODO: show failure alert
-                return
+            var existingShare: CKShare?
+
+            if let matchedShares = try? storageProvider.persistentContainer.fetchShares(matching: [board.objectID]),
+                let (_, share) = matchedShares.first {
+                existingShare = share
             }
 
-            let sharingController = UICloudSharingController(share: share, container: storageProvider.cloudKitContainer)
+            let sharingController: UICloudSharingController
+            if let existingShare = existingShare {
+                sharingController = UICloudSharingController(share: existingShare, container: storageProvider.cloudKitContainer)
+            } else {
+                // TODO: show failure alert
+                guard let share = await newShare(board: board) else {
+                    return
+                }
+                sharingController = UICloudSharingController(share: share, container: storageProvider.cloudKitContainer)
+            }
             sharingController.delegate = self
             sharingController.modalPresentationStyle = .formSheet
 
