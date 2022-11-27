@@ -10,6 +10,15 @@
       }
     },
     {
+      "identity" : "lgsidemenucontroller",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/Friend-LGA/LGSideMenuController",
+      "state" : {
+        "revision" : "0bc42f704fb2b60cd54b13f813a0e4e6875f569a",
+        "version" : "3.1.2"
+      }
+    },
+    {
       "identity" : "progresshud",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/relatedcode/ProgressHUD",

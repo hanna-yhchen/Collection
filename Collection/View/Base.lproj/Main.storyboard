@@ -21,13 +21,13 @@
                         <subviews>
                             <collectionView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" dataMode="prototypes" translatesAutoresizingMaskIntoConstraints="NO" id="JSz-EI-3rn">
                                 <rect key="frame" x="0.0" y="91" width="390" height="719"/>
-                                <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                                <color key="backgroundColor" systemColor="systemGroupedBackgroundColor"/>
                                 <collectionViewLayout key="collectionViewLayout" id="lK4-zg-Ekp"/>
                                 <cells/>
                             </collectionView>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="pnV-hh-zbH"/>
-                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                        <color key="backgroundColor" systemColor="systemGroupedBackgroundColor"/>
                         <constraints>
                             <constraint firstItem="pnV-hh-zbH" firstAttribute="trailing" secondItem="JSz-EI-3rn" secondAttribute="trailing" id="CCc-zs-kpn"/>
                             <constraint firstItem="JSz-EI-3rn" firstAttribute="leading" secondItem="pnV-hh-zbH" secondAttribute="leading" id="Wvg-sE-TA5"/>
@@ -90,16 +90,8 @@
                         </constraints>
                     </view>
                     <toolbarItems/>
-                    <navigationItem key="navigationItem" id="Ogh-qN-4uA">
-                        <barButtonItem key="rightBarButtonItem" title="Item" image="square.grid.2x2" catalog="system" id="TGF-Kr-a7w">
-                            <connections>
-                                <action selector="layoutButtonTapped" destination="BYZ-38-t0r" id="ieX-Sl-zAI"/>
-                            </connections>
-                        </barButtonItem>
-                    </navigationItem>
                     <simulatedNavigationBarMetrics key="simulatedTopBarMetrics" prompted="NO"/>
                     <connections>
-                        <outlet property="layoutButton" destination="TGF-Kr-a7w" id="kpV-Uv-DZK"/>
                         <outlet property="plusButton" destination="tle-7M-0pr" id="5s7-eS-dKV"/>
                     </connections>
                 </viewController>
@@ -831,7 +823,6 @@
         <image name="plus.circle.fill" catalog="system" width="128" height="123"/>
         <image name="record.circle" catalog="system" width="128" height="123"/>
         <image name="square.and.pencil" catalog="system" width="128" height="113"/>
-        <image name="square.grid.2x2" catalog="system" width="128" height="114"/>
         <image name="tag" catalog="system" width="128" height="118"/>
         <image name="tag.fill" catalog="system" width="128" height="118"/>
         <image name="tray.and.arrow.down" catalog="system" width="128" height="111"/>

@@ -14,20 +14,37 @@ import UIKit
 
 class ItemListViewController: UIViewController {
 
+    enum Scope {
+        case allItems
+        case board(ObjectID)
+        case tag(ObjectID)
+
+        var predicate: NSPredicate? {
+            switch self {
+            case .allItems:
+                return nil
+            case .board(let boardID):
+                return NSPredicate(format: "%K == %@", #keyPath(Item.board), boardID)
+            case .tag(let tagID):
+                return NSPredicate(format: "%K CONTAINS %@", #keyPath(Item.tags), tagID)
+            }
+        }
+    }
+
     typealias Snapshot = NSDiffableDataSourceSnapshot<Int, NSManagedObjectID>
     typealias DataSource = UICollectionViewDiffableDataSource<Int, NSManagedObjectID>
 
-    private let boardID: NSManagedObjectID
-    private lazy var board: Board = {
-        let context = storageProvider.persistentContainer.viewContext
-        do {
-            guard let board = try context.existingObject(with: boardID) as? Board else {
-                fatalError("#\(#function): failed to downcast to board object")
-            }
+    // MARK: - Properties
 
-            return board
-        } catch let error as NSError {
-            fatalError("#\(#function): failed to retrieve board object by id, \(error)")
+    private let scope: Scope
+
+    #warning("NEED refactoring. This is only used for importing now.")
+    private lazy var boardID: ObjectID = {
+        switch scope {
+        case .allItems, .tag:
+            return storageProvider.getInboxBoardID()
+        case .board(let boardID):
+            return boardID
         }
     }()
 
@@ -36,7 +53,7 @@ class ItemListViewController: UIViewController {
     // TODO: move fetchedResultsController logic to viewModel
     private lazy var fetchedResultsController: NSFetchedResultsController<Item> = {
         let fetchRequest = Item.fetchRequest()
-        fetchRequest.predicate = NSPredicate(format: "board == %@", board)
+        fetchRequest.predicate = scope.predicate
         fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \Item.creationDate, ascending: false)]
 
         let controller = NSFetchedResultsController(
@@ -59,7 +76,7 @@ class ItemListViewController: UIViewController {
             UIAction(
                 title: layout.title,
                 image: layout.buttonIcon
-            ) { _ in
+            ) {[unowned self] _ in
                 self.changeLayout(layout)
             }
         }
@@ -70,24 +87,19 @@ class ItemListViewController: UIViewController {
     private lazy var collectionView = ItemCollectionView(frame: view.bounds, traits: view.traitCollection)
 
     @IBOutlet var plusButton: UIButton!
-    @IBOutlet var layoutButton: UIBarButtonItem!
+//    @IBOutlet var layoutButton: UIBarButtonItem!
+    private lazy var layoutButton = UIBarButtonItem(
+        image: currentLayout.buttonIcon,
+        style: .plain,
+        target: self,
+        action: #selector(layoutButtonTapped))
 
     // MARK: - Lifecycle
 
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        self.title = board.name
-        plusButton.layer.shadowColor = UIColor.black.cgColor
-        plusButton.layer.shadowOpacity = 0.7
-        plusButton.layer.shadowOffset = CGSize(width: 0, height: 2)
-
-        view.insertSubview(collectionView, belowSubview: plusButton)
-        collectionView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-        collectionView.delegate = self
-
-        layoutButton.menu = layoutMenu(selectedIndex: ItemLayout.smallCard.rawValue)
-
+        configureHierarchy()
         addObservers()
     }
 
@@ -104,13 +116,15 @@ class ItemListViewController: UIViewController {
         try? fetchedResultsController.performFetch()
     }
 
+    // MARK: - Initializers
+
     init?(
         coder: NSCoder,
-        boardID: NSManagedObjectID,
+        scope: Scope,
         storageProvider: StorageProvider,
         itemManager: ItemManager = ItemManager.shared
     ) {
-        self.boardID = boardID
+        self.scope = scope
         self.storageProvider = storageProvider
         self.itemManager = itemManager
 
@@ -165,12 +179,12 @@ class ItemListViewController: UIViewController {
     }
 
 
-    @IBAction func layoutButtonTapped() {
+    @objc private func layoutButtonTapped() {
         let newLayout = currentLayout.next
         changeLayout(newLayout)
     }
 
-    func changeLayout(_ layout: ItemLayout) {
+    private func changeLayout(_ layout: ItemLayout) {
         guard layout != currentLayout else { return }
 
         layoutButton.image = layout.buttonIcon
@@ -184,8 +198,50 @@ class ItemListViewController: UIViewController {
             self.collectionView.setLayout(layout, animated: true)
         }
     }
+}
 
-    // MARK: - Private Methods
+// MARK: - Private
+
+extension ItemListViewController {
+    private func configureHierarchy() {
+        switch scope {
+        case .allItems:
+            title = "All Items"
+        case .board(let boardID):
+            let context = storageProvider.persistentContainer.viewContext
+            do {
+                guard let board = try context.existingObject(with: boardID) as? Board else {
+                    fatalError("#\(#function): failed to downcast to board object")
+                }
+                title = board.name
+            } catch {
+                fatalError("#\(#function): failed to retrieve board object by id, \(error)")
+            }
+        case .tag(let tagID):
+            plusButton.isHidden = true
+
+            let context = storageProvider.persistentContainer.viewContext
+            do {
+                guard let tag = try context.existingObject(with: tagID) as? Tag else {
+                    fatalError("#\(#function): failed to downcast to board object")
+                }
+                title = tag.name
+            } catch {
+                fatalError("#\(#function): failed to retrieve board object by id, \(error)")
+            }
+        }
+
+        plusButton.layer.shadowColor = UIColor.black.cgColor
+        plusButton.layer.shadowOpacity = 0.7
+        plusButton.layer.shadowOffset = CGSize(width: 0, height: 2)
+
+        view.insertSubview(collectionView, belowSubview: plusButton)
+        collectionView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        collectionView.delegate = self
+
+        navigationItem.rightBarButtonItem = layoutButton
+        layoutButton.menu = layoutMenu(selectedIndex: ItemLayout.smallCard.rawValue)
+    }
 
     private func createDataSource() -> DataSource {
         DataSource(collectionView: collectionView) {[unowned self] collectionView, indexPath, objectID in
@@ -254,8 +310,8 @@ class ItemListViewController: UIViewController {
             }
 
             present(nav, animated: true)
-        case .comments:
-            break
+//        case .comments:
+//            break
         case .move:
             let selectorVC = UIStoryboard.main
                 .instantiateViewController(identifier: BoardSelectorViewController.storyboardID) { coder in
@@ -287,14 +343,30 @@ class ItemListViewController: UIViewController {
 
     private func addObservers() {
         storageProvider.historyManager?.storeDidChangePublisher
+            .map {[weak self] transactions -> [NSPersistentHistoryTransaction] in
+                guard let `self` = self else { return [] }
+                let itemEntityName = Item.entity().name
+
+                return transactions.filter { transaction in
+                    if let changes = transaction.changes {
+                        switch self.scope {
+                        case .allItems:
+                            return changes.contains { $0.changedObjectID.entity.name == itemEntityName }
+                        case .board(let boardID):
+                            return changes.contains { $0.changedObjectID == boardID }
+                        case .tag(let tagID):
+                            return changes.contains { $0.changedObjectID == tagID }
+                        }
+                    }
+                    return false
+                }
+            }
             .receive(on: DispatchQueue.main)
             .sink {[weak self] transactions in
-                guard let `self` = self else { return }
+                guard let self = self, !transactions.isEmpty else { return }
 
-                let boardTransactions = self.currentBoardTransactions(from: transactions)
-                guard !boardTransactions.isEmpty else { return }
                 self.storageProvider.mergeTransactions(
-                    boardTransactions,
+                    transactions,
                     to: self.fetchedResultsController.managedObjectContext)
             }
             .store(in: &subscriptions)
@@ -479,15 +551,6 @@ class ItemListViewController: UIViewController {
         present(safariController, animated: true)
     }
 
-    private func currentBoardTransactions(from transactions: [NSPersistentHistoryTransaction]) -> [NSPersistentHistoryTransaction] {
-        transactions.filter { transaction in
-            if let changes = transaction.changes {
-                return changes.contains { $0.changedObjectID == boardID }
-            }
-            return false
-        }
-    }
-
     private func reloadItems(_ items: [NSManagedObjectID]) {
         Task { @MainActor in
             var newSnapshot = dataSource.snapshot()
@@ -645,6 +708,8 @@ extension ItemListViewController: NSFetchedResultsControllerDelegate {
 
 extension ItemListViewController {
     override func paste(itemProviders: [NSItemProvider]) {
+        guard !itemProviders.isEmpty else { return }
+
         HUD.showImporting()
 
         Task {

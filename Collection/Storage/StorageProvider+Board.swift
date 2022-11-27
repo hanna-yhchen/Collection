@@ -7,6 +7,8 @@
 
 import CoreData
 
+// MARK: - Board CRUD
+
 extension StorageProvider {
     func addBoard(name: String, context: NSManagedObjectContext) {
         guard !hasExistedBoardName(name, context: context) else { return }
@@ -31,7 +33,19 @@ extension StorageProvider {
     }
 }
 
+// MARK: - Helper
+
 extension StorageProvider {
+    func getInboxBoardID() -> ObjectID {
+        guard
+            let url = URL(string: UserDefaults.defaultBoardURL),
+            let boardID = persistentContainer.persistentStoreCoordinator
+                .managedObjectID(forURIRepresentation: url)
+        else { fatalError("#\(#function): Failed to retrieve default inbox board") }
+
+        return boardID
+    }
+
     private func hasExistedBoardName(_ name: String, context: NSManagedObjectContext) -> Bool {
         let fetchRequest = Board.fetchRequest()
         fetchRequest.predicate = NSPredicate(format: "%K = %@", #keyPath(Board.name), name as String)

@@ -6,7 +6,6 @@
 //
 
 import CloudKit
-import Combine
 import CoreData
 import UIKit
 
@@ -19,6 +18,7 @@ class BoardListViewController: UIViewController {
     // TODO: move fetchedResultsController logic to viewModel
     private lazy var fetchedResultsController: NSFetchedResultsController<Board> = {
         let fetchRequest = Board.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "%K != %@", #keyPath(Board.name), "Inbox")
         fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \Board.sortOrder, ascending: false)]
 
         let controller = NSFetchedResultsController(
@@ -33,7 +33,7 @@ class BoardListViewController: UIViewController {
 
     private var dataSource: DataSource?
     private var boardToShare: Board?
-    private var subscriptions: Set<AnyCancellable> = []
+    private lazy var subscriptions = CancellableSet()
 
     @IBOutlet var collectionView: UICollectionView!
 
@@ -42,7 +42,7 @@ class BoardListViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        self.title = "All Boards"
+        self.title = "Boards"
         navigationController?.navigationBar.prefersLargeTitles = true
         configureCollectionView()
         configureDataSource()
@@ -68,11 +68,6 @@ class BoardListViewController: UIViewController {
     // MARK: - Actions
 
     @IBAction func addButtonTapped() {
-//        if let board = fetchedResultsController.fetchedObjects?[0] {
-//            fetchedResultsController.managedObjectContext.delete(board)
-//            try? fetchedResultsController.managedObjectContext.save()
-//            return
-//        }
         let alert = UIAlertController(title: "New board", message: "", preferredStyle: .alert)
 
         alert.addTextField { textField in
@@ -129,14 +124,22 @@ class BoardListViewController: UIViewController {
 
     private func addObservers() {
         storageProvider.historyManager?.storeDidChangePublisher
+            .map { transactions -> [NSPersistentHistoryTransaction] in
+                let boardEntityName = Board.entity().name
+
+                return transactions.filter { transaction in
+                    if let changes = transaction.changes {
+                        return changes.contains { $0.changedObjectID.entity.name == boardEntityName }
+                    }
+                    return false
+                }
+            }
             .receive(on: DispatchQueue.main)
             .sink {[weak self] transactions in
-                guard let `self` = self else { return }
+                guard let self = self, !transactions.isEmpty else { return }
 
-                let boardTransactions = self.boardTransactions(from: transactions)
-                guard !boardTransactions.isEmpty else { return }
                 self.storageProvider.mergeTransactions(
-                    boardTransactions,
+                    transactions,
                     to: self.fetchedResultsController.managedObjectContext)
             }
             .store(in: &subscriptions)
@@ -195,17 +198,6 @@ class BoardListViewController: UIViewController {
             return nil
         }
     }
-
-    private func boardTransactions(from transactions: [NSPersistentHistoryTransaction]) -> [NSPersistentHistoryTransaction] {
-        let boardEntityName = Board.entity().name
-
-        return transactions.filter { transaction in
-            if let changes = transaction.changes {
-                return changes.contains { $0.changedObjectID.entity.name == boardEntityName }
-            }
-            return false
-        }
-    }
 }
 
 // MARK: - NSFetchedResultsControllerDelegate
@@ -243,10 +235,10 @@ extension BoardListViewController: UICollectionViewDelegate {
         guard let boardID = dataSource?.itemIdentifier(for: indexPath) else { return }
 
         let itemListVC = UIStoryboard.main
-            .instantiateViewController(identifier: "ItemListViewController") { coder in
+            .instantiateViewController(identifier: ItemListViewController.storyboardID) { coder in
                 ItemListViewController(
                     coder: coder,
-                    boardID: boardID,
+                    scope: .board(boardID),
                     storageProvider: self.storageProvider)
             }
         navigationController?.pushViewController(itemListVC, animated: true)

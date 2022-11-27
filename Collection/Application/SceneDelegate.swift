@@ -19,12 +19,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
         self.window = UIWindow(windowScene: windowScene)
 
-        let boardListVC = UIStoryboard.main
-            .instantiateViewController(identifier: String(describing: BoardListViewController.self)) { coder in
-                BoardListViewController(coder: coder, storageProvider: self.storageProvider)
-            }
-
-        window?.rootViewController = UINavigationController(rootViewController: boardListVC)
+        window?.rootViewController = MainFlowController(storageProvider: storageProvider)
         window?.makeKeyAndVisible()
     }
 
