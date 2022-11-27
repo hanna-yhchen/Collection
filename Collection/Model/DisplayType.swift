@@ -24,8 +24,8 @@ enum DisplayType: Int16 {
                 paletteColors: [.tintColor, .tertiarySystemBackground, .tertiarySystemBackground])
             return UIImage(systemName: "play.circle.fill", withConfiguration: colorConfig)
         case .audio:
-            let sizeConfig = UIImage.SymbolConfiguration(pointSize: 50)
-            return UIImage(systemName: "waveform.path", withConfiguration: sizeConfig)
+            let config = UIImage.SymbolConfiguration(pointSize: 65)
+            return UIImage(systemName: "waveform.path", withConfiguration: config)
         case .note:
             return UIImage(systemName: "textformat")
         case .link:

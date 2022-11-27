@@ -59,11 +59,11 @@ enum ItemLayout: Int, CaseIterable {
     var buttonIcon: UIImage? {
         switch self {
         case .largeCard:
-            return UIImage(systemName: "rectangle.grid.1x2")
+            return UIImage(systemName: "square.fill.text.grid.1x2")
         case .smallCard:
-            return UIImage(systemName: "square.grid.2x2")
+            return UIImage(systemName: "list.bullet.below.rectangle")
         case .grid:
-            return UIImage(systemName: "square.grid.3x3")
+            return UIImage(systemName: "square.grid.2x2")
         }
     }
 
