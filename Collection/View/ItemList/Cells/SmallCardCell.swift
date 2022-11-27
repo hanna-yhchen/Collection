@@ -11,6 +11,8 @@ import UIKit
 class SmallCardCell: UICollectionViewCell, ItemCell, ItemActionSendable {
     static let bottomAreaHeight: CGFloat = 4 + 17 + 14 + 2 + 18 + 4
 
+    var viewForZooming: UIView? { thumbnailImageView }
+
     @IBOutlet var iconImageView: UIImageView!
     @IBOutlet var fileTypeLabel: UILabel!
     @IBOutlet var noteStackView: UIStackView!
@@ -25,7 +27,7 @@ class SmallCardCell: UICollectionViewCell, ItemCell, ItemActionSendable {
     var objectID: ObjectID?
 
     lazy var actionSubject = PassthroughSubject<(ItemAction, ObjectID), Never>()
-    lazy var subscriptions = Set<AnyCancellable>()
+    lazy var subscriptions = CancellableSet()
 
     // MARK: - Lifecycle
 
@@ -76,12 +78,8 @@ class SmallCardCell: UICollectionViewCell, ItemCell, ItemActionSendable {
             noteStackView.isHidden = false
             iconImageView.image = nil
         case .link:
-            if let data = item.itemData?.data, let url = URL(dataRepresentation: data, relativeTo: nil) {
-                configureLinkPreview(for: url)
-            } else {
-                fileTypeLabel.isHidden = false
-                fileTypeLabel.text = "Wrong data"
-            }
+            configureLinkPreview(for: item)
+            return
         case .file:
             if let thumbnail = item.thumbnail?.data, let thumbnailImage = UIImage(data: thumbnail) {
                 thumbnailImageView.image = thumbnailImage
@@ -102,7 +100,12 @@ class SmallCardCell: UICollectionViewCell, ItemCell, ItemActionSendable {
         }
     }
 
-    private func configureLinkPreview(for url: URL) {
+    func configureLinkPreview(for item: Item) {
+        guard
+            let data = item.itemData?.data,
+            let url = URL(dataRepresentation: data, relativeTo: nil)
+        else { return }
+
         RichLinkProvider.shared.fetchMetadata(for: url)
             .receive(on: DispatchQueue.main)
             .catch { error -> Just<RichLinkProvider.RichLink> in
@@ -113,7 +116,11 @@ class SmallCardCell: UICollectionViewCell, ItemCell, ItemActionSendable {
                 guard let `self` = self else { return }
 
                 self.titleStackView.isHidden = false
-                self.titleLabel.text = richLink.title
+                if let name = item.name, !name.isEmpty {
+                    self.titleLabel.text = name
+                } else {
+                    self.titleLabel.text = richLink.title
+                }
                 self.hostLabel.text = richLink.host
                 self.hostLabel.isHidden = false
                 if let thumbnail = richLink.image {
@@ -148,7 +155,6 @@ class SmallCardCell: UICollectionViewCell, ItemCell, ItemActionSendable {
 
         iconImageView.image = nil
         iconImageView.tintColor = .secondaryLabel
-        iconImageView.preferredSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 30)
 
         fileTypeLabel.isHidden = true
 

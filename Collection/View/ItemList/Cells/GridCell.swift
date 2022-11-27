@@ -10,6 +10,8 @@ import UIKit
 
 class GridCell: UICollectionViewCell, ItemCell {
 
+    var viewForZooming: UIView? { thumbnailImageView }
+
     @IBOutlet var iconImageView: UIImageView!
     @IBOutlet var thumbnailImageView: UIImageView!
     @IBOutlet var noteStackView: UIStackView!
@@ -42,10 +44,8 @@ class GridCell: UICollectionViewCell, ItemCell {
 
         switch item.type {
         case .link:
-            if let data = item.itemData?.data, let url = URL(dataRepresentation: data, relativeTo: nil) {
-                configureLinkPreview(for: url)
-                return
-            }
+            configureLinkPreview(for: item)
+            return
         case .note:
             if let note = item.note, !note.isEmpty {
                 noteLabel.text = note
@@ -67,7 +67,12 @@ class GridCell: UICollectionViewCell, ItemCell {
         }
     }
 
-    func configureLinkPreview(for url: URL) {
+    private func configureLinkPreview(for item: Item) {
+        guard
+            let data = item.itemData?.data,
+            let url = URL(dataRepresentation: data, relativeTo: nil)
+        else { return }
+
         richLinkSubscription = RichLinkProvider.shared.fetchMetadata(for: url)
             .receive(on: DispatchQueue.main)
             .catch { error -> Just<RichLinkProvider.RichLink> in
@@ -80,9 +85,15 @@ class GridCell: UICollectionViewCell, ItemCell {
                 if let thumbnail = richLink.image {
                     self.thumbnailImageView.image = thumbnail
                     self.iconImageView.image = nil
+                    self.titleLabel.isHidden = true
                 } else {
-                    self.titleLabel.text = richLink.title
                     self.titleLabel.isHidden = false
+
+                    if let name = item.name, !name.isEmpty {
+                        self.titleLabel.text = name
+                    } else {
+                        self.titleLabel.text = richLink.title
+                    }
                 }
             }
     }

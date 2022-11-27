@@ -48,7 +48,7 @@ extension ItemActionSendable {
 enum ItemAction: Int, CaseIterable {
     case rename
     case tags
-    case comments
+//    case comments
     case move
     case copy
     case delete
@@ -59,8 +59,8 @@ enum ItemAction: Int, CaseIterable {
             return "Rename"
         case .tags:
             return "Edit tags"
-        case .comments:
-            return "Comments"
+//        case .comments:
+//            return "Comments"
         case .move:
             return "Move to"
         case .copy:

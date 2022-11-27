@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="21507" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES">
-    <device id="retina5_9" orientation="portrait" appearance="dark"/>
+    <device id="retina5_9" orientation="portrait" appearance="light"/>
     <dependencies>
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="21505"/>
@@ -26,13 +26,13 @@
                                 <rect key="frame" x="0.0" y="0.0" width="163" height="161"/>
                             </imageView>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="PDF" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="jcP-FE-QlJ">
-                                <rect key="frame" x="67.666666666666671" y="106.66666666666667" width="28" height="17"/>
+                                <rect key="frame" x="67.666666666666671" y="115.33333333333333" width="28" height="16.999999999999986"/>
                                 <fontDescription key="fontDescription" type="boldSystem" pointSize="14"/>
                                 <color key="textColor" systemColor="secondaryLabelColor"/>
                                 <nil key="highlightedColor"/>
                             </label>
-                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="eoD-FO-L6m">
-                                <rect key="frame" x="64" y="63.666666666666657" width="35.333333333333343" height="34"/>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="eoD-FO-L6m">
+                                <rect key="frame" x="72" y="54.333333333333329" width="19.333333333333329" height="52.666666666666664"/>
                                 <imageReference key="image" image="play.circle.fill" catalog="system" renderingMode="hierarchical">
                                     <hierarchicalColors>
                                         <color systemColor="secondaryLabelColor"/>
@@ -40,7 +40,7 @@
                                         <color systemColor="tertiarySystemBackgroundColor"/>
                                     </hierarchicalColors>
                                 </imageReference>
-                                <preferredSymbolConfiguration key="preferredSymbolConfiguration" configurationType="pointSize" pointSize="30"/>
+                                <preferredSymbolConfiguration key="preferredSymbolConfiguration" weight="light"/>
                             </imageView>
                             <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" translatesAutoresizingMaskIntoConstraints="NO" id="Hdm-W0-qe7">
                                 <rect key="frame" x="6" y="4" width="151" height="157"/>
@@ -68,6 +68,7 @@
                             <constraint firstItem="jcP-FE-QlJ" firstAttribute="centerX" secondItem="Ghk-Er-g46" secondAttribute="centerX" id="U2C-Sq-LgJ"/>
                             <constraint firstAttribute="width" secondItem="Ghk-Er-g46" secondAttribute="height" multiplier="1:1" priority="999" id="Vcz-Q0-SA3"/>
                             <constraint firstItem="itV-Mu-wE3" firstAttribute="top" secondItem="Ghk-Er-g46" secondAttribute="top" id="e8J-l3-X9J"/>
+                            <constraint firstItem="eoD-FO-L6m" firstAttribute="height" secondItem="Ghk-Er-g46" secondAttribute="height" multiplier="1/3" id="h44-y7-eqe"/>
                             <constraint firstItem="eoD-FO-L6m" firstAttribute="centerX" secondItem="Ghk-Er-g46" secondAttribute="centerX" id="lYd-Ng-UBF"/>
                             <constraint firstItem="eoD-FO-L6m" firstAttribute="centerY" secondItem="Ghk-Er-g46" secondAttribute="centerY" id="ubk-9u-wIH"/>
                             <constraint firstItem="jcP-FE-QlJ" firstAttribute="top" secondItem="eoD-FO-L6m" secondAttribute="bottom" constant="8" id="wRa-zg-XIE"/>

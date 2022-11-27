@@ -17,6 +17,8 @@ class LargeCardCell: UICollectionViewCell, ItemCell, ItemActionSendable {
         return components + spacing * 8
     }()
 
+    var viewForZooming: UIView? { thumbnailImageView }
+
     @IBOutlet var thumbnailImageView: UIImageView!
     @IBOutlet var iconImageView: UIImageView!
     @IBOutlet var noteStackView: UIStackView!
@@ -33,7 +35,7 @@ class LargeCardCell: UICollectionViewCell, ItemCell, ItemActionSendable {
     var objectID: ObjectID?
 
     lazy var actionSubject = PassthroughSubject<(ItemAction, ObjectID), Never>()
-    lazy var subscriptions = Set<AnyCancellable>()
+    lazy var subscriptions = CancellableSet()
 
     override func awakeFromNib() {
         super.awakeFromNib()
@@ -67,10 +69,8 @@ class LargeCardCell: UICollectionViewCell, ItemCell, ItemActionSendable {
 
         switch item.type {
         case .link:
-            if let data = item.itemData?.data, let url = URL(dataRepresentation: data, relativeTo: nil) {
-                configureLinkPreview(for: url)
-                return
-            }
+            configureLinkPreview(for: item)
+            return
         case .note:
             if let note = item.note, !note.isEmpty {
                 noteLabel.text = note
@@ -98,7 +98,12 @@ class LargeCardCell: UICollectionViewCell, ItemCell, ItemActionSendable {
         }
     }
 
-    private func configureLinkPreview(for url: URL) {
+    func configureLinkPreview(for item: Item) {
+        guard
+            let data = item.itemData?.data,
+            let url = URL(dataRepresentation: data, relativeTo: nil)
+        else { return }
+
         RichLinkProvider.shared.fetchMetadata(for: url)
             .receive(on: DispatchQueue.main)
             .catch { error -> Just<RichLinkProvider.RichLink> in
@@ -108,7 +113,11 @@ class LargeCardCell: UICollectionViewCell, ItemCell, ItemActionSendable {
             .sink {[weak self] richLink in
                 guard let `self` = self else { return }
 
-                self.titleLabel.text = richLink.title
+                if let name = item.name, !name.isEmpty {
+                    self.titleLabel.text = name
+                } else {
+                    self.titleLabel.text = richLink.title
+                }
                 self.subtitleLabel.text = richLink.host
                 if let thumbnail = richLink.image {
                     self.thumbnailImageView.image = thumbnail
@@ -177,7 +186,6 @@ class LargeCardCell: UICollectionViewCell, ItemCell, ItemActionSendable {
 
         iconImageView.image = nil
         iconImageView.tintColor = .secondaryLabel
-        iconImageView.preferredSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 40)
 
         noteLabel.text = nil
         noteStackView.isHidden = true

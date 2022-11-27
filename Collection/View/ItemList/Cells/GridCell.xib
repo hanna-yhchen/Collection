@@ -21,10 +21,10 @@
                     <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="Mnf-Ka-ajI">
                         <rect key="frame" x="0.0" y="0.0" width="90" height="90"/>
                     </imageView>
-                    <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="doc" catalog="system" translatesAutoresizingMaskIntoConstraints="NO" id="Wqh-V7-X9p">
-                        <rect key="frame" x="29" y="27.333333333333336" width="32" height="35.666666666666671"/>
+                    <imageView userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="doc" catalog="system" translatesAutoresizingMaskIntoConstraints="NO" id="Wqh-V7-X9p">
+                        <rect key="frame" x="36" y="30" width="18" height="30.333333333333329"/>
                         <color key="tintColor" systemColor="secondaryLabelColor"/>
-                        <preferredSymbolConfiguration key="preferredSymbolConfiguration" configurationType="pointSize" pointSize="30"/>
+                        <preferredSymbolConfiguration key="preferredSymbolConfiguration" weight="light"/>
                     </imageView>
                     <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" translatesAutoresizingMaskIntoConstraints="NO" id="a6K-XV-qUV" userLabel="Note Stack View">
                         <rect key="frame" x="4" y="4" width="82" height="82"/>
@@ -55,6 +55,7 @@
                 <constraint firstItem="Wqh-V7-X9p" firstAttribute="centerX" secondItem="gTV-IL-0wX" secondAttribute="centerX" id="6B0-DW-xnZ"/>
                 <constraint firstItem="Wqh-V7-X9p" firstAttribute="centerY" secondItem="gTV-IL-0wX" secondAttribute="centerY" id="7Y0-kn-Edu"/>
                 <constraint firstAttribute="trailing" secondItem="Mnf-Ka-ajI" secondAttribute="trailing" id="DTE-xx-tSp"/>
+                <constraint firstItem="Wqh-V7-X9p" firstAttribute="height" secondItem="gTV-IL-0wX" secondAttribute="height" multiplier="1/3" id="G3t-08-ES8"/>
                 <constraint firstItem="a6K-XV-qUV" firstAttribute="leading" secondItem="gTV-IL-0wX" secondAttribute="leading" constant="4" id="LAW-sh-ADd"/>
                 <constraint firstItem="Mnf-Ka-ajI" firstAttribute="top" secondItem="gTV-IL-0wX" secondAttribute="top" id="Noe-jU-3Nj"/>
                 <constraint firstItem="Mnf-Ka-ajI" firstAttribute="leading" secondItem="gTV-IL-0wX" secondAttribute="leading" id="P68-wW-XY8"/>

@@ -769,4 +769,14 @@ extension ItemListViewController: QLPreviewControllerDelegate {
     func previewControllerDidDismiss(_ controller: QLPreviewController) {
         previewingItem = nil
     }
+
+    func previewController(_ controller: QLPreviewController, transitionViewFor item: QLPreviewItem) -> UIView? {
+        guard
+            let previewItem = item as? PreviewItem,
+            let indexPath = dataSource.indexPath(for: previewItem.objectID),
+            let cell = collectionView.cellForItem(at: indexPath) as? ItemCell
+        else { return nil }
+
+        return cell.viewForZooming
+    }
 }

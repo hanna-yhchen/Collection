@@ -9,6 +9,7 @@ import UIKit
 
 protocol ItemCell: UICollectionViewCell {
     func configure(for item: Item)
+    var viewForZooming: UIView? { get }
 }
 
 class ItemCollectionView: UICollectionView {

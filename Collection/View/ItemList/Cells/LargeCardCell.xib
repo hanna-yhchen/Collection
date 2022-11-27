@@ -27,10 +27,10 @@
                                     <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="JwP-MK-cYo">
                                         <rect key="frame" x="0.0" y="0.0" width="174.66666666666666" height="250"/>
                                     </imageView>
-                                    <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="doc" catalog="system" translatesAutoresizingMaskIntoConstraints="NO" id="yi5-dg-kbm">
-                                        <rect key="frame" x="66" y="101.66666666666666" width="43" height="47.333333333333343"/>
+                                    <imageView userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="doc" catalog="system" translatesAutoresizingMaskIntoConstraints="NO" id="yi5-dg-kbm">
+                                        <rect key="frame" x="58.333333333333329" y="115" width="58.333333333333329" height="20.666666666666671"/>
                                         <color key="tintColor" systemColor="secondaryLabelColor"/>
-                                        <preferredSymbolConfiguration key="preferredSymbolConfiguration" configurationType="pointSize" pointSize="40"/>
+                                        <preferredSymbolConfiguration key="preferredSymbolConfiguration" weight="light"/>
                                     </imageView>
                                     <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" translatesAutoresizingMaskIntoConstraints="NO" id="bql-IT-7sM" userLabel="Note Stack">
                                         <rect key="frame" x="6" y="4" width="162.66666666666666" height="242"/>
@@ -58,6 +58,7 @@
                                     <constraint firstItem="JwP-MK-cYo" firstAttribute="leading" secondItem="Ram-4E-TpP" secondAttribute="leading" id="Xk9-sq-oXS"/>
                                     <constraint firstAttribute="bottom" secondItem="bql-IT-7sM" secondAttribute="bottom" constant="4" id="bXe-32-exJ"/>
                                     <constraint firstAttribute="trailing" secondItem="bql-IT-7sM" secondAttribute="trailing" constant="6" id="gH1-aq-nVe"/>
+                                    <constraint firstItem="yi5-dg-kbm" firstAttribute="width" secondItem="Ram-4E-TpP" secondAttribute="width" multiplier="1/3" id="lvn-df-5ls"/>
                                     <constraint firstItem="bql-IT-7sM" firstAttribute="top" secondItem="Ram-4E-TpP" secondAttribute="top" constant="4" id="tTn-Xm-TrU"/>
                                 </constraints>
                             </view>
@@ -67,7 +68,7 @@
                                     <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" spacing="4" translatesAutoresizingMaskIntoConstraints="NO" id="Yci-WL-gpi">
                                         <rect key="frame" x="8.0000000000000142" y="4" width="246.33333333333337" height="242"/>
                                         <subviews>
-                                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" verticalCompressionResistancePriority="751" text="Title" textAlignment="natural" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" minimumFontSize="12" translatesAutoresizingMaskIntoConstraints="NO" id="Dwr-GC-dXE">
+                                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" verticalCompressionResistancePriority="751" text="Title" textAlignment="natural" lineBreakMode="tailTruncation" numberOfLines="3" baselineAdjustment="alignBaselines" minimumFontSize="12" translatesAutoresizingMaskIntoConstraints="NO" id="Dwr-GC-dXE">
                                                 <rect key="frame" x="0.0" y="0.0" width="246.33333333333334" height="17"/>
                                                 <fontDescription key="fontDescription" type="system" weight="semibold" pointSize="14"/>
                                                 <nil key="textColor"/>
