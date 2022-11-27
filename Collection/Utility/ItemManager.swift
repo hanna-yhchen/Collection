@@ -137,10 +137,8 @@ final class ItemManager {
                     if provider.hasItemConformingToTypeIdentifier(UTType.url.identifier)
                         && !provider.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier) {
                         try await processURL(provider: provider, saveInto: boardID)
-                        await taskCounter.decrement()
                     } else if provider.hasItemConformingToTypeIdentifier(UTType.utf8PlainText.identifier) {
                         try await processText(provider: provider, saveInto: boardID)
-                        await taskCounter.decrement()
                     } else {
                         try await processFile(provider: provider, saveInto: boardID, isSecurityScoped: isSecurityScoped)
                     }

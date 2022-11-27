@@ -58,7 +58,7 @@ enum ItemAction: Int, CaseIterable {
         case .rename:
             return "Rename"
         case .tags:
-            return "Edit tags"
+            return "Tags"
 //        case .comments:
 //            return "Comments"
         case .move:

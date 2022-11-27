@@ -27,6 +27,8 @@ class NameEditorViewController: UIViewController {
     }
     var cancellable: AnyCancellable?
 
+    private var originalName: String?
+
     // MARK: - Lifecycle
 
     override func viewDidLoad() {
@@ -42,6 +44,17 @@ class NameEditorViewController: UIViewController {
         nameTextField.becomeFirstResponder()
     }
 
+    // MARK: - Initializer
+
+    init?(coder: NSCoder, originalName: String?) {
+        self.originalName = originalName
+        super.init(coder: coder)
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
     // MARK: - Actions
 
     @IBAction func saveButtonTapped() {
@@ -55,6 +68,7 @@ class NameEditorViewController: UIViewController {
     // MARK: - Private
 
     private func configureUI() {
+        nameTextField.text = originalName
         view.backgroundColor = .clear
 
         sheetView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]

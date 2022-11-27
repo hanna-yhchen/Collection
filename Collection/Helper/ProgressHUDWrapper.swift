@@ -27,8 +27,8 @@ enum HUD {
         ProgressHUD.showSucceed()
     }
 
-    static func showFailed() {
-        ProgressHUD.showFailed()
+    static func showFailed(message: String? = nil) {
+        ProgressHUD.showFailed(message)
     }
 
     static func dismiss() {

@@ -40,9 +40,6 @@
                         <buttonConfiguration key="configuration" style="plain" image="ellipsis" catalog="system">
                             <preferredSymbolConfiguration key="preferredSymbolConfigurationForImage" configurationType="pointSize" pointSize="15"/>
                         </buttonConfiguration>
-                        <connections>
-                            <action selector="shareButtonTapped" destination="gTV-IL-0wX" eventType="touchUpInside" id="STy-Zq-5Hj"/>
-                        </connections>
                     </button>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Owner Name" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Vng-Rb-Rz1">
                         <rect key="frame" x="8" y="56.333333333333336" width="74" height="14.333333333333336"/>
@@ -71,7 +68,7 @@
                 <outlet property="actionButton" destination="1uY-4k-vTV" id="Ipg-wQ-X8p"/>
                 <outlet property="boardNameLabel" destination="8h9-7b-JcX" id="2OG-RV-u3Q"/>
                 <outlet property="itemCountLabel" destination="glS-LM-Tfs" id="M6j-18-Rv7"/>
-                <outlet property="ownerNameLabel" destination="Vng-Rb-Rz1" id="PCR-U7-OGa"/>
+                <outlet property="shareStatusLabel" destination="Vng-Rb-Rz1" id="PCR-U7-OGa"/>
             </connections>
             <point key="canvasLocation" x="318.32061068702291" y="-16.901408450704228"/>
         </collectionViewCell>

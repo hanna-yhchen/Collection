@@ -5,16 +5,22 @@
 //  Created by Hanna Chen on 2022/11/2.
 //
 
+import Combine
 import UIKit
 
-class BoardCell: UICollectionViewCell {
+class BoardCell: UICollectionViewCell, ContextMenuActionSendable {
+
+    typealias MenuAction = BoardAction
 
     @IBOutlet var boardNameLabel: UILabel!
     @IBOutlet var itemCountLabel: UILabel!
-    @IBOutlet var ownerNameLabel: UILabel!
+    @IBOutlet var shareStatusLabel: UILabel!
     @IBOutlet var actionButton: UIButton!
 
-    var shareHandler: (() -> Void)?
+    var objectID: ObjectID?
+
+    lazy var actionSubject = PassthroughSubject<(MenuAction, ObjectID), Never>()
+    lazy var subscriptions = CancellableSet()
 
     // MARK: - Lifecycle
 
@@ -22,41 +28,41 @@ class BoardCell: UICollectionViewCell {
         super.awakeFromNib()
 
         self.layer.cornerRadius = 10
-        setInitialLayout()
+        reset()
+        addContextMenu(for: actionButton)
     }
 
     override func prepareForReuse() {
         super.prepareForReuse()
 
-        setInitialLayout()
-    }
-
-    // MARK: - Actions
-
-    @IBAction func shareButtonTapped() {
-        shareHandler?()
+        reset()
     }
 
     // MARK: - Methods
 
-    func layoutBoard(_ board: Board) {
+    func configure(for board: Board) {
+        objectID = board.objectID
+
         boardNameLabel.text = board.name
         itemCountLabel.text = "\(board.itemCount) items"
 
-        var shareInfo = ""
-        if board.isPrivate && board.shareRecord == nil {
-            shareInfo = "Private"
+        var shareStatus = ""
+        // FIXME: shareRecord exists after stop sharing
+        if (board.isPrivate && board.shareRecord == nil) || (board.shareRecord?.participants.count)! <= 1 {
+            shareStatus = "Private"
         } else if board.isOwnedByCurrentUser {
-            shareInfo = "Shared"
+            shareStatus = "Shared"
         } else {
-            shareInfo = "Shared by \(board.ownerName)"
+            shareStatus = "Shared by \(board.ownerName)"
         }
-        ownerNameLabel.text = shareInfo
+        shareStatusLabel.text = shareStatus
     }
 
-    private func setInitialLayout() {
-        boardNameLabel.text = ""
-        itemCountLabel.text = ""
-        ownerNameLabel.text = ""
+    private func reset() {
+        subscriptions.removeAll()
+
+        boardNameLabel.text = nil
+        itemCountLabel.text = nil
+        shareStatusLabel.text = nil
     }
 }

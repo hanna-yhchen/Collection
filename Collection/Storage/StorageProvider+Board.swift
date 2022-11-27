@@ -11,7 +11,7 @@ import CoreData
 
 extension StorageProvider {
     func addBoard(name: String, context: NSManagedObjectContext) {
-        guard !hasExistedBoardName(name, context: context) else { return }
+        guard !hasExistingBoardName(name, context: context) else { return }
         // TODO: handle situation of adding existed board name
         context.performAndWait {
             let board = Board(context: context)
@@ -31,6 +31,34 @@ extension StorageProvider {
             context.save(situation: .addBoard)
         }
     }
+
+    func updateBoard(boardID: ObjectID, name: String, context: NSManagedObjectContext? = nil) async throws {
+        let context = context ?? newTaskContext()
+
+        guard !hasExistingBoardName(name, context: context) else {
+            throw CoreDataError.duplicateName
+        }
+
+        guard let board = try context.existingObject(with: boardID) as? Board else {
+            throw CoreDataError.unfoundObjectInContext
+        }
+
+        await context.perform {
+            board.name = name
+            context.save(situation: .updateBoard)
+        }
+    }
+
+    func deleteBoard(boardID: NSManagedObjectID, context: NSManagedObjectContext) async throws {
+        guard let board = try context.existingObject(with: boardID) as? Board else {
+            throw CoreDataError.unfoundObjectInContext
+        }
+
+        await context.perform {
+            context.delete(board)
+            context.save(situation: .deleteBoard)
+        }
+    }
 }
 
 // MARK: - Helper
@@ -46,9 +74,9 @@ extension StorageProvider {
         return boardID
     }
 
-    private func hasExistedBoardName(_ name: String, context: NSManagedObjectContext) -> Bool {
+    private func hasExistingBoardName(_ name: String, context: NSManagedObjectContext) -> Bool {
         let fetchRequest = Board.fetchRequest()
-        fetchRequest.predicate = NSPredicate(format: "%K = %@", #keyPath(Board.name), name as String)
+        fetchRequest.predicate = NSPredicate(format: "%K == %@", #keyPath(Board.name), name as String)
 
         return context.performAndWait {
             do {

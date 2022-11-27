@@ -6,6 +6,7 @@
 //
 
 import CoreData
+import Combine
 import PhotosUI
 import QuickLook
 import SafariServices
@@ -272,9 +273,12 @@ extension ItemListViewController {
     private func perform(_ action: ItemAction, itemID: ObjectID) {
         switch action {
         case .rename:
-            guard let nameEditorVC = UIStoryboard.main.instantiateViewController(
-                withIdentifier: NameEditorViewController.storyboardID) as? NameEditorViewController
-            else { fatalError("#\(#function): Failed downcast to NameEditorViewController") }
+            let context = fetchedResultsController.managedObjectContext
+            let item = try? context.existingObject(with: itemID) as? Item
+            let nameEditorVC = UIStoryboard.main
+                .instantiateViewController(identifier: NameEditorViewController.storyboardID) { coder in
+                    NameEditorViewController(coder: coder, originalName: item?.name)
+                }
 
             nameEditorVC.modalPresentationStyle = .overCurrentContext
             nameEditorVC.cancellable = nameEditorVC.newNamePublisher
@@ -284,11 +288,12 @@ extension ItemListViewController {
                             try await itemManager.updateItem(
                                 itemID: itemID,
                                 name: newName,
-                                context: fetchedResultsController.managedObjectContext)
+                                context: context)
                             await MainActor.run {
                                 nameEditorVC.animateDismissSheet()
                             }
                         } catch {
+                            HUD.showFailed()
                             print("#\(#function): Failed to rename item, \(error)")
                         }
                     }
@@ -329,15 +334,23 @@ extension ItemListViewController {
 
             present(selectorVC, animated: true)
         case .delete:
-            Task {
-                do {
-                    try await itemManager.deleteItem(
-                        itemID: itemID,
-                        context: fetchedResultsController.managedObjectContext)
-                } catch {
-                    print("#\(#function): Failed to delete item, \(error)")
+            let alert = UIAlertController(
+                title: "Delete the item",
+                message: "Are you sure you want to delete this item permanently?",
+                preferredStyle: .actionSheet)
+            alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+            alert.addAction(UIAlertAction(title: "Delete", style: .destructive) {[unowned self] _ in
+                Task {
+                    do {
+                        try await itemManager.deleteItem(
+                            itemID: itemID,
+                            context: fetchedResultsController.managedObjectContext)
+                    } catch {
+                        print("#\(#function): Failed to delete board, \(error)")
+                    }
                 }
-            }
+            })
+            present(alert, animated: true)
         }
     }
 

@@ -14,6 +14,7 @@ typealias ObjectID = NSManagedObjectID
 
 enum CoreDataError: Error {
     case unfoundObjectInContext
+    case duplicateName
 }
 
 // MARK: - NSManagedObjectContext
@@ -116,5 +117,30 @@ extension NSPersistentStore {
 
             return true
         }
+    }
+}
+
+// MARK: - CKShare
+
+extension CKShare {
+    var persistentStore: NSPersistentStore? {
+        let persistentContainer = storageProvider.persistentContainer
+        let privatePersistentStore = storageProvider.privatePersistentStore
+        if let shares = try? persistentContainer.fetchShares(in: privatePersistentStore) {
+            let zoneIDs = shares.map { $0.recordID.zoneID }
+            if zoneIDs.contains(recordID.zoneID) {
+                return privatePersistentStore
+            }
+        }
+
+        let sharedPersistentStore = storageProvider.sharedPersistentStore
+        if let shares = try? persistentContainer.fetchShares(in: sharedPersistentStore) {
+            let zoneIDs = shares.map { $0.recordID.zoneID }
+            if zoneIDs.contains(recordID.zoneID) {
+                return sharedPersistentStore
+            }
+        }
+        
+        return nil
     }
 }

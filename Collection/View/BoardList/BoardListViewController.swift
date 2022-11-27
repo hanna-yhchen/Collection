@@ -32,7 +32,6 @@ class BoardListViewController: UIViewController {
     }()
 
     private var dataSource: DataSource?
-    private var boardToShare: Board?
     private lazy var subscriptions = CancellableSet()
 
     @IBOutlet var collectionView: UICollectionView!
@@ -80,7 +79,7 @@ class BoardListViewController: UIViewController {
                 let name = textField.text
             else { return }
 
-            if !name.isEmpty {
+            if !name.isEmpty, name != "Inbox" {
                 storageProvider.addBoard(name: name, context: storageProvider.newTaskContext())
             } else {
                 // TODO: show warning
@@ -109,16 +108,74 @@ class BoardListViewController: UIViewController {
                 .existingObject(with: objectID) as? Board
             else { fatalError("#\(#function): Failed to retrieve item by objectID") }
 
-            cell.layoutBoard(board)
-            // TODO: check share status to display different titles and implement corresponding logic
-            cell.shareHandler = {[weak self] in
-                self?.boardToShare = board
-                self?.startSharingFlow()
-            }
+            cell.configure(for: board)
+
+            cell.actionPublisher
+                .sink { boardAction, boardID in
+                    self.perform(boardAction, boardID: boardID)
+                }
+                .store(in: &cell.subscriptions)
         }
 
         dataSource = DataSource(collectionView: collectionView) { collectionView, indexPath, item in
             collectionView.dequeueConfiguredReusableCell(using: cellRegistration, for: indexPath, item: item)
+        }
+    }
+
+    private func perform(_ action: BoardAction, boardID: ObjectID) {
+        switch action {
+        case .rename:
+            let context = fetchedResultsController.managedObjectContext
+            let board = try? context.existingObject(with: boardID) as? Board
+            let nameEditorVC = UIStoryboard.main
+                .instantiateViewController(identifier: NameEditorViewController.storyboardID) { coder in
+                    NameEditorViewController(coder: coder, originalName: board?.name)
+                }
+
+            nameEditorVC.modalPresentationStyle = .overCurrentContext
+            nameEditorVC.cancellable = nameEditorVC.newNamePublisher
+                .sink {[unowned self] newName in
+                    guard !newName.isEmpty else {
+                        HUD.showFailed(message: "The name of a board cannot be empty.")
+                        return
+                    }
+
+                    Task {
+                        do {
+                            try await storageProvider.updateBoard(
+                                boardID: boardID,
+                                name: newName,
+                                context: context)
+                            await MainActor.run {
+                                nameEditorVC.animateDismissSheet()
+                            }
+                        } catch {
+                            print("#\(#function): Failed to rename item, \(error)")
+                        }
+                    }
+                }
+
+            present(nameEditorVC, animated: false)
+        case .share:
+            startSharingFlow(boardID: boardID)
+        case .delete:
+            let alert = UIAlertController(
+                title: "Delete the board",
+                message: "Are you sure you want to delete this board permanently?",
+                preferredStyle: .actionSheet)
+            alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+            alert.addAction(UIAlertAction(title: "Delete", style: .destructive) {[unowned self] _ in
+                Task {
+                    do {
+                        try await storageProvider.deleteBoard(
+                            boardID: boardID,
+                            context: fetchedResultsController.managedObjectContext)
+                    } catch {
+                        print("#\(#function): Failed to delete board, \(error)")
+                    }
+                }
+            })
+            present(alert, animated: true)
         }
     }
 
@@ -167,33 +224,40 @@ class BoardListViewController: UIViewController {
     }
 
     // TODO: abstract sharing functionality into StorageProvider
-    private func startSharingFlow() {
-        guard let board = boardToShare else {
-            return
-        }
+    private func startSharingFlow(boardID: ObjectID) {
+        HUD.showProgressing()
 
         Task {
-            var existingShare: CKShare?
-
-            if let matchedShares = try? storageProvider.persistentContainer.fetchShares(matching: [board.objectID]),
-                let (_, share) = matchedShares.first {
-                existingShare = share
+            let context = fetchedResultsController.managedObjectContext
+            guard let board = try? context.existingObject(with: boardID) as? Board else {
+                HUD.showFailed()
+                return
             }
 
-            let sharingController: UICloudSharingController
-            if let existingShare = existingShare {
-                sharingController = UICloudSharingController(share: existingShare, container: storageProvider.cloudKitContainer)
-            } else {
-                // TODO: show failure alert
-                guard let share = await newShare(board: board) else {
-                    return
-                }
-                sharingController = UICloudSharingController(share: share, container: storageProvider.cloudKitContainer)
+            var share: CKShare?
+
+            if let existingShare = board.shareRecord {
+                share = existingShare
+            } else if let newShare = await newShare(board: board) {
+                share = newShare
             }
+
+            guard let share = share else {
+                HUD.showFailed()
+                return
+            }
+
+            share[CKShare.SystemFieldKey.title] = board.name
+            if let image = UIImage(named: "logo"), let data = image.jpegData(compressionQuality: 0.5) {
+                share[CKShare.SystemFieldKey.thumbnailImageData] = data
+            }
+
+            let sharingController = UICloudSharingController(share: share, container: storageProvider.cloudKitContainer)
             sharingController.delegate = self
             sharingController.modalPresentationStyle = .formSheet
 
             await MainActor.run {
+                HUD.dismiss()
                 present(sharingController, animated: true)
             }
         }
@@ -202,7 +266,6 @@ class BoardListViewController: UIViewController {
     private func newShare(board: Board) async -> CKShare? {
         do {
             let (_, share, _) = try await storageProvider.persistentContainer.share([board], to: nil)
-            share[CKShare.SystemFieldKey.title] = board.name
             return share
         } catch {
             print("#\(#function): Failed to create new CKShare, \(error)")
