@@ -28,7 +28,7 @@ final class BoardManager {
 
         return try await context.perform {
             let fetchRequest = Board.fetchRequest()
-            fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \Board.sortOrder, ascending: true)]
+            fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \Board.sortOrder, ascending: false)]
             return try context.fetch(fetchRequest) as [Board]
         }
     }
