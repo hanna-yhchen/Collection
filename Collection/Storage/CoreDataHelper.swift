@@ -31,7 +31,7 @@ extension NSManagedObjectContext {
             do {
                 try save()
             } catch let error as NSError {
-                print("\(#function): Failed to save context for \(situation.rawValue): \(error), \(error.userInfo)")
+                print("#\(#function): Failed to save context for \(situation.rawValue): \(error), \(error.userInfo)")
             }
         }
     }

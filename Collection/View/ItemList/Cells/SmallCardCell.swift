@@ -79,7 +79,6 @@ class SmallCardCell: UICollectionViewCell, ItemCell, ItemActionSendable {
             iconImageView.image = nil
         case .link:
             configureLinkPreview(for: item)
-            return
         case .file:
             if let thumbnail = item.thumbnail?.data, let thumbnailImage = UIImage(data: thumbnail) {
                 thumbnailImageView.image = thumbnailImage

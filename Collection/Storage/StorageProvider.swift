@@ -14,7 +14,7 @@ enum StorageActor: String, CaseIterable {
 
 enum AppIdentifier {
     static let coreDataModel = "Collection"
-    static let cloudKitContainer = "iCloud.com.yhchen.Collection"
+    static let cloudKitContainer = "iCloud.com.yhchen.CollectionOfInspiration"
     static let appGroup = "group.com.yhchen.Collection"
 }
 
