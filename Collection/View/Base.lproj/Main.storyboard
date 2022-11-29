@@ -526,6 +526,7 @@
                     <modalPageSheetSimulatedSizeMetrics key="simulatedDestinationMetrics"/>
                     <connections>
                         <outlet property="collectionView" destination="rKW-3H-LXT" id="FcF-IW-JgA"/>
+                        <outlet property="titleLabel" destination="aGQ-Tq-ndQ" id="tPM-tk-eFO"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="jDc-Hx-Hqv" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
@@ -670,7 +671,7 @@
                                 <inset key="imageEdgeInsets" minX="0.0" minY="0.0" maxX="2.2250738585072014e-308" maxY="0.0"/>
                                 <state key="normal" title="Create"/>
                                 <connections>
-                                    <action selector="doneButtonTapped" destination="f8Y-jB-FIO" eventType="touchUpInside" id="JUY-j9-gbW"/>
+                                    <action selector="createButtonTapped" destination="f8Y-jB-FIO" eventType="touchUpInside" id="JUY-j9-gbW"/>
                                 </connections>
                             </button>
                             <textField opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="248" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="Add a name" textAlignment="natural" minimumFontSize="17" clearButtonMode="whileEditing" translatesAutoresizingMaskIntoConstraints="NO" id="OdH-Nk-BXo">

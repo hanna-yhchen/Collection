@@ -56,6 +56,7 @@
 		B5810CBF2930A2FE00EFB41C /* UIViewController+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5810CBE2930A2FE00EFB41C /* UIViewController+Extension.swift */; };
 		B59544102924E3C700665868 /* ItemAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = B595440F2924E3C700665868 /* ItemAction.swift */; };
 		B59544122925549400665868 /* NameEditorViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B59544112925549400665868 /* NameEditorViewController.swift */; };
+		B59B050B29358984003B913C /* NewTagViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B59B050A29358984003B913C /* NewTagViewModel.swift */; };
 		B59BE4062923475600E50B30 /* GridCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = B59BE4042923475600E50B30 /* GridCell.swift */; };
 		B59BE4072923475600E50B30 /* GridCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = B59BE4052923475600E50B30 /* GridCell.xib */; };
 		B59BE4092923643F00E50B30 /* ItemLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = B59BE4082923643F00E50B30 /* ItemLayout.swift */; };
@@ -163,6 +164,7 @@
 		B5810CBE2930A2FE00EFB41C /* UIViewController+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIViewController+Extension.swift"; sourceTree = "<group>"; };
 		B595440F2924E3C700665868 /* ItemAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemAction.swift; sourceTree = "<group>"; };
 		B59544112925549400665868 /* NameEditorViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NameEditorViewController.swift; sourceTree = "<group>"; };
+		B59B050A29358984003B913C /* NewTagViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewTagViewModel.swift; sourceTree = "<group>"; };
 		B59BE4042923475600E50B30 /* GridCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GridCell.swift; sourceTree = "<group>"; };
 		B59BE4052923475600E50B30 /* GridCell.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = GridCell.xib; sourceTree = "<group>"; };
 		B59BE4082923643F00E50B30 /* ItemLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemLayout.swift; sourceTree = "<group>"; };
@@ -241,6 +243,7 @@
 			isa = PBXGroup;
 			children = (
 				B5AEC1AC29267A9D00AA4072 /* ItemEditor */,
+				B59B050929358970003B913C /* TagEditor */,
 			);
 			path = ViewModel;
 			sourceTree = "<group>";
@@ -355,12 +358,20 @@
 			path = Utility;
 			sourceTree = "<group>";
 		};
+		B59B050929358970003B913C /* TagEditor */ = {
+			isa = PBXGroup;
+			children = (
+				B59B050A29358984003B913C /* NewTagViewModel.swift */,
+				B52FF8FA29273BFE0023481D /* TagSelectorViewModel.swift */,
+			);
+			path = TagEditor;
+			sourceTree = "<group>";
+		};
 		B5AEC1AC29267A9D00AA4072 /* ItemEditor */ = {
 			isa = PBXGroup;
 			children = (
 				B5AEC1AA29267A8800AA4072 /* BoardSelectorViewModel.swift */,
 				B50E8F6E291B84A000E64E36 /* NoteEditorViewModel.swift */,
-				B52FF8FA29273BFE0023481D /* TagSelectorViewModel.swift */,
 			);
 			path = ItemEditor;
 			sourceTree = "<group>";
@@ -647,6 +658,7 @@
 				B59BE4092923643F00E50B30 /* ItemLayout.swift in Sources */,
 				B559BE542914FACF00F342C1 /* StorageHistoryManager.swift in Sources */,
 				B55B1388292164D200607345 /* ImportMethodCell.swift in Sources */,
+				B59B050B29358984003B913C /* NewTagViewModel.swift in Sources */,
 				B50E0A8C2922372300E00432 /* PreviewItem.swift in Sources */,
 				B57F94E7293265EB00696E8E /* SideMenuViewController.swift in Sources */,
 				B5E50E1A290F7A31006A7B22 /* CoreDataHelper.swift in Sources */,

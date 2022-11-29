@@ -301,9 +301,23 @@ extension ItemListViewController {
 
             present(nameEditorVC, animated: false)
         case .tags:
+            let context = fetchedResultsController.managedObjectContext
+
+            guard
+                let item = try? context.existingObject(with: itemID) as? Item,
+                let board = item.board
+            else {
+                HUD.showFailed(message: "Missing data")
+                return
+            }
+
             let selectorVC = UIStoryboard.main
                 .instantiateViewController(identifier: TagSelectorViewController.storyboardID) { coder in
-                    let viewModel = TagSelectorViewModel(storageProvider: self.storageProvider, itemID: itemID)
+                    let viewModel = TagSelectorViewModel(
+                        storageProvider: self.storageProvider,
+                        itemID: itemID,
+                        boardID: board.objectID,
+                        context: context)
                     return TagSelectorViewController(coder: coder, viewModel: viewModel)
                 }
 

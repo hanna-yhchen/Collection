@@ -46,17 +46,12 @@ class SideMenuViewController: UIViewController {
             destination: .itemList(.board(storageProvider.getInboxBoardID())),
             icon: UIImage(systemName: "tray")),
         boardMenu,
-        tagMenu,
     ]
 
     private lazy var boardMenu = SideMenuItem(
         title: "Boards",
         destination: .boardList,
         icon: UIImage(systemName: "square.stack.3d.up"))
-    private lazy var tagMenu = SideMenuItem(
-        title: "Tags",
-        destination: .tagList,
-        icon: UIImage(systemName: "tag"))
 
     private lazy var managedObjectContext = storageProvider.persistentContainer.viewContext
 
@@ -75,28 +70,14 @@ class SideMenuViewController: UIViewController {
         return controller
     }()
 
-    private lazy var tagFetcher: NSFetchedResultsController<Tag> = {
-        let fetchRequest = Tag.fetchRequest()
-        fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \Tag.sortOrder, ascending: false)]
-
-        let controller = NSFetchedResultsController(
-            fetchRequest: fetchRequest,
-            managedObjectContext: managedObjectContext,
-            sectionNameKeyPath: nil,
-            cacheName: nil)
-        controller.delegate = self
-
-        return controller
-    }()
-
     // MARK: - Lifecycle
 
     override func viewDidLoad() {
         super.viewDidLoad()
         configureCollectionView()
         configureDataSource()
+        addObservers()
         fetchBoards()
-        fetchTags()
     }
 
     // MARK: - Initializers
@@ -123,7 +104,7 @@ class SideMenuViewController: UIViewController {
     private func configureDataSource() {
         typealias CellRegistration = UICollectionView.CellRegistration<UICollectionViewListCell, SideMenuItem>
 
-        let mainCellRegistration = CellRegistration { cell, _, menuItem in
+        let mainCellRegistration = CellRegistration {[unowned self] cell, _, menuItem in
             var content = cell.defaultContentConfiguration()
             content.text = menuItem.title
             content.textProperties.font = .systemFont(ofSize: 24, weight: .semibold)
@@ -135,7 +116,7 @@ class SideMenuViewController: UIViewController {
             content.imageToTextPadding = 24
             cell.contentConfiguration = content
 
-            if !menuItem.subitems.isEmpty {
+            if menuItem == boardMenu {
                 let disclosureOptions = UICellAccessory.OutlineDisclosureOptions(style: .cell)
                 cell.accessories = [.outlineDisclosure(options: disclosureOptions)]
             }
@@ -147,6 +128,7 @@ class SideMenuViewController: UIViewController {
             var content = cell.defaultContentConfiguration()
             content.text = menuItem.title
             content.textProperties.font = .systemFont(ofSize: 20, weight: .medium)
+            content.directionalLayoutMargins = .init(top: 8, leading: 24, bottom: 8, trailing: 0)
             cell.contentConfiguration = content
 
             cell.backgroundConfiguration = .clear()
@@ -195,14 +177,10 @@ class SideMenuViewController: UIViewController {
         storageProvider.historyManager?.storeDidChangePublisher
             .map { transactions -> [NSPersistentHistoryTransaction] in
                 let boardEntityName = Board.entity().name
-                let tagEntityName = Tag.entity().name
 
                 return transactions.filter { transaction in
                     if let changes = transaction.changes {
-                        return changes.contains { change in
-                            change.changedObjectID.entity.name == boardEntityName
-                            || change.changedObjectID.entity.name == tagEntityName
-                        }
+                        return changes.contains { $0.changedObjectID.entity.name == boardEntityName }
                     }
                     return false
                 }
@@ -225,24 +203,9 @@ class SideMenuViewController: UIViewController {
         }
     }
 
-    private func fetchTags() {
-        try? tagFetcher.performFetch()
-        if let tags = tagFetcher.fetchedObjects {
-            updateTagMenu(with: tags)
-        }
-    }
-
     private func updateBoardMenu(with boards: [Board]) {
         boardMenu.subitems = boards.map { board in
             SideMenuItem(title: board.name, destination: .itemList(.board(board.objectID)), isSubitem: true)
-        }
-
-        applyLatestSnapshot()
-    }
-
-    private func updateTagMenu(with tags: [Tag]) {
-        tagMenu.subitems = tags.map { tag in
-            SideMenuItem(title: tag.name, destination: .itemList(.tag(tag.objectID)), isSubitem: true)
         }
 
         applyLatestSnapshot()
@@ -271,8 +234,6 @@ extension SideMenuViewController: NSFetchedResultsControllerDelegate {
     func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
         if let boards = controller.fetchedObjects as? [Board] {
             updateBoardMenu(with: boards)
-        } else if let tags = controller.fetchedObjects as? [Tag] {
-            updateTagMenu(with: tags)
         }
     }
 }

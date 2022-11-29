@@ -10,6 +10,7 @@ import UIKit
 class TagSelectorViewController: UIViewController {
 
     @IBOutlet var collectionView: UICollectionView!
+    @IBOutlet var titleLabel: UILabel!
 
     private let viewModel: TagSelectorViewModel
 
@@ -18,6 +19,7 @@ class TagSelectorViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
+        titleLabel.text = "Tags in \(viewModel.boardName())"
         configureCollectionView()
         navigationController?.isNavigationBarHidden = true
     }
@@ -57,8 +59,11 @@ class TagSelectorViewController: UIViewController {
     // MARK: - Actions
 
     @IBAction func plusButtonTapped() {
-        let newTagVC = UIStoryboard.main.instantiateViewController(
-            withIdentifier: NewTagViewController.storyboardID)
+        let newTagVC = UIStoryboard.main
+            .instantiateViewController(identifier: NewTagViewController.storyboardID) { coder in
+                let viewModel = self.viewModel.newTagViewModel()
+                return NewTagViewController(coder: coder, viewModel: viewModel)
+            }
 
         navigationController?.pushViewController(newTagVC, animated: true)
     }
