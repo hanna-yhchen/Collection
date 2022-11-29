@@ -9,7 +9,7 @@ import CloudKit
 import CoreData
 import UIKit
 
-class BoardListViewController: UIViewController {
+class BoardListViewController: UIViewController, PlaceholderViewDisplayable {
 
     typealias Snapshot = NSDiffableDataSourceSnapshot<Int, NSManagedObjectID>
     typealias DataSource = UICollectionViewDiffableDataSource<Int, NSManagedObjectID>
@@ -35,6 +35,7 @@ class BoardListViewController: UIViewController {
     private lazy var subscriptions = CancellableSet()
 
     @IBOutlet var collectionView: UICollectionView!
+    var placeholderView: HintPlaceholderView?
 
     // MARK: - Lifecycle
 
@@ -52,6 +53,9 @@ class BoardListViewController: UIViewController {
         super.viewWillAppear(animated)
 
         try? fetchedResultsController.performFetch()
+//        if let objects = fetchedResultsController.fetchedObjects, objects.isEmpty {
+//            showPlaceholderView()
+//        }
     }
 
     init?(coder: NSCoder, storageProvider: StorageProvider) {
@@ -281,6 +285,12 @@ extension BoardListViewController: NSFetchedResultsControllerDelegate {
         guard let dataSource = dataSource else { fatalError("#\(#function): Failed to unwrap data source") }
 
         var newSnapshot = snapshot as Snapshot
+        if newSnapshot.numberOfItems == 0 {
+            showPlaceholderView()
+        } else {
+            removePlaceholderView()
+        }
+
         let currentSnapshot = dataSource.snapshot()
 
         let updatedIDs = newSnapshot.itemIdentifiers.filter { objectID in

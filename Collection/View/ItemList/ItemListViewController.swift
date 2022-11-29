@@ -13,7 +13,7 @@ import SafariServices
 import UniformTypeIdentifiers
 import UIKit
 
-class ItemListViewController: UIViewController {
+class ItemListViewController: UIViewController, PlaceholderViewDisplayable {
 
     enum Scope {
         case allItems
@@ -86,9 +86,9 @@ class ItemListViewController: UIViewController {
     }()
 
     private lazy var collectionView = ItemCollectionView(frame: view.bounds, traits: view.traitCollection)
+    var placeholderView: HintPlaceholderView?
 
     @IBOutlet var plusButton: UIButton!
-//    @IBOutlet var layoutButton: UIBarButtonItem!
     private lazy var layoutButton = UIBarButtonItem(
         image: currentLayout.buttonIcon,
         style: .plain,
@@ -711,6 +711,12 @@ extension ItemListViewController: UIImagePickerControllerDelegate & UINavigation
 extension ItemListViewController: NSFetchedResultsControllerDelegate {
     func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChangeContentWith snapshot: NSDiffableDataSourceSnapshotReference) {
         var newSnapshot = snapshot as Snapshot
+        if newSnapshot.numberOfItems == 0 {
+            showPlaceholderView()
+        } else {
+            removePlaceholderView()
+        }
+
         let currentSnapshot = dataSource.snapshot()
 
         let updatedIDs = newSnapshot.itemIdentifiers.filter { objectID in
