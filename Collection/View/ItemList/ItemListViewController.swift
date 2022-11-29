@@ -351,7 +351,7 @@ extension ItemListViewController {
             let alert = UIAlertController(
                 title: "Delete the item",
                 message: "Are you sure you want to delete this item permanently?",
-                preferredStyle: .actionSheet)
+                preferredStyle: UIDevice.current.userInterfaceIdiom == .phone ? .actionSheet : .alert)
             alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
             alert.addAction(UIAlertAction(title: "Delete", style: .destructive) {[unowned self] _ in
                 Task {

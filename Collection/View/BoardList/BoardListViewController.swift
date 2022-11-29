@@ -53,9 +53,6 @@ class BoardListViewController: UIViewController, PlaceholderViewDisplayable {
         super.viewWillAppear(animated)
 
         try? fetchedResultsController.performFetch()
-//        if let objects = fetchedResultsController.fetchedObjects, objects.isEmpty {
-//            showPlaceholderView()
-//        }
     }
 
     init?(coder: NSCoder, storageProvider: StorageProvider) {
@@ -166,7 +163,7 @@ class BoardListViewController: UIViewController, PlaceholderViewDisplayable {
             let alert = UIAlertController(
                 title: "Delete the board",
                 message: "Are you sure you want to delete this board permanently?",
-                preferredStyle: .actionSheet)
+                preferredStyle: UIDevice.current.userInterfaceIdiom == .phone ? .actionSheet : .alert)
             alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
             alert.addAction(UIAlertAction(title: "Delete", style: .destructive) {[unowned self] _ in
                 Task {
