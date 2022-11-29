@@ -9,7 +9,7 @@ import CloudKit
 import CoreData
 import UIKit
 
-class BoardListViewController: UIViewController {
+class BoardListViewController: UIViewController, PlaceholderViewDisplayable {
 
     typealias Snapshot = NSDiffableDataSourceSnapshot<Int, NSManagedObjectID>
     typealias DataSource = UICollectionViewDiffableDataSource<Int, NSManagedObjectID>
@@ -35,6 +35,7 @@ class BoardListViewController: UIViewController {
     private lazy var subscriptions = CancellableSet()
 
     @IBOutlet var collectionView: UICollectionView!
+    var placeholderView: HintPlaceholderView?
 
     // MARK: - Lifecycle
 
@@ -162,7 +163,7 @@ class BoardListViewController: UIViewController {
             let alert = UIAlertController(
                 title: "Delete the board",
                 message: "Are you sure you want to delete this board permanently?",
-                preferredStyle: .actionSheet)
+                preferredStyle: UIDevice.current.userInterfaceIdiom == .phone ? .actionSheet : .alert)
             alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
             alert.addAction(UIAlertAction(title: "Delete", style: .destructive) {[unowned self] _ in
                 Task {
@@ -281,6 +282,12 @@ extension BoardListViewController: NSFetchedResultsControllerDelegate {
         guard let dataSource = dataSource else { fatalError("#\(#function): Failed to unwrap data source") }
 
         var newSnapshot = snapshot as Snapshot
+        if newSnapshot.numberOfItems == 0 {
+            showPlaceholderView()
+        } else {
+            removePlaceholderView()
+        }
+
         let currentSnapshot = dataSource.snapshot()
 
         let updatedIDs = newSnapshot.itemIdentifiers.filter { objectID in

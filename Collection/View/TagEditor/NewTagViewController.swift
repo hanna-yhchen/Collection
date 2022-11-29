@@ -14,20 +14,22 @@ class NewTagViewController: UIViewController {
     @IBOutlet var nameTextField: UITextField!
     @IBOutlet var colorTagButtons: [UIButton]!
 
+    private let viewModel: NewTagViewModel
+
     private var newTagName = "" {
         didSet {
             createButton.isEnabled = !newTagName.isEmpty
         }
     }
 
-    private var selectedIndex = 0 {
+    @Published var selectedColorIndex = 0 {
         didSet {
             colorTagButtons[oldValue].setImage(UIImage(systemName: "tag"), for: .normal)
-            colorTagButtons[selectedIndex].setImage(UIImage(systemName: "tag.fill"), for: .normal)
+            colorTagButtons[selectedColorIndex].setImage(UIImage(systemName: "tag.fill"), for: .normal)
         }
     }
 
-    private var cancellable: AnyCancellable?
+    private lazy var subscriptions = CancellableSet()
 
     // MARK: - Lifecycle
 
@@ -36,32 +38,50 @@ class NewTagViewController: UIViewController {
 
         colorTagButtons.sort { $0.tag < $1.tag }
         createButton.isEnabled = false
-        cancellable = nameTextField.textPublisher
+        addBindings()
+    }
+
+    init?(coder: NSCoder, viewModel: NewTagViewModel) {
+        self.viewModel = viewModel
+        super.init(coder: coder)
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    // MARK: - Private
+
+    private func addBindings() {
+        nameTextField.textPublisher
             .receive(on: DispatchQueue.main)
-            .assign(to: \.newTagName, on: self)
+            .assign(to: \.tagName, on: viewModel)
+            .store(in: &subscriptions)
+        $selectedColorIndex
+            .receive(on: DispatchQueue.main)
+            .assign(to: \.selectedColorIndex, on: viewModel)
+            .store(in: &subscriptions)
+        viewModel.canCreate
+            .receive(on: DispatchQueue.main)
+            .sink {[unowned self] canCreate in
+                createButton.isEnabled = canCreate
+            }
+            .store(in: &subscriptions)
     }
 
     // MARK: - Actions
 
     @IBAction func colorTagButtonTapped(_ sender: UIButton) {
-        selectedIndex = sender.tag
+        selectedColorIndex = sender.tag
     }
 
-    @IBAction func doneButtonTapped() {
-        guard
-            let color = TagColor(rawValue: Int16(selectedIndex)),
-            !newTagName.isEmpty
-        else {
-            return
-        }
-
+    @IBAction func createButtonTapped() {
         Task {
             do {
-                try await StorageProvider.shared.addTag(name: newTagName, color: color)
+                try await viewModel.create()
             } catch {
-                print("#\(#function): Failed to add new tag, \(error)")
+                HUD.showFailed()
             }
-
             await MainActor.run {
                 _ = navigationController?.popViewController(animated: true)
             }

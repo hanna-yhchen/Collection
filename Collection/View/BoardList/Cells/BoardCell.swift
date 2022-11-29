@@ -48,7 +48,7 @@ class BoardCell: UICollectionViewCell, ContextMenuActionSendable {
 
         var shareStatus = ""
         // FIXME: shareRecord exists after stop sharing
-        if (board.isPrivate && board.shareRecord == nil) || (board.shareRecord?.participants.count)! <= 1 {
+        if board.isPrivate && board.shareRecord == nil {
             shareStatus = "Private"
         } else if board.isOwnedByCurrentUser {
             shareStatus = "Shared"

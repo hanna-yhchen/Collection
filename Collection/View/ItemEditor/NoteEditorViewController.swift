@@ -73,7 +73,7 @@ class NoteEditorViewController: UIViewController {
         let alert = UIAlertController(
             title: "Unsaved Changes",
             message: "You have unsaved changes. Are you sure you want to leave this page and discard your changes?",
-            preferredStyle: .actionSheet)
+            preferredStyle: UIDevice.current.userInterfaceIdiom == .phone ? .actionSheet : .alert)
         alert.addAction(UIAlertAction(title: "Stay", style: .cancel))
         alert.addAction(UIAlertAction(title: "Discard", style: .destructive) {[unowned self] _ in
             dismiss(animated: true)

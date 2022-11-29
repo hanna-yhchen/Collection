@@ -60,10 +60,10 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="tle-7M-0pr">
-                                <rect key="frame" x="326" y="746" width="48" height="48"/>
+                                <rect key="frame" x="314" y="734" width="60" height="60"/>
                                 <constraints>
-                                    <constraint firstAttribute="height" constant="48" id="Cjd-a4-r3Z"/>
-                                    <constraint firstAttribute="width" constant="48" id="ou6-M8-bVq"/>
+                                    <constraint firstAttribute="height" constant="60" id="Cjd-a4-r3Z"/>
+                                    <constraint firstAttribute="width" constant="60" id="ou6-M8-bVq"/>
                                 </constraints>
                                 <color key="tintColor" name="HightlightColor"/>
                                 <state key="normal" title="Button"/>
@@ -75,7 +75,7 @@
                                             <color name="HighlightColor"/>
                                         </hierarchicalColors>
                                     </imageReference>
-                                    <preferredSymbolConfiguration key="preferredSymbolConfigurationForImage" configurationType="pointSize" pointSize="36"/>
+                                    <preferredSymbolConfiguration key="preferredSymbolConfigurationForImage" configurationType="pointSize" pointSize="42"/>
                                 </buttonConfiguration>
                                 <connections>
                                     <action selector="plusButtonTapped" destination="BYZ-38-t0r" eventType="touchUpInside" id="ZGX-QP-lg2"/>
@@ -526,6 +526,7 @@
                     <modalPageSheetSimulatedSizeMetrics key="simulatedDestinationMetrics"/>
                     <connections>
                         <outlet property="collectionView" destination="rKW-3H-LXT" id="FcF-IW-JgA"/>
+                        <outlet property="titleLabel" destination="aGQ-Tq-ndQ" id="tPM-tk-eFO"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="jDc-Hx-Hqv" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
@@ -670,7 +671,7 @@
                                 <inset key="imageEdgeInsets" minX="0.0" minY="0.0" maxX="2.2250738585072014e-308" maxY="0.0"/>
                                 <state key="normal" title="Create"/>
                                 <connections>
-                                    <action selector="doneButtonTapped" destination="f8Y-jB-FIO" eventType="touchUpInside" id="JUY-j9-gbW"/>
+                                    <action selector="createButtonTapped" destination="f8Y-jB-FIO" eventType="touchUpInside" id="JUY-j9-gbW"/>
                                 </connections>
                             </button>
                             <textField opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="248" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="Add a name" textAlignment="natural" minimumFontSize="17" clearButtonMode="whileEditing" translatesAutoresizingMaskIntoConstraints="NO" id="OdH-Nk-BXo">

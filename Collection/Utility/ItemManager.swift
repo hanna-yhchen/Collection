@@ -433,6 +433,9 @@ extension ItemManager {
             }
             if let boardID = boardID, let board = try context.existingObject(with: boardID) as? Board {
                 board.addToItems(item)
+                if let tags = item.tags {
+                    board.addToTags(tags)
+                }
             }
 
             let currentDate = Date()
@@ -475,6 +478,10 @@ extension ItemManager {
 
             if let board = try context.existingObject(with: boardID) as? Board {
                 board.addToItems(copy)
+                if let tags = item.tags {
+                    copy.addToTags(tags)
+                    board.addToTags(tags)
+                }
             }
 
             context.save(situation: .copyItem)

@@ -11,6 +11,7 @@ extension StorageProvider {
     func addTag(
         name: String?,
         color: TagColor,
+        boardID: ObjectID,
         context: NSManagedObjectContext? = nil
     ) async throws {
         let context = context ?? newTaskContext()
@@ -22,6 +23,10 @@ extension StorageProvider {
 
             let count = try context.count(for: Tag.fetchRequest())
             tag.sortOrder = Double(count + 1)
+
+            if let board = context.object(with: boardID) as? Board {
+                board.addToTags(tag)
+            }
 
             context.save(situation: .addTag)
         }
