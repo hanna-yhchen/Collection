@@ -17,16 +17,19 @@ final class TagSelectorViewModel: NSObject {
     // MARK: - Properties
 
     private let storageProvider: StorageProvider
+    private let context: NSManagedObjectContext
     private let itemID: ObjectID
+    private let boardID: ObjectID
 
     private var dataSource: DataSource?
     private lazy var fetchedResultsController: NSFetchedResultsController<Tag> = {
         let fetchRequest = Tag.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "%K == %@", #keyPath(Tag.board), boardID)
         fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \Tag.sortOrder, ascending: true)]
 
         let controller = NSFetchedResultsController(
             fetchRequest: fetchRequest,
-            managedObjectContext: storageProvider.persistentContainer.viewContext,
+            managedObjectContext: context,
             sectionNameKeyPath: nil,
             cacheName: nil)
         controller.delegate = self
@@ -36,9 +39,16 @@ final class TagSelectorViewModel: NSObject {
 
     // MARK: - Lifecycle
 
-    init(storageProvider: StorageProvider = .shared, itemID: ObjectID) {
+    init(
+        storageProvider: StorageProvider = .shared,
+        itemID: ObjectID,
+        boardID: ObjectID,
+        context: NSManagedObjectContext
+    ) {
         self.storageProvider = storageProvider
         self.itemID = itemID
+        self.boardID = boardID
+        self.context = context
     }
 
     // MARK: - Methods
@@ -49,6 +59,11 @@ final class TagSelectorViewModel: NSObject {
         dataSource = DataSource(collectionView: collectionView) { collectionView, indexPath, tagID in
             return collectionView.dequeueConfiguredReusableCell(using: cellRegistration, for: indexPath, item: tagID)
         }
+    }
+
+    func boardName() -> String {
+        let board = try? context.existingObject(with: boardID) as? Board
+        return board?.name ?? ""
     }
 
     func fetchTags() {
@@ -67,16 +82,16 @@ final class TagSelectorViewModel: NSObject {
         }
     }
 
+    func newTagViewModel() -> NewTagViewModel {
+        NewTagViewModel(storageProvider: storageProvider, context: context, boardID: boardID)
+    }
+
     // MARK: - Private
 
     private func cellRegistrationHandler(cell: UICollectionViewListCell, indexPath: IndexPath, tagID: ObjectID) {
         guard
-            let tag = try? fetchedResultsController
-                .managedObjectContext
-                .existingObject(with: tagID) as? Tag,
-            let item = try? fetchedResultsController
-                .managedObjectContext
-                .existingObject(with: itemID) as? Item,
+            let tag = try? context.existingObject(with: tagID) as? Tag,
+            let item = try? context.existingObject(with: itemID) as? Item,
             let isSelected = item.tags?.contains(tag)
         else { fatalError("#\(#function): Failed to retrieve object by objectID") }
 
