@@ -15,6 +15,7 @@ typealias ObjectID = NSManagedObjectID
 enum CoreDataError: Error {
     case unfoundObjectInContext
     case duplicateName
+    case failedSaving
 }
 
 // MARK: - NSManagedObjectContext
@@ -26,12 +27,13 @@ extension NSManagedObjectContext {
         case addBoard, updateBoard, deleteBoard
     }
 
-    func save(situation: SituationForSaving) {
+    func save(situation: SituationForSaving) throws {
         if hasChanges {
             do {
                 try save()
             } catch let error as NSError {
                 print("#\(#function): Failed to save context for \(situation.rawValue): \(error), \(error.userInfo)")
+                throw CoreDataError.failedSaving
             }
         }
     }

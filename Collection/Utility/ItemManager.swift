@@ -399,7 +399,8 @@ extension ItemManager {
                 board.addToItems(item)
             }
 
-            context.save(situation: .addItem)
+            // TODO: error handling
+            try? context.save(situation: .addItem)
         }
     }
 
@@ -441,7 +442,7 @@ extension ItemManager {
             let currentDate = Date()
             item.updateDate = currentDate
 
-            context.save(situation: .updateItem)
+            try context.save(situation: .updateItem)
         }
     }
 
@@ -484,7 +485,7 @@ extension ItemManager {
                 }
             }
 
-            context.save(situation: .copyItem)
+            try context.save(situation: .copyItem)
         }
     }
 
@@ -496,9 +497,9 @@ extension ItemManager {
             throw CoreDataError.unfoundObjectInContext
         }
 
-        await context.perform {
+        try await context.perform {
             context.delete(item)
-            context.save(situation: .deleteItem)
+            try context.save(situation: .deleteItem)
         }
     }
 }
