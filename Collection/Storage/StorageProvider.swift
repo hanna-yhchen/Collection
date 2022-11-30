@@ -128,6 +128,7 @@ class StorageProvider {
 
         persistentContainer.viewContext.automaticallyMergesChangesFromParent = true
         persistentContainer.viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
+        persistentContainer.viewContext.transactionAuthor = actor.rawValue
 
         /// Pin the viewContext to the current generation token (snapshot) for UI stability.
         do {
