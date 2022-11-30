@@ -492,17 +492,13 @@
                                 <nil key="highlightedColor"/>
                             </label>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="oVn-6U-8YI">
-                                <rect key="frame" x="350" y="16" width="24" height="32"/>
-                                <constraints>
-                                    <constraint firstAttribute="width" constant="24" id="5dG-eR-hzh"/>
-                                </constraints>
+                                <rect key="frame" x="322" y="16" width="52" height="32"/>
                                 <state key="normal" title="Button"/>
-                                <buttonConfiguration key="configuration" style="plain" imagePlacement="leading">
-                                    <imageReference key="image" image="plus" catalog="system" variableValue="0.0"/>
-                                    <preferredSymbolConfiguration key="preferredSymbolConfigurationForImage" configurationType="pointSize" pointSize="15"/>
+                                <buttonConfiguration key="configuration" style="plain" title="Edit">
+                                    <fontDescription key="titleFontDescription" type="system" weight="medium" pointSize="15"/>
                                 </buttonConfiguration>
                                 <connections>
-                                    <action selector="plusButtonTapped" destination="cx8-K5-dkT" eventType="touchUpInside" id="hnp-lh-ozA"/>
+                                    <action selector="editButtonTapped" destination="cx8-K5-dkT" eventType="touchUpInside" id="hnp-lh-ozA"/>
                                 </connections>
                             </button>
                         </subviews>
@@ -519,13 +515,14 @@
                             <constraint firstItem="aGQ-Tq-ndQ" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="U5D-Ls-cU3" secondAttribute="trailing" constant="8" id="VzR-BZ-2h5"/>
                             <constraint firstItem="aGQ-Tq-ndQ" firstAttribute="centerX" secondItem="9tQ-8c-3BI" secondAttribute="centerX" id="nOr-fD-PuJ"/>
                             <constraint firstItem="aGQ-Tq-ndQ" firstAttribute="centerY" secondItem="U5D-Ls-cU3" secondAttribute="centerY" id="oA4-QN-6Z1"/>
-                            <constraint firstItem="oVn-6U-8YI" firstAttribute="top" secondItem="9tQ-8c-3BI" secondAttribute="top" constant="16" id="plx-Pa-rBR"/>
+                            <constraint firstItem="oVn-6U-8YI" firstAttribute="centerY" secondItem="aGQ-Tq-ndQ" secondAttribute="centerY" id="sXI-rE-0Cs"/>
                             <constraint firstItem="rKW-3H-LXT" firstAttribute="leading" secondItem="z03-7U-g1v" secondAttribute="leading" id="uOy-t6-Z8h"/>
                         </constraints>
                     </view>
                     <modalPageSheetSimulatedSizeMetrics key="simulatedDestinationMetrics"/>
                     <connections>
                         <outlet property="collectionView" destination="rKW-3H-LXT" id="FcF-IW-JgA"/>
+                        <outlet property="editButton" destination="oVn-6U-8YI" id="dUY-6W-d8d"/>
                         <outlet property="titleLabel" destination="aGQ-Tq-ndQ" id="tPM-tk-eFO"/>
                     </connections>
                 </viewController>
@@ -687,6 +684,7 @@
                                         <constraints>
                                             <constraint firstAttribute="width" constant="30" id="Jwp-Kh-GQo"/>
                                         </constraints>
+                                        <fontDescription key="fontDescription" type="system" pointSize="15"/>
                                         <color key="tintColor" systemColor="systemRedColor"/>
                                         <inset key="imageEdgeInsets" minX="0.0" minY="0.0" maxX="2.2250738585072014e-308" maxY="0.0"/>
                                         <state key="normal" image="tag.fill" catalog="system"/>

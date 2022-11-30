@@ -11,17 +11,25 @@ class TagSelectorViewController: UIViewController {
 
     @IBOutlet var collectionView: UICollectionView!
     @IBOutlet var titleLabel: UILabel!
+    @IBOutlet var editButton: UIButton!
 
     private let viewModel: TagSelectorViewModel
+    private lazy var subscriptions = CancellableSet()
+
+    @Published var isEditingTags = false {
+        didSet {
+            editButton.setNeedsUpdateConfiguration()
+        }
+    }
 
     // MARK: - Lifecycle
 
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        titleLabel.text = "Tags in \(viewModel.boardName())"
+        configureHierarchy()
         configureCollectionView()
-        navigationController?.isNavigationBarHidden = true
+        addBindings()
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -41,10 +49,44 @@ class TagSelectorViewController: UIViewController {
 
     // MARK: - Private
 
+    private func configureHierarchy() {
+        navigationController?.isNavigationBarHidden = true
+        titleLabel.text = "Tags in \(viewModel.boardName())"
+
+        editButton.configurationUpdateHandler = { [unowned self] button in
+            var config = button.configuration
+            config?.contentInsets = .zero
+            config?.titleAlignment = .trailing
+            config?.attributedTitle = AttributedString(
+                isEditingTags ? "Done" : "Edit",
+                attributes: AttributeContainer([.font: UIFont.systemFont(ofSize: 17, weight: .semibold)])
+            )
+            config?.baseForegroundColor = .systemIndigo
+            button.configuration = config
+        }
+    }
+
+    private func addBindings() {
+        $isEditingTags
+            .receive(on: DispatchQueue.main)
+            .assign(to: \.isEditing, on: collectionView)
+            .store(in: &subscriptions)
+        $isEditingTags
+            .assign(to: \.isEditing, on: viewModel)
+            .store(in: &subscriptions)
+        viewModel.createTagFooterTap
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] in
+                showTagEditor()
+            }
+            .store(in: &subscriptions)
+    }
+
     private func configureCollectionView() {
         collectionView.collectionViewLayout = createListLayout()
         collectionView.allowsMultipleSelection = true
         collectionView.delegate = self
+        collectionView.allowsMultipleSelectionDuringEditing = false
 
         viewModel.configureDataSource(for: collectionView)
     }
@@ -52,13 +94,14 @@ class TagSelectorViewController: UIViewController {
     private func createListLayout() -> UICollectionViewLayout {
         var listConfiguration = UICollectionLayoutListConfiguration(appearance: .plain)
         listConfiguration.showsSeparators = false
+        listConfiguration.footerMode = .supplementary
 
         return UICollectionViewCompositionalLayout.list(using: listConfiguration)
     }
 
-    // MARK: - Actions
+    func showTagEditor() {
+        isEditingTags = false
 
-    @IBAction func plusButtonTapped() {
         let newTagVC = UIStoryboard.main
             .instantiateViewController(identifier: NewTagViewController.storyboardID) { coder in
                 let viewModel = self.viewModel.newTagViewModel()
@@ -68,17 +111,31 @@ class TagSelectorViewController: UIViewController {
         navigationController?.pushViewController(newTagVC, animated: true)
     }
 
+    // MARK: - Actions
+
+    @IBAction func editButtonTapped() {
+        isEditingTags.toggle()
+    }
+
     @IBAction func closeButtonTapped() {
         navigationController?.dismiss(animated: true)
     }
 }
 
+// MARK: - UICollectionViewDelegate
+
 extension TagSelectorViewController: UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        viewModel.toggleTagAt(indexPath)
+        if isEditingTags {
+            showTagEditor()
+        } else {
+            viewModel.toggleTag(at: indexPath)
+        }
     }
 
     func collectionView(_ collectionView: UICollectionView, didDeselectItemAt indexPath: IndexPath) {
-        viewModel.toggleTagAt(indexPath)
+        if !isEditingTags {
+            viewModel.toggleTag(at: indexPath)
+        }
     }
 }

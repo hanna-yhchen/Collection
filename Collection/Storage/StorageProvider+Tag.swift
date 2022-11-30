@@ -95,6 +95,28 @@ extension StorageProvider {
         }
     }
 
+    func reorderTags(
+        orderedTagIDs: [ObjectID],
+        context: NSManagedObjectContext? = nil
+    ) async throws {
+        let context = context ?? newTaskContext()
+
+        try await context.perform {
+            var order = 0.0
+
+            for id in orderedTagIDs {
+                guard let tag = try context.existingObject(with: id) as? Tag else {
+                    throw CoreDataError.unfoundObjectInContext
+                }
+
+                tag.sortOrder = order
+                order += 1
+            }
+
+            try context.save(situation: .reorderTags)
+        }
+    }
+
     func deleteTag(
         tagID: ObjectID,
         context: NSManagedObjectContext? = nil
@@ -105,14 +127,11 @@ extension StorageProvider {
             throw CoreDataError.unfoundObjectInContext
         }
 
-        try await deleteTag(tag: tag, context: context)
+        try await deleteTag(tag: tag)
     }
 
-    func deleteTag(
-        tag: Tag,
-        context: NSManagedObjectContext? = nil
-    ) async throws {
-        let context = context ?? newTaskContext()
+    func deleteTag(tag: Tag) async throws {
+        let context = tag.managedObjectContext ?? persistentContainer.viewContext
 
         try await context.perform {
             context.delete(tag)

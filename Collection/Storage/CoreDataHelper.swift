@@ -23,7 +23,7 @@ enum CoreDataError: Error {
 extension NSManagedObjectContext {
     enum SituationForSaving: String {
         case addItem, updateItem, deleteItem, copyItem
-        case addTag, updateTag, deleteTag, toggleTagging
+        case addTag, updateTag, deleteTag, toggleTagging, reorderTags
         case addBoard, updateBoard, deleteBoard
     }
 
