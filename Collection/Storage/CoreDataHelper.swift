@@ -142,7 +142,7 @@ extension CKShare {
                 return sharedPersistentStore
             }
         }
-        
+
         return nil
     }
 }
