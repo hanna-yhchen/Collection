@@ -284,7 +284,7 @@ extension BoardListViewController: NSFetchedResultsControllerDelegate {
         var newSnapshot = snapshot as Snapshot
         if newSnapshot.numberOfItems == 0 {
             showPlaceholderView()
-        } else {
+        } else if placeholderView != nil {
             removePlaceholderView()
         }
 

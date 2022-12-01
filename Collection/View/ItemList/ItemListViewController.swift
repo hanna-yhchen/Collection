@@ -397,6 +397,14 @@ extension ItemListViewController {
                     to: self.fetchedResultsController.managedObjectContext)
             }
             .store(in: &subscriptions)
+
+        NotificationCenter.default.publisher(for: .tagObjectDidChange, object: storageProvider)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                guard let self = self else { return }
+                try? self.fetchedResultsController.performFetch()
+            }
+            .store(in: &subscriptions)
     }
 
     private func showDocumentPicker() {
@@ -713,7 +721,7 @@ extension ItemListViewController: NSFetchedResultsControllerDelegate {
         var newSnapshot = snapshot as Snapshot
         if newSnapshot.numberOfItems == 0 {
             showPlaceholderView()
-        } else {
+        } else if placeholderView != nil {
             removePlaceholderView()
         }
 
@@ -724,11 +732,14 @@ extension ItemListViewController: NSFetchedResultsControllerDelegate {
                 let currentIndex = currentSnapshot.indexOfItem(objectID),
                 let newIndex = newSnapshot.indexOfItem(objectID),
                 newIndex == currentIndex,
-                let existingObject = try? controller.managedObjectContext.existingObject(with: objectID),
-                existingObject.isUpdated
+                let item = try? controller.managedObjectContext.existingObject(with: objectID) as? Item
             else { return false }
 
-            return true
+            if let tags = item.tags?.allObjects as? [Tag], tags.contains(where: { $0.isUpdated }) {
+                return true
+            }
+
+            return item.isUpdated
         }
         newSnapshot.reloadItems(updatedIDs)
 

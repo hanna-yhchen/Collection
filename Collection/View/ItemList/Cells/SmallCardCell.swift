@@ -57,6 +57,12 @@ class SmallCardCell: UICollectionViewCell, ItemCell, ItemActionSendable {
 
         iconImageView.image = item.type.icon
 
+        if let tags = item.tags, let sortedTags = tags.sortedArray(
+            using: [NSSortDescriptor(keyPath: \Tag.sortOrder, ascending: true)]
+        ) as? [Tag] {
+            configureTagViews(tags: sortedTags)
+        }
+
         switch item.type {
         case .image:
             if let thumbnail = item.thumbnail?.data, let thumbnailImage = UIImage(data: thumbnail) {
@@ -87,15 +93,6 @@ class SmallCardCell: UICollectionViewCell, ItemCell, ItemActionSendable {
                 fileTypeLabel.isHidden = false
                 fileTypeLabel.text = item.filenameExtension
             }
-        }
-
-        if let tags = item.tags?.allObjects as? [Tag] {
-            let tagColors = tags
-                .compactMap { tag in
-                    return TagColor(rawValue: tag.color)
-                }
-                .map(\.color)
-            configureTagViews(colors: tagColors)
         }
     }
 
@@ -130,8 +127,10 @@ class SmallCardCell: UICollectionViewCell, ItemCell, ItemActionSendable {
             .store(in: &subscriptions)
     }
 
-    private func configureTagViews(colors: [UIColor]) {
-        for color in colors {
+    private func configureTagViews(tags: [Tag]) {
+        tags.forEach { tag in
+            guard let color = TagColor(rawValue: tag.color)?.color else { return }
+
             let tagView = UIView()
             tagView.backgroundColor = color
             tagView.layer.cornerRadius = 8 / 2
