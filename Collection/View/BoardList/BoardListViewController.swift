@@ -181,7 +181,7 @@ class BoardListViewController: UIViewController, PlaceholderViewDisplayable {
     }
 
     private func addObservers() {
-        storageProvider.historyManager?.storeDidChangePublisher
+        storageProvider.historyManager.storeDidChangePublisher
             .map { transactions -> [NSPersistentHistoryTransaction] in
                 let boardEntityName = Board.entity().name
 

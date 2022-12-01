@@ -369,7 +369,7 @@ extension ItemListViewController {
     }
 
     private func addObservers() {
-        storageProvider.historyManager?.storeDidChangePublisher
+        storageProvider.historyManager.storeDidChangePublisher
             .map {[weak self] transactions -> [NSPersistentHistoryTransaction] in
                 guard let `self` = self else { return [] }
                 let itemEntityName = Item.entity().name
@@ -447,7 +447,6 @@ extension ItemListViewController {
                 let viewModel = NoteEditorViewModel(itemManager: self.itemManager, scenario: .create(boardID: self.boardID))
                 return NoteEditorViewController(coder: coder, viewModel: viewModel)
             }
-
 
         if let sheet = editorVC.sheetPresentationController {
             sheet.detents = [.medium(), .large()]
