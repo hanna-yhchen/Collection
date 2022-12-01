@@ -8,7 +8,7 @@
 import Combine
 import UIKit
 
-protocol ItemActionSendable {
+protocol ItemActionSendable: AnyObject {
     var objectID: ObjectID? { get set }
     var subscriptions: Set<AnyCancellable> { get set }
     var actionSubject: PassthroughSubject<(ItemAction, ObjectID), Never> { get set }
@@ -31,8 +31,8 @@ extension ItemActionSendable {
 
     func addActionMenu(for button: UIButton) {
         let children = ItemAction.allCases.map { itemAction in
-            let action = UIAction(title: itemAction.title) { _ in
-                self.sendAction(itemAction)
+            let action = UIAction(title: itemAction.title) { [unowned self] _ in
+                sendAction(itemAction)
             }
             if itemAction == .delete {
                 action.attributes = .destructive
