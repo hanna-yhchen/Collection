@@ -63,8 +63,10 @@ class LargeCardCell: UICollectionViewCell, ItemCell, ItemActionSendable {
                 + DateFormatter.hyphenatedDateTimeFormatter.string(from: updateDate)
         }
 
-        if let tags = item.tags?.allObjects as? [Tag] {
-            configureTagView(tags: tags)
+        if let tags = item.tags, let sortedTags = tags.sortedArray(
+            using: [NSSortDescriptor(keyPath: \Tag.sortOrder, ascending: true)]
+        ) as? [Tag] {
+            configureTagView(tags: sortedTags)
         }
 
         switch item.type {

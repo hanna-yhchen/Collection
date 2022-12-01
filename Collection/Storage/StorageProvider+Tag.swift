@@ -93,6 +93,7 @@ extension StorageProvider {
 
             try context.save(situation: .updateTag)
         }
+        NotificationCenter.default.post(name: .tagObjectDidChange, object: self)
     }
 
     func reorderTags(
@@ -115,6 +116,7 @@ extension StorageProvider {
 
             try context.save(situation: .reorderTags)
         }
+        NotificationCenter.default.post(name: .tagObjectDidChange, object: self)
     }
 
     func deleteTag(

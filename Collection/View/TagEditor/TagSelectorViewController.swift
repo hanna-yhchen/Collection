@@ -16,8 +16,9 @@ class TagSelectorViewController: UIViewController {
     private let viewModel: TagSelectorViewModel
     private lazy var subscriptions = CancellableSet()
 
-    @Published var isEditingTags = false {
+    @Published private var isEditingTags = false {
         didSet {
+            collectionView.isEditing = isEditingTags
             editButton.setNeedsUpdateConfiguration()
         }
     }
@@ -68,16 +69,12 @@ class TagSelectorViewController: UIViewController {
 
     private func addBindings() {
         $isEditingTags
-            .receive(on: DispatchQueue.main)
-            .assign(to: \.isEditing, on: collectionView)
-            .store(in: &subscriptions)
-        $isEditingTags
             .assign(to: \.isEditing, on: viewModel)
             .store(in: &subscriptions)
         viewModel.createTagFooterTap
             .receive(on: DispatchQueue.main)
             .sink { [unowned self] in
-                showTagEditor()
+                showTagEditor(viewModel: viewModel.newTagViewModel())
             }
             .store(in: &subscriptions)
     }
@@ -99,13 +96,12 @@ class TagSelectorViewController: UIViewController {
         return UICollectionViewCompositionalLayout.list(using: listConfiguration)
     }
 
-    func showTagEditor() {
+    func showTagEditor(viewModel: TagEditorViewModel) {
         isEditingTags = false
 
         let newTagVC = UIStoryboard.main
-            .instantiateViewController(identifier: NewTagViewController.storyboardID) { coder in
-                let viewModel = self.viewModel.newTagViewModel()
-                return NewTagViewController(coder: coder, viewModel: viewModel)
+            .instantiateViewController(identifier: TagEditorViewController.storyboardID) { coder in
+                TagEditorViewController(coder: coder, viewModel: viewModel)
             }
 
         navigationController?.pushViewController(newTagVC, animated: true)
@@ -127,15 +123,15 @@ class TagSelectorViewController: UIViewController {
 extension TagSelectorViewController: UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         if isEditingTags {
-            showTagEditor()
+            collectionView.deselectItem(at: indexPath, animated: false)
+            showTagEditor(viewModel: viewModel.editTagViewModel(at: indexPath))
         } else {
             viewModel.toggleTag(at: indexPath)
         }
     }
 
     func collectionView(_ collectionView: UICollectionView, didDeselectItemAt indexPath: IndexPath) {
-        if !isEditingTags {
-            viewModel.toggleTag(at: indexPath)
-        }
+        guard !isEditingTags else { return }
+        viewModel.toggleTag(at: indexPath)
     }
 }

@@ -94,7 +94,7 @@ final class TagSelectorViewModel: NSObject {
             content.textProperties.font = .systemFont(ofSize: 18, weight: .semibold)
             content.textProperties.color = .label
             content.image = UIImage(systemName: "plus")
-            content.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 16, leading: 0, bottom: 0, trailing: 0)
+            content.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 16, leading: 0, bottom: 16, trailing: 0)
 
             footer.contentConfiguration = content
             let tapGesture = UITapGestureRecognizer(target: self, action: #selector(footerTapped))
@@ -143,8 +143,18 @@ final class TagSelectorViewModel: NSObject {
         }
     }
 
-    func newTagViewModel() -> NewTagViewModel {
-        NewTagViewModel(storageProvider: storageProvider, context: context, boardID: boardID)
+    func newTagViewModel() -> TagEditorViewModel {
+        TagEditorViewModel(storageProvider: storageProvider, context: context, scenario: .create(relatedBoardID: boardID))
+    }
+
+    func editTagViewModel(at indexPath: IndexPath) -> TagEditorViewModel {
+        guard
+            let dataSource = dataSource,
+            let tagID = dataSource.itemIdentifier(for: indexPath),
+            let tag = context.object(with: tagID) as? Tag
+        else { fatalError("#\(#function): Failed to retrieve tag object") }
+
+        return TagEditorViewModel(storageProvider: storageProvider, context: context, scenario: .update(tag: tag))
     }
 
     // MARK: - Private
