@@ -613,6 +613,23 @@ extension ItemListViewController: UICollectionViewDelegate {
 
         showItem(id: itemID)
     }
+
+    func collectionView(_ collectionView: UICollectionView, contextMenuConfigurationForItemAt indexPath: IndexPath, point: CGPoint) -> UIContextMenuConfiguration? {
+        guard let itemID = dataSource.itemIdentifier(for: indexPath) else { return nil }
+
+        return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { _ in
+            let children = ItemAction.allCases.map { itemAction in
+                let action = UIAction(title: itemAction.title) { [unowned self] _ in
+                    perform(itemAction, itemID: itemID)
+                }
+                if itemAction == .delete {
+                    action.attributes = .destructive
+                }
+                return action
+            }
+            return UIMenu(children: children)
+        }
+    }
 }
 
 extension ItemListViewController: UICollectionViewDelegateFlowLayout {
