@@ -32,12 +32,18 @@ class ItemListViewController: UIViewController, PlaceholderViewDisplayable {
         }
     }
 
+    enum SnapshotStrategy {
+        case normal
+        case reload
+    }
+
     typealias Snapshot = NSDiffableDataSourceSnapshot<Int, NSManagedObjectID>
     typealias DataSource = UICollectionViewDiffableDataSource<Int, NSManagedObjectID>
 
     // MARK: - Properties
 
     private let scope: Scope
+    private var snapshotStrategy: SnapshotStrategy = .normal
 
     #warning("NEED refactoring. This is only used for importing now.")
     private lazy var boardID: ObjectID = {
@@ -51,6 +57,8 @@ class ItemListViewController: UIViewController, PlaceholderViewDisplayable {
 
     private let itemManager: ItemManager
     private let storageProvider: StorageProvider
+    private let menuProvider: OptionMenuProvider
+
     // TODO: move fetchedResultsController logic to viewModel
     private lazy var fetchedResultsController: NSFetchedResultsController<Item> = {
         let fetchRequest = Item.fetchRequest()
@@ -71,29 +79,15 @@ class ItemListViewController: UIViewController, PlaceholderViewDisplayable {
     private lazy var dataSource = createDataSource()
     private var subscriptions = CancellableSet()
 
-    private var currentLayout: ItemLayout = .smallCard
-    private lazy var layoutActions: [UIAction] = {
-        let actions = ItemLayout.allCases.map { layout in
-            UIAction(
-                title: layout.title,
-                image: layout.buttonIcon
-            ) {[unowned self] _ in
-                self.changeLayout(layout)
-            }
-        }
-        actions[1].state = .on
-        return actions
-    }()
-
     private lazy var collectionView = ItemCollectionView(frame: view.bounds, traits: view.traitCollection)
     var placeholderView: HintPlaceholderView?
 
     @IBOutlet var plusButton: UIButton!
-    private lazy var layoutButton = UIBarButtonItem(
-        image: currentLayout.buttonIcon,
-        style: .plain,
-        target: self,
-        action: #selector(layoutButtonTapped))
+    private lazy var optionButton = UIBarButtonItem(
+        image: UIImage(systemName: "slider.horizontal.3"),
+        menu: menuProvider.currentMenu)
+
+    private var topContentOffset: CGPoint?
 
     // MARK: - Lifecycle
 
@@ -104,16 +98,21 @@ class ItemListViewController: UIViewController, PlaceholderViewDisplayable {
         addObservers()
     }
 
-    override func viewWillLayoutSubviews() {
-        super.viewWillLayoutSubviews()
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
 
-        collectionView.collectionViewLayout.invalidateLayout()
+        if topContentOffset == nil {
+            let statusBarHeight = view.window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0
+            let navBarHeight = navigationController?.navigationBar.frame.height ?? 0
+            let safeAreaHeight = statusBarHeight + navBarHeight
+            topContentOffset = CGPoint(x: 0, y: -safeAreaHeight)
+        }
     }
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
 
-        collectionView.setLayout(currentLayout, animated: false)
+        collectionView.setLayout(menuProvider.currentLayout, animated: false)
         try? fetchedResultsController.performFetch()
     }
 
@@ -123,11 +122,13 @@ class ItemListViewController: UIViewController, PlaceholderViewDisplayable {
         coder: NSCoder,
         scope: Scope,
         storageProvider: StorageProvider,
-        itemManager: ItemManager = ItemManager.shared
+        itemManager: ItemManager = ItemManager.shared,
+        menuProvider: OptionMenuProvider = OptionMenuProvider()
     ) {
         self.scope = scope
         self.storageProvider = storageProvider
         self.itemManager = itemManager
+        self.menuProvider = menuProvider
 
         super.init(coder: coder)
     }
@@ -178,27 +179,6 @@ class ItemListViewController: UIViewController, PlaceholderViewDisplayable {
 
         present(importController, animated: true)
     }
-
-
-    @objc private func layoutButtonTapped() {
-        let newLayout = currentLayout.next
-        changeLayout(newLayout)
-    }
-
-    private func changeLayout(_ layout: ItemLayout) {
-        guard layout != currentLayout else { return }
-
-        layoutButton.image = layout.buttonIcon
-
-        layoutButton.menu = layoutMenu(selectedIndex: layout.rawValue)
-        currentLayout = layout
-
-        var snapshot = dataSource.snapshot()
-        snapshot.reloadItems(snapshot.itemIdentifiers)
-        dataSource.applySnapshotUsingReloadData(snapshot) {
-            self.collectionView.setLayout(layout, animated: true)
-        }
-    }
 }
 
 // MARK: - Private
@@ -240,14 +220,13 @@ extension ItemListViewController {
         collectionView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         collectionView.delegate = self
 
-        navigationItem.rightBarButtonItem = layoutButton
-        layoutButton.menu = layoutMenu(selectedIndex: ItemLayout.smallCard.rawValue)
+        navigationItem.rightBarButtonItem = optionButton
     }
 
     private func createDataSource() -> DataSource {
         DataSource(collectionView: collectionView) {[unowned self] collectionView, indexPath, objectID in
             guard let cell = collectionView.dequeueReusableCell(
-                withReuseIdentifier: self.currentLayout.cellIdentifier,
+                withReuseIdentifier: menuProvider.currentLayout.cellIdentifier,
                 for: indexPath) as? ItemCell
             else { fatalError("#\(#function): Failed to dequeue ItemCollectionViewCell") }
 
@@ -369,7 +348,7 @@ extension ItemListViewController {
     }
 
     private func addObservers() {
-        storageProvider.historyManager?.storeDidChangePublisher
+        storageProvider.historyManager.storeDidChangePublisher
             .map {[weak self] transactions -> [NSPersistentHistoryTransaction] in
                 guard let `self` = self else { return [] }
                 let itemEntityName = Item.entity().name
@@ -397,6 +376,80 @@ extension ItemListViewController {
                     to: self.fetchedResultsController.managedObjectContext)
             }
             .store(in: &subscriptions)
+
+        NotificationCenter.default.publisher(for: .tagObjectDidChange, object: storageProvider)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                guard let self = self else { return }
+                self.snapshotStrategy = .reload
+                try? self.fetchedResultsController.performFetch()
+            }
+            .store(in: &subscriptions)
+
+        menuProvider.$currentLayout
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] layout in
+                switchLayout(layout)
+            }
+            .store(in: &subscriptions)
+
+        menuProvider.$currentSort
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] sort in
+                switchSort(sort)
+            }
+            .store(in: &subscriptions)
+
+        menuProvider.$currentFilterType
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] type in
+                applyFilter(type)
+            }
+            .store(in: &subscriptions)
+
+        menuProvider.$currentMenu
+            .compactMap { $0 }
+            .receive(on: DispatchQueue.main)
+            .assign(to: \.menu, on: optionButton)
+            .store(in: &subscriptions)
+    }
+
+    private func switchLayout(_ layout: ItemLayout) {
+        var snapshot = dataSource.snapshot()
+        snapshot.reloadItems(snapshot.itemIdentifiers)
+
+        dataSource.applySnapshotUsingReloadData(snapshot) { [unowned self] in
+            collectionView.setLayout(layout, animated: true)
+            if let topContentOffset = topContentOffset {
+                collectionView.setContentOffset(topContentOffset, animated: true)
+            }
+        }
+    }
+
+    private func switchSort(_ sort: ItemSort) {
+        snapshotStrategy = .reload
+        let fetchRequest = fetchedResultsController.fetchRequest
+        fetchRequest.sortDescriptors = [sort.sortDescriptor]
+        try? fetchedResultsController.performFetch()
+    }
+
+    private func applyFilter(_ type: DisplayType?) {
+        snapshotStrategy = .reload
+        let fetchRequest = fetchedResultsController.fetchRequest
+
+        var predicate: NSPredicate?
+        if let type = type {
+            if let basePredicate = scope.predicate {
+                predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [basePredicate, type.predicate])
+            } else {
+                predicate = type.predicate
+            }
+        } else {
+            predicate = scope.predicate
+        }
+        fetchRequest.predicate = predicate
+
+        try? fetchedResultsController.performFetch()
     }
 
     private func showDocumentPicker() {
@@ -439,7 +492,6 @@ extension ItemListViewController {
                 let viewModel = NoteEditorViewModel(itemManager: self.itemManager, scenario: .create(boardID: self.boardID))
                 return NoteEditorViewController(coder: coder, viewModel: viewModel)
             }
-
 
         if let sheet = editorVC.sheetPresentationController {
             sheet.detents = [.medium(), .large()]
@@ -578,22 +630,11 @@ extension ItemListViewController {
         present(safariController, animated: true)
     }
 
-    private func reloadItems(_ items: [NSManagedObjectID]) {
-        Task { @MainActor in
-            var newSnapshot = dataSource.snapshot()
-            newSnapshot.reloadItems(items)
-            await dataSource.apply(newSnapshot, animatingDifferences: true)
-        }
-    }
-
-    private func layoutMenu(selectedIndex: Int) -> UIMenu {
-        for (index, action) in layoutActions.enumerated() {
-            action.state = index == selectedIndex ? .on : .off
-        }
-
-        return UIMenu(
-            title: "Display Mode",
-            children: layoutActions)
+    @MainActor
+    private func reconfigureItems(_ items: [NSManagedObjectID]) async {
+        var newSnapshot = dataSource.snapshot()
+        newSnapshot.reconfigureItems(items)
+        await dataSource.apply(newSnapshot, animatingDifferences: true)
     }
 }
 
@@ -606,11 +647,28 @@ extension ItemListViewController: UICollectionViewDelegate {
 
         showItem(id: itemID)
     }
+
+    func collectionView(_ collectionView: UICollectionView, contextMenuConfigurationForItemAt indexPath: IndexPath, point: CGPoint) -> UIContextMenuConfiguration? {
+        guard let itemID = dataSource.itemIdentifier(for: indexPath) else { return nil }
+
+        return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { _ in
+            let children = ItemAction.allCases.map { itemAction in
+                let action = UIAction(title: itemAction.title) { [unowned self] _ in
+                    perform(itemAction, itemID: itemID)
+                }
+                if itemAction == .delete {
+                    action.attributes = .destructive
+                }
+                return action
+            }
+            return UIMenu(children: children)
+        }
+    }
 }
 
 extension ItemListViewController: UICollectionViewDelegateFlowLayout {
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        self.collectionView.itemSize(for: currentLayout)
+        self.collectionView.itemSize(for: menuProvider.currentLayout)
     }
 }
 
@@ -711,29 +769,37 @@ extension ItemListViewController: UIImagePickerControllerDelegate & UINavigation
 extension ItemListViewController: NSFetchedResultsControllerDelegate {
     func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChangeContentWith snapshot: NSDiffableDataSourceSnapshotReference) {
         var newSnapshot = snapshot as Snapshot
-        if newSnapshot.numberOfItems == 0 {
+
+        if newSnapshot.numberOfItems == 0, placeholderView == nil {
             showPlaceholderView()
-        } else {
+        } else if placeholderView != nil {
             removePlaceholderView()
         }
 
-        let currentSnapshot = dataSource.snapshot()
+        if snapshotStrategy == .normal {
+            let currentSnapshot = dataSource.snapshot()
 
-        let updatedIDs = newSnapshot.itemIdentifiers.filter { objectID in
-            guard
-                let currentIndex = currentSnapshot.indexOfItem(objectID),
-                let newIndex = newSnapshot.indexOfItem(objectID),
-                newIndex == currentIndex,
-                let existingObject = try? controller.managedObjectContext.existingObject(with: objectID),
-                existingObject.isUpdated
-            else { return false }
+            let updatedIDs = newSnapshot.itemIdentifiers.filter { objectID in
+                guard
+                    let currentIndex = currentSnapshot.indexOfItem(objectID),
+                    let newIndex = newSnapshot.indexOfItem(objectID),
+                    newIndex == currentIndex,
+                    let item = try? controller.managedObjectContext.existingObject(with: objectID) as? Item
+                else { return false }
 
-            return true
+                if let tags = item.tags?.allObjects as? [Tag], tags.contains(where: { $0.isUpdated }) {
+                    return true
+                }
+
+                return item.isUpdated
+            }
+            newSnapshot.reloadItems(updatedIDs)
+        } else {
+            newSnapshot.reloadItems(newSnapshot.itemIdentifiers)
         }
-        newSnapshot.reloadItems(updatedIDs)
 
-        let shouldAnimate = collectionView.numberOfSections != 0
-        dataSource.apply(newSnapshot, animatingDifferences: shouldAnimate)
+        dataSource.apply(newSnapshot, animatingDifferences: true)
+        snapshotStrategy = .normal
     }
 }
 
@@ -795,7 +861,7 @@ extension ItemListViewController: QLPreviewControllerDelegate {
                 print("\(#function): Failed to update changes on previewing item, \(error)")
             }
 
-            reloadItems([itemID])
+            await reconfigureItems([itemID])
         }
     }
 

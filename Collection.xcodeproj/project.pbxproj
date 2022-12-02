@@ -23,6 +23,8 @@
 		B515D5E92912215400072CBC /* BoardCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = B515D5E72912215400072CBC /* BoardCell.xib */; };
 		B515D5EB29124CC400072CBC /* StorageProvider+Board.swift in Sources */ = {isa = PBXBuildFile; fileRef = B515D5EA29124CC400072CBC /* StorageProvider+Board.swift */; };
 		B515D5EF291371D700072CBC /* UserDefaults+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = B515D5EE291371D700072CBC /* UserDefaults+Extension.swift */; };
+		B51656B729385D7500965F3B /* NSNotification+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = B51656B629385D7500965F3B /* NSNotification+Extension.swift */; };
+		B51656B92938971200965F3B /* ItemSort.swift in Sources */ = {isa = PBXBuildFile; fileRef = B51656B82938971200965F3B /* ItemSort.swift */; };
 		B51968C3291CB90F003CBDD0 /* UTType+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = B51968C2291CB90F003CBDD0 /* UTType+Extension.swift */; };
 		B51968C4291CBA38003CBDD0 /* UTType+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = B51968C2291CB90F003CBDD0 /* UTType+Extension.swift */; };
 		B520A5C4292B734F00A76E9A /* KeyboardHandling.swift in Sources */ = {isa = PBXBuildFile; fileRef = B520A5C3292B734F00A76E9A /* KeyboardHandling.swift */; };
@@ -34,9 +36,10 @@
 		B523E93929164B4F00180B36 /* MainInterface.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = B523E93729164B4F00180B36 /* MainInterface.storyboard */; };
 		B523E93D29164B4F00180B36 /* ShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B523E93329164B4F00180B36 /* ShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		B52FF8FB29273BFE0023481D /* TagSelectorViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B52FF8FA29273BFE0023481D /* TagSelectorViewModel.swift */; };
-		B52FF900292759CA0023481D /* NewTagViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B52FF8FF292759CA0023481D /* NewTagViewController.swift */; };
+		B52FF900292759CA0023481D /* TagEditorViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B52FF8FF292759CA0023481D /* TagEditorViewController.swift */; };
 		B538E9E32910255100DF5DEB /* NoteEditorViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B538E9E22910255100DF5DEB /* NoteEditorViewController.swift */; };
 		B538E9E62910277300DF5DEB /* UIStoryboard+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = B538E9E52910277300DF5DEB /* UIStoryboard+Extension.swift */; };
+		B53CD12429399F24006E9B4A /* OptionMenuProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = B53CD12329399F24006E9B4A /* OptionMenuProvider.swift */; };
 		B55298A42926F03600EF3D52 /* StorageProvider+Tag.swift in Sources */ = {isa = PBXBuildFile; fileRef = B55298A32926F03600EF3D52 /* StorageProvider+Tag.swift */; };
 		B55298A62926F09F00EF3D52 /* TagColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = B55298A52926F09F00EF3D52 /* TagColor.swift */; };
 		B55298A829273A2700EF3D52 /* TagSelectorViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B55298A729273A2700EF3D52 /* TagSelectorViewController.swift */; };
@@ -56,7 +59,7 @@
 		B5810CBF2930A2FE00EFB41C /* UIViewController+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5810CBE2930A2FE00EFB41C /* UIViewController+Extension.swift */; };
 		B59544102924E3C700665868 /* ItemAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = B595440F2924E3C700665868 /* ItemAction.swift */; };
 		B59544122925549400665868 /* NameEditorViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B59544112925549400665868 /* NameEditorViewController.swift */; };
-		B59B050B29358984003B913C /* NewTagViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B59B050A29358984003B913C /* NewTagViewModel.swift */; };
+		B59B050B29358984003B913C /* TagEditorViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B59B050A29358984003B913C /* TagEditorViewModel.swift */; };
 		B59BE4062923475600E50B30 /* GridCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = B59BE4042923475600E50B30 /* GridCell.swift */; };
 		B59BE4072923475600E50B30 /* GridCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = B59BE4052923475600E50B30 /* GridCell.xib */; };
 		B59BE4092923643F00E50B30 /* ItemLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = B59BE4082923643F00E50B30 /* ItemLayout.swift */; };
@@ -135,6 +138,8 @@
 		B515D5E72912215400072CBC /* BoardCell.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = BoardCell.xib; sourceTree = "<group>"; };
 		B515D5EA29124CC400072CBC /* StorageProvider+Board.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "StorageProvider+Board.swift"; sourceTree = "<group>"; };
 		B515D5EE291371D700072CBC /* UserDefaults+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UserDefaults+Extension.swift"; sourceTree = "<group>"; };
+		B51656B629385D7500965F3B /* NSNotification+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSNotification+Extension.swift"; sourceTree = "<group>"; };
+		B51656B82938971200965F3B /* ItemSort.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemSort.swift; sourceTree = "<group>"; };
 		B51968C2291CB90F003CBDD0 /* UTType+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UTType+Extension.swift"; sourceTree = "<group>"; };
 		B520A5C3292B734F00A76E9A /* KeyboardHandling.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardHandling.swift; sourceTree = "<group>"; };
 		B520A5C9292B82F700A76E9A /* ProgressHUDWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressHUDWrapper.swift; sourceTree = "<group>"; };
@@ -145,9 +150,10 @@
 		B523E93829164B4F00180B36 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/MainInterface.storyboard; sourceTree = "<group>"; };
 		B523E93A29164B4F00180B36 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		B52FF8FA29273BFE0023481D /* TagSelectorViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagSelectorViewModel.swift; sourceTree = "<group>"; };
-		B52FF8FF292759CA0023481D /* NewTagViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewTagViewController.swift; sourceTree = "<group>"; };
+		B52FF8FF292759CA0023481D /* TagEditorViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagEditorViewController.swift; sourceTree = "<group>"; };
 		B538E9E22910255100DF5DEB /* NoteEditorViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NoteEditorViewController.swift; path = Collection/View/ItemEditor/NoteEditorViewController.swift; sourceTree = SOURCE_ROOT; };
 		B538E9E52910277300DF5DEB /* UIStoryboard+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIStoryboard+Extension.swift"; sourceTree = "<group>"; };
+		B53CD12329399F24006E9B4A /* OptionMenuProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OptionMenuProvider.swift; sourceTree = "<group>"; };
 		B55298A32926F03600EF3D52 /* StorageProvider+Tag.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "StorageProvider+Tag.swift"; sourceTree = "<group>"; };
 		B55298A52926F09F00EF3D52 /* TagColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagColor.swift; sourceTree = "<group>"; };
 		B55298A729273A2700EF3D52 /* TagSelectorViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagSelectorViewController.swift; sourceTree = "<group>"; };
@@ -166,7 +172,7 @@
 		B5810CBE2930A2FE00EFB41C /* UIViewController+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIViewController+Extension.swift"; sourceTree = "<group>"; };
 		B595440F2924E3C700665868 /* ItemAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemAction.swift; sourceTree = "<group>"; };
 		B59544112925549400665868 /* NameEditorViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NameEditorViewController.swift; sourceTree = "<group>"; };
-		B59B050A29358984003B913C /* NewTagViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewTagViewModel.swift; sourceTree = "<group>"; };
+		B59B050A29358984003B913C /* TagEditorViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagEditorViewModel.swift; sourceTree = "<group>"; };
 		B59BE4042923475600E50B30 /* GridCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GridCell.swift; sourceTree = "<group>"; };
 		B59BE4052923475600E50B30 /* GridCell.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = GridCell.xib; sourceTree = "<group>"; };
 		B59BE4082923643F00E50B30 /* ItemLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemLayout.swift; sourceTree = "<group>"; };
@@ -227,6 +233,7 @@
 				B5DE8850291F728D009B0957 /* DisplayType.swift */,
 				B595440F2924E3C700665868 /* ItemAction.swift */,
 				B59BE4082923643F00E50B30 /* ItemLayout.swift */,
+				B51656B82938971200965F3B /* ItemSort.swift */,
 				B50E0A8B2922372300E00432 /* PreviewItem.swift */,
 				B57F94E82932F4EA00696E8E /* SideMenuItem.swift */,
 				B55298A52926F09F00EF3D52 /* TagColor.swift */,
@@ -310,6 +317,7 @@
 				B52203F629101C7100F2224B /* DateFormatter+Extension.swift */,
 				B5136DAA29246793009F26F3 /* Item+Extension.swift */,
 				B55B138429215E3100607345 /* ItemImportController+Extension.swift */,
+				B51656B629385D7500965F3B /* NSNotification+Extension.swift */,
 				B52203F4290FCA2200F2224B /* UICollectionViewCell+Extension.swift */,
 				B538E9E52910277300DF5DEB /* UIStoryboard+Extension.swift */,
 				B50E8F72291BB14900E64E36 /* UITextField+Extension.swift */,
@@ -335,7 +343,7 @@
 		B52FF8FE292759920023481D /* TagEditor */ = {
 			isa = PBXGroup;
 			children = (
-				B52FF8FF292759CA0023481D /* NewTagViewController.swift */,
+				B52FF8FF292759CA0023481D /* TagEditorViewController.swift */,
 				B55298A729273A2700EF3D52 /* TagSelectorViewController.swift */,
 			);
 			path = TagEditor;
@@ -359,6 +367,7 @@
 				B5B64E052917A52A002183FA /* ItemManager.swift */,
 				B55B13802920CFEC00607345 /* RichLinkProvider.swift */,
 				B50E7C042910B32B0027B56A /* ThumbnailProvider.swift */,
+				B53CD12329399F24006E9B4A /* OptionMenuProvider.swift */,
 			);
 			path = Utility;
 			sourceTree = "<group>";
@@ -366,7 +375,7 @@
 		B59B050929358970003B913C /* TagEditor */ = {
 			isa = PBXGroup;
 			children = (
-				B59B050A29358984003B913C /* NewTagViewModel.swift */,
+				B59B050A29358984003B913C /* TagEditorViewModel.swift */,
 				B52FF8FA29273BFE0023481D /* TagSelectorViewModel.swift */,
 			);
 			path = TagEditor;
@@ -659,6 +668,7 @@
 				B51968C3291CB90F003CBDD0 /* UTType+Extension.swift in Sources */,
 				B520A5CA292B82F700A76E9A /* ProgressHUDWrapper.swift in Sources */,
 				B57F94E92932F4EA00696E8E /* SideMenuItem.swift in Sources */,
+				B51656B92938971200965F3B /* ItemSort.swift in Sources */,
 				B50E7C052910B32B0027B56A /* ThumbnailProvider.swift in Sources */,
 				B5606F2C2933F7BA00E2EA52 /* ContextMenuActionSendable.swift in Sources */,
 				B52203F5290FCA2200F2224B /* UICollectionViewCell+Extension.swift in Sources */,
@@ -672,7 +682,7 @@
 				B59BE4092923643F00E50B30 /* ItemLayout.swift in Sources */,
 				B559BE542914FACF00F342C1 /* StorageHistoryManager.swift in Sources */,
 				B55B1388292164D200607345 /* ImportMethodCell.swift in Sources */,
-				B59B050B29358984003B913C /* NewTagViewModel.swift in Sources */,
+				B59B050B29358984003B913C /* TagEditorViewModel.swift in Sources */,
 				B50E0A8C2922372300E00432 /* PreviewItem.swift in Sources */,
 				B5C40F722935F05000AB2C8B /* HintPlaceholderView.swift in Sources */,
 				B57F94E7293265EB00696E8E /* SideMenuViewController.swift in Sources */,
@@ -688,10 +698,12 @@
 				B50D6CAF29237CAB006DB343 /* LargeCardCell.swift in Sources */,
 				B50E8F71291BB12B00E64E36 /* UITextView+Extension.swift in Sources */,
 				B55B13812920CFEC00607345 /* RichLinkProvider.swift in Sources */,
+				B53CD12429399F24006E9B4A /* OptionMenuProvider.swift in Sources */,
 				B59544122925549400665868 /* NameEditorViewController.swift in Sources */,
+				B51656B729385D7500965F3B /* NSNotification+Extension.swift in Sources */,
 				B50E8F75291BB2FB00E64E36 /* CombineWrapper.swift in Sources */,
 				B52203F729101C7100F2224B /* DateFormatter+Extension.swift in Sources */,
-				B52FF900292759CA0023481D /* NewTagViewController.swift in Sources */,
+				B52FF900292759CA0023481D /* TagEditorViewController.swift in Sources */,
 				B5DE8848291E2556009B0957 /* SmallCardCell.swift in Sources */,
 				B5E50DFC290BDF16006A7B22 /* SceneDelegate.swift in Sources */,
 				B50E8F6F291B84A000E64E36 /* NoteEditorViewModel.swift in Sources */,
@@ -944,9 +956,7 @@
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = "";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -982,9 +992,7 @@
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = "";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

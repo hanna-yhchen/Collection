@@ -7,7 +7,7 @@
 
 import UIKit
 
-enum DisplayType: Int16 {
+enum DisplayType: Int16, CaseIterable {
     case image
     case video
     case audio
@@ -33,5 +33,26 @@ enum DisplayType: Int16 {
         case .file:
             return UIImage(systemName: "doc")
         }
+    }
+
+    var title: String {
+        switch self {
+        case .image:
+            return "Image"
+        case .video:
+            return "Video"
+        case .audio:
+            return "Audio"
+        case .note:
+            return "Notes"
+        case .link:
+            return "Link"
+        case .file:
+            return "File"
+        }
+    }
+
+    var predicate: NSPredicate {
+        NSPredicate(format: "%K == %ld", #keyPath(Item.displayType), rawValue)
     }
 }

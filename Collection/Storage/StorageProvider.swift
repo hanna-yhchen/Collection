@@ -36,7 +36,7 @@ class StorageProvider {
         #endif
     }()
     let persistentContainer: NSPersistentCloudKitContainer
-    var historyManager: StorageHistoryManager?
+    lazy var historyManager: StorageHistoryManager = StorageHistoryManager(storageProvider: self, actor: actor)
 
     // swiftlint:disable:next implicitly_unwrapped_optional
     private var _privatePersistentStore: NSPersistentStore!
@@ -55,16 +55,10 @@ class StorageProvider {
     // MARK: - Initializer
 
     init() {
-        // TODO: use custom flags to specify current target
         self.persistentContainer = NSPersistentCloudKitContainer(name: AppIdentifier.coreDataModel)
         // TODO: tackle the situation when user turn off iCloud sync
         configurePersistentContainer()
 //        initializeCloudKitSchema()
-
-        if actor == .mainApp {
-            self.historyManager = StorageHistoryManager(storageProvider: self, actor: actor)
-//            fetchCurrentUser()
-        }
     }
 
     // MARK: - Methods
@@ -75,21 +69,6 @@ class StorageProvider {
         context.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
         return context
     }
-
-//    func fetchCurrentUser() {
-//        Task {
-//            do {
-//                let authStatus = try await cloudKitContainer.requestApplicationPermission(.userDiscoverability)
-//                if authStatus == .granted {
-//                    let userRecordID = try await cloudKitContainer.userRecordID()
-//                    let userIdentity = try await cloudKitContainer.userIdentity(forUserRecordID: userRecordID)
-//                    UserDefaults.username = userIdentity?.nameComponents?.formatted() ?? "You"
-//                }
-//            } catch {
-//                print("#\(#function): Failed to fetch user, \(error)")
-//            }
-//        }
-//    }
 
     func mergeTransactions(_ transactions: [NSPersistentHistoryTransaction], to context: NSManagedObjectContext) {
         context.perform {
@@ -128,6 +107,7 @@ class StorageProvider {
 
         persistentContainer.viewContext.automaticallyMergesChangesFromParent = true
         persistentContainer.viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
+        persistentContainer.viewContext.transactionAuthor = actor.rawValue
 
         /// Pin the viewContext to the current generation token (snapshot) for UI stability.
         do {
@@ -145,15 +125,12 @@ class StorageProvider {
         }
         privateStoreDescription.url = privateFolderURL.appendingPathComponent("Private.sqlite")
 
-        /// Enable history tracking in main app.
-        if actor == .mainApp {
-            privateStoreDescription.setOption(
-                true as NSNumber,
-                forKey: NSPersistentHistoryTrackingKey)
-            privateStoreDescription.setOption(
-                true as NSNumber,
-                forKey: NSPersistentStoreRemoteChangeNotificationPostOptionKey)
-        }
+        privateStoreDescription.setOption(
+            true as NSNumber,
+            forKey: NSPersistentHistoryTrackingKey)
+        privateStoreDescription.setOption(
+            true as NSNumber,
+            forKey: NSPersistentStoreRemoteChangeNotificationPostOptionKey)
 
         let privateStoreOptions = NSPersistentCloudKitContainerOptions(
             containerIdentifier: AppIdentifier.cloudKitContainer)

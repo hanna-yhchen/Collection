@@ -12,8 +12,8 @@ import CoreData
 extension StorageProvider {
     func addBoard(name: String, context: NSManagedObjectContext) {
         guard !hasExistingBoardName(name, context: context) else { return }
-        // TODO: handle situation of adding existed board name
-        context.performAndWait {
+        // TODO: error handling
+        try? context.performAndWait {
             let board = Board(context: context)
             board.name = name
 
@@ -28,7 +28,7 @@ extension StorageProvider {
             board.creationDate = currentDate
             board.updateDate = currentDate
 
-            context.save(situation: .addBoard)
+            try context.save(situation: .addBoard)
         }
     }
 
@@ -43,9 +43,9 @@ extension StorageProvider {
             throw CoreDataError.unfoundObjectInContext
         }
 
-        await context.perform {
+        try await context.perform {
             board.name = name
-            context.save(situation: .updateBoard)
+            try context.save(situation: .updateBoard)
         }
     }
 
@@ -54,9 +54,9 @@ extension StorageProvider {
             throw CoreDataError.unfoundObjectInContext
         }
 
-        await context.perform {
+        try await context.perform {
             context.delete(board)
-            context.save(situation: .deleteBoard)
+            try context.save(situation: .deleteBoard)
         }
     }
 }

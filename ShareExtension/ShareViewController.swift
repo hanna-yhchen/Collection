@@ -10,6 +10,7 @@
  */
 
 import CoreData
+import UniformTypeIdentifiers
 import UIKit
 import Social
 
@@ -26,9 +27,17 @@ class ShareViewController: SLComposeServiceViewController {
     }
 
     override func didSelectPost() {
-        guard let attachments = (extensionContext?.inputItems as? [NSExtensionItem])?.first?.attachments else {
+        guard var attachments = (extensionContext?.inputItems as? [NSExtensionItem])?.first?.attachments else {
             extensionContext?.cancelRequest(withError: ShareExtensionError.failedToRetrieveAttachments)
             return
+        }
+
+        // exclude text intended for social post
+        if attachments.count > 1 {
+            attachments.removeAll { itemProvider in
+                itemProvider.hasItemConformingToTypeIdentifier(UTType.text.identifier)
+                && !itemProvider.hasItemConformingToTypeIdentifier(UTType.url.identifier)
+            }
         }
 
         Task {

@@ -21,6 +21,8 @@ final class StorageHistoryManager {
         return queue
     }()
 
+    private lazy var context = storageProvider.newTaskContext()
+
     private var subscriptions: Set<AnyCancellable> = []
 
     // MARK: - Initializer
@@ -60,9 +62,12 @@ final class StorageHistoryManager {
 
         /// Fetch all transactions made by other authors
         let request = NSPersistentHistoryChangeRequest.fetchHistory(after: UserDefaults.historyTimestamp)
-        let historyFetchRequest = NSPersistentHistoryTransaction.fetchRequest
-        historyFetchRequest?.predicate = NSPredicate(format: "author != %@", actor.rawValue)
-        request.fetchRequest = historyFetchRequest
+        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "Transaction")
+        fetchRequest.predicate = NSPredicate(
+            format: "%K != %@",
+            #keyPath(NSPersistentHistoryTransaction.author),
+            actor.rawValue)
+        request.fetchRequest = fetchRequest
 
         if privateStore.identifier == storeUUID {
             request.affectedStores = [privateStore]
@@ -70,13 +75,14 @@ final class StorageHistoryManager {
             request.affectedStores = [sharedStore]
         }
 
-        let context = storageProvider.newTaskContext()
         let result = (try? context.execute(request)) as? NSPersistentHistoryResult
         guard let transactions = result?.result as? [NSPersistentHistoryTransaction] else {
             return
         }
 
-        storeDidChangePublisher.send(transactions)
+        if !transactions.isEmpty {
+            storeDidChangePublisher.send(transactions)
+        }
 
         if let lastTimestamp = transactions.last?.timestamp {
             UserDefaults.historyTimestamp = lastTimestamp
