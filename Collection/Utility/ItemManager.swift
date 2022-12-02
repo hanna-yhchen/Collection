@@ -137,7 +137,7 @@ final class ItemManager {
                     if provider.hasItemConformingToTypeIdentifier(UTType.url.identifier)
                         && !provider.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier) {
                         try await processURL(provider: provider, saveInto: boardID)
-                    } else if provider.hasItemConformingToTypeIdentifier(UTType.utf8PlainText.identifier) {
+                    } else if provider.hasItemConformingToTypeIdentifier(UTType.plainText.identifier) {
                         try await processText(provider: provider, saveInto: boardID)
                     } else {
                         try await processFile(provider: provider, saveInto: boardID, isSecurityScoped: isSecurityScoped)
@@ -220,14 +220,29 @@ extension ItemManager {
     }
 
     private func processText(provider: NSItemProvider, saveInto boardID: ObjectID) async throws {
-        guard let data = try await provider.loadDataRepresentation(
-            forTypeIdentifier: UTType.utf8PlainText.identifier)
-        else { throw ImportError.invalidData }
+        if let string = try? await provider.loadItem(forTypeIdentifier: UTType.plainText.identifier) as? String {
+            processString(string, saveInto: boardID)
+        } else if let string = try? await provider.loadObject(ofClass: String.self) {
+            processString(string, saveInto: boardID)
+        }
+    }
+
+    private func processString(_ string: String, saveInto boardID: ObjectID) {
+        if let url = string.validURL {
+            addItem(
+                displayType: .link,
+                uti: UTType.url.identifier,
+                itemData: url.dataRepresentation,
+                boardID: boardID,
+                context: storageProvider.newTaskContext()
+            )
+            return
+        }
 
         addItem(
             displayType: .note,
             uti: UTType.utf8PlainText.identifier,
-            note: String(data: data, encoding: .utf8),
+            note: string,
             boardID: boardID,
             context: storageProvider.newTaskContext()
         )
@@ -532,5 +547,18 @@ extension NSItemProvider {
                 }
             }
         }
+    }
+}
+
+private extension String {
+    // ref: https://stackoverflow.com/questions/28079123/how-to-check-validity-of-url-in-swift/
+    var validURL: URL? {
+        guard
+            let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue),
+            let match = detector.firstMatch(in: self, range: NSRange(location: 0, length: self.utf16.count)),
+            match.range.length == self.utf16.count
+        else { return nil }
+
+        return match.url
     }
 }

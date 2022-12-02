@@ -56,7 +56,7 @@ class TagSelectorViewController: UIViewController {
 
         editButton.configurationUpdateHandler = { [unowned self] button in
             var config = button.configuration
-            config?.contentInsets = .zero
+            config?.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 0)
             config?.titleAlignment = .trailing
             config?.attributedTitle = AttributedString(
                 isEditingTags ? "Done" : "Edit",
