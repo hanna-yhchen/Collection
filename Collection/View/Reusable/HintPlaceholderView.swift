@@ -23,7 +23,10 @@ class HintPlaceholderView: UIView {
         let paragraphStyle = NSMutableParagraphStyle()
         paragraphStyle.lineSpacing = 4
         paragraphStyle.alignment = .center
-        aString.addAttribute(.paragraphStyle, value: paragraphStyle, range: NSMakeRange(0, aString.length))
+        aString.addAttribute(
+            .paragraphStyle,
+            value: paragraphStyle,
+            range: NSRange(location: 0, length: aString.length))
 
         label.attributedText = aString
         label.numberOfLines = 2

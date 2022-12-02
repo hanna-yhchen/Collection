@@ -237,7 +237,7 @@ extension ItemListViewController {
 
             cell.configure(for: item)
 
-            if var sender = cell as? ItemActionSendable {
+            if let sender = cell as? ItemActionSendable {
                 sender.actionPublisher
                     .sink { itemAction, itemID in
                         self.perform(itemAction, itemID: itemID)
@@ -489,7 +489,9 @@ extension ItemListViewController {
     private func showNoteEditor() {
         let editorVC = UIStoryboard.main
             .instantiateViewController(identifier: NoteEditorViewController.storyboardID) { coder in
-                let viewModel = NoteEditorViewModel(itemManager: self.itemManager, scenario: .create(boardID: self.boardID))
+                let viewModel = NoteEditorViewModel(
+                    itemManager: self.itemManager,
+                    scenario: .create(boardID: self.boardID))
                 return NoteEditorViewController(coder: coder, viewModel: viewModel)
             }
 
