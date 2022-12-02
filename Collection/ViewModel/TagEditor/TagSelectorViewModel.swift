@@ -97,6 +97,9 @@ final class TagSelectorViewModel: NSObject {
             content.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 16, leading: 0, bottom: 16, trailing: 0)
 
             footer.contentConfiguration = content
+            footer.backgroundConfiguration?.backgroundColor = .systemBackground
+            footer.backgroundConfiguration?.visualEffect = nil
+            footer.automaticallyUpdatesBackgroundConfiguration = false
             let tapGesture = UITapGestureRecognizer(target: self, action: #selector(footerTapped))
             footer.addGestureRecognizer(tapGesture)
         }
