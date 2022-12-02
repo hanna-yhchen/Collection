@@ -55,6 +55,10 @@ extension StorageProvider {
             } else {
                 item.addToTags(tag)
             }
+
+            let currentDate = Date()
+            item.updateDate = currentDate
+
             try context.save(situation: .toggleTagging)
         }
     }
