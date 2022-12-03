@@ -239,8 +239,16 @@ class BoardListViewController: UIViewController, PlaceholderViewDisplayable {
 
             if let existingShare = board.shareRecord {
                 share = existingShare
-            } else if let newShare = await newShare(board: board) {
-                share = newShare
+            } else {
+                let semaphore = DispatchSemaphore(value: 0)
+                self.storageProvider.persistentContainer.share([board], to: nil) { _, newShare, _, error in
+                    if let error = error {
+                        print("#\(#function): Failed to create new share, \(error)")
+                    }
+                    share = newShare
+                    semaphore.signal()
+                }
+                semaphore.wait()
             }
 
             guard let share = share else {
@@ -249,28 +257,22 @@ class BoardListViewController: UIViewController, PlaceholderViewDisplayable {
             }
 
             share[CKShare.SystemFieldKey.title] = board.name
-            if let image = UIImage(named: "logo"), let data = image.jpegData(compressionQuality: 0.5) {
+            if let image = UIImage(named: "logo-icon"), let data = image.jpegData(compressionQuality: 0.5) {
                 share[CKShare.SystemFieldKey.thumbnailImageData] = data
             }
 
-            let sharingController = UICloudSharingController(share: share, container: storageProvider.cloudKitContainer)
-            sharingController.delegate = self
-            sharingController.modalPresentationStyle = .formSheet
+            DispatchQueue.main.async { [weak self] in
+                guard let self = self else { return }
 
-            await MainActor.run {
-                HUD.dismiss()
-                present(sharingController, animated: true)
+                let sharingController = UICloudSharingController(
+                    share: share,
+                    container: self.storageProvider.cloudKitContainer)
+                sharingController.delegate = self
+                sharingController.modalPresentationStyle = .formSheet
+                self.present(sharingController, animated: true) {
+                    HUD.dismiss()
+                }
             }
-        }
-    }
-
-    private func newShare(board: Board) async -> CKShare? {
-        do {
-            let (_, share, _) = try await storageProvider.persistentContainer.share([board], to: nil)
-            return share
-        } catch {
-            print("#\(#function): Failed to create new CKShare, \(error)")
-            return nil
         }
     }
 }

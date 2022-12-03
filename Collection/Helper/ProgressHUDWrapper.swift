@@ -9,17 +9,14 @@ import ProgressHUD
 
 enum HUD {
     static func show() {
-        ProgressHUD.animationType = .circleRotateChase
         ProgressHUD.show()
     }
 
     static func showProgressing() {
-        ProgressHUD.animationType = .circleRotateChase
         ProgressHUD.show("Progressing")
     }
 
     static func showImporting() {
-        ProgressHUD.animationType = .circleRotateChase
         ProgressHUD.show("Importing")
     }
 
