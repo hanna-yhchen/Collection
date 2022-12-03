@@ -21,8 +21,8 @@ final class OptionMenuProvider {
     private var children: [UIMenu] { [layoutMenu, sortMenu, filterMenu] }
     private let baseChildMenu = UIMenu(options: [.displayInline, .singleSelection])
 
-    private lazy var layoutMenu = baseChildMenu.replacingChildren(layoutItems)
-    private lazy var layoutItems: [UIAction] = {
+    private var layoutMenu: UIMenu { baseChildMenu.replacingChildren(layoutItems) }
+    private var layoutItems: [UIAction] {
         let items = ItemLayout.allCases.map { layout in
             UIAction(
                 title: layout.title,
@@ -33,7 +33,7 @@ final class OptionMenuProvider {
         }
         items[currentLayout.rawValue].state = .on
         return items
-    }()
+    }
 
     private var sortMenu: UIMenu { baseChildMenu.replacingChildren(sortItems) }
     private var sortItems: [UIAction] {
