@@ -38,7 +38,7 @@ class BoardSelectorViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
 
-        viewModel.fetchAllBoards()
+        Task { await viewModel.fetchBoards() }
     }
 
     // MARK: - Initializers

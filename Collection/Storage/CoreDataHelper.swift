@@ -146,3 +146,9 @@ extension CKShare {
         return nil
     }
 }
+
+// MARK: - Default Board
+
+extension Board {
+    static let inboxBoardName = "Inbox"
+}

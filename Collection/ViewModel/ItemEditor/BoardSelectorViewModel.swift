@@ -29,6 +29,7 @@ final class BoardSelectorViewModel {
     let scenario: Scenario
     @Published var boards: [Board] = []
 
+    private let storageProvider = StorageProvider.shared
     private let itemManager: ItemManager
     private let boardManager: BoardManager
 
@@ -42,15 +43,25 @@ final class BoardSelectorViewModel {
 
     // MARK: - Methods
 
-    func fetchAllBoards() {
-        Task {
-            do {
-                let boards = try await boardManager.allBoards()
-                self.boards = boards
-            } catch {
-                print("#\(#function): Failed to fetch all boards, \(error)")
-                // TODO: error handling
+    func fetchBoards() async {
+        let context = storageProvider.persistentContainer.viewContext
+
+        do {
+            let inboxBoardID = storageProvider.getInboxBoardID()
+            var boards = try await context.perform {
+                let fetchRequest = Board.fetchRequest()
+                fetchRequest.predicate = NSPredicate(format: "%K != %@", #keyPath(Board.name), Board.inboxBoardName)
+                fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \Board.sortOrder, ascending: false)]
+                return try context.fetch(fetchRequest) as [Board]
             }
+
+            if let inboxBoard = try context.existingObject(with: inboxBoardID) as? Board {
+                boards.insert(inboxBoard, at: boards.startIndex)
+            }
+
+            self.boards = boards
+        } catch {
+            print("#\(#function): Failed to fetch boards, \(error)")
         }
     }
 
