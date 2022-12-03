@@ -80,7 +80,9 @@ class ItemListViewController: UIViewController, PlaceholderViewDisplayable {
     private var subscriptions = CancellableSet()
 
     private lazy var collectionView = ItemCollectionView(frame: view.bounds, traits: view.traitCollection)
+
     var placeholderView: HintPlaceholderView?
+    var isShowingPlaceholder = false
 
     @IBOutlet var plusButton: UIButton!
     private lazy var optionButton = UIBarButtonItem(
@@ -772,9 +774,9 @@ extension ItemListViewController: NSFetchedResultsControllerDelegate {
     func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChangeContentWith snapshot: NSDiffableDataSourceSnapshotReference) {
         var newSnapshot = snapshot as Snapshot
 
-        if newSnapshot.numberOfItems == 0, placeholderView == nil {
+        if newSnapshot.numberOfItems == 0 {
             showPlaceholderView()
-        } else if placeholderView != nil {
+        } else if isShowingPlaceholder {
             removePlaceholderView()
         }
 

@@ -37,6 +37,8 @@ class BoardListViewController: UIViewController, PlaceholderViewDisplayable {
     @IBOutlet var collectionView: UICollectionView!
     var placeholderView: HintPlaceholderView?
 
+    var isShowingPlaceholder = false
+
     // MARK: - Lifecycle
 
     override func viewDidLoad() {
@@ -228,8 +230,10 @@ class BoardListViewController: UIViewController, PlaceholderViewDisplayable {
     private func startSharingFlow(boardID: ObjectID) {
         HUD.showProgressing()
 
-        Task {
-            let context = fetchedResultsController.managedObjectContext
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
+
+            let context = self.fetchedResultsController.managedObjectContext
             guard let board = try? context.existingObject(with: boardID) as? Board else {
                 HUD.showFailed()
                 return
@@ -286,7 +290,7 @@ extension BoardListViewController: NSFetchedResultsControllerDelegate {
         var newSnapshot = snapshot as Snapshot
         if newSnapshot.numberOfItems == 0 {
             showPlaceholderView()
-        } else if placeholderView != nil {
+        } else if isShowingPlaceholder {
             removePlaceholderView()
         }
 
