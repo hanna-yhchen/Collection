@@ -69,9 +69,42 @@ extension StorageProvider {
             let url = URL(string: UserDefaults.defaultBoardURL),
             let boardID = persistentContainer.persistentStoreCoordinator
                 .managedObjectID(forURIRepresentation: url)
-        else { fatalError("#\(#function): Failed to retrieve default inbox board") }
+        else {
+            prepareInboxBoard()
+            return getInboxBoardID()
+        }
 
         return boardID
+    }
+
+    func prepareInboxBoard() {
+        let context = persistentContainer.viewContext
+        addBoard(name: "Inbox", context: context)
+
+        let fetchRequest = Board.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "%K = %@", #keyPath(Board.name), Board.inboxBoardName)
+        fetchRequest.fetchLimit = 1
+
+        if let inboxBoard = try? context.fetch(fetchRequest).first {
+            UserDefaults.defaultBoardURL = inboxBoard.objectID.uriRepresentation().absoluteString
+        }
+    }
+
+    func deduplicateInboxBoard() {
+        let context = persistentContainer.newBackgroundContext()
+        let inboxBoardID = getInboxBoardID()
+
+        context.perform {
+            let fetchRequest = Board.fetchRequest()
+            fetchRequest.predicate = NSPredicate(format: "%K == %@", #keyPath(Board.name), Board.inboxBoardName)
+            if let boards = try? context.fetch(fetchRequest) {
+                let boardsToDelete = boards.filter { $0.objectID != inboxBoardID }
+                for board in boardsToDelete {
+                    context.delete(board)
+                }
+                try? context.save(situation: .deleteBoard)
+            }
+        }
     }
 
     private func hasExistingBoardName(_ name: String, context: NSManagedObjectContext) -> Bool {
