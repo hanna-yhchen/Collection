@@ -16,7 +16,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         ProgressHUD.animationType = .circleStrokeSpin
         configureKeyboardManager()
         prepareForFirstLaunch()
-
+        Thread.sleep(forTimeInterval: 0.1)
         return true
     }
 
