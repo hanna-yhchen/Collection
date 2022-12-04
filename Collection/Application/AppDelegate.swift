@@ -16,6 +16,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         ProgressHUD.animationType = .circleStrokeSpin
         configureKeyboardManager()
         prepareForFirstLaunch()
+        StorageProvider.shared.mergeDuplicateInboxIfNeeded()
+
         Thread.sleep(forTimeInterval: 0.1)
         return true
     }
@@ -50,8 +52,6 @@ extension AppDelegate {
         if UserDefaults.isFirstLaunch {
             StorageProvider.shared.prepareInboxBoard()
             UserDefaults.isFirstLaunch = false
-        } else {
-            StorageProvider.shared.deduplicateInboxBoard()
         }
     }
 }

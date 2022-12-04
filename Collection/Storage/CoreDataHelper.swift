@@ -24,7 +24,7 @@ extension NSManagedObjectContext {
     enum SituationForSaving: String {
         case addItem, updateItem, deleteItem, copyItem
         case addTag, updateTag, deleteTag, toggleTagging, reorderTags
-        case addBoard, updateBoard, deleteBoard
+        case addBoard, updateBoard, deleteBoard, mergeBoards
     }
 
     func save(situation: SituationForSaving) throws {

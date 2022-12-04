@@ -90,19 +90,34 @@ extension StorageProvider {
         }
     }
 
-    func deduplicateInboxBoard() {
-        let context = persistentContainer.newBackgroundContext()
-        let inboxBoardID = getInboxBoardID()
+    func mergeDuplicateInboxIfNeeded(context: NSManagedObjectContext? = nil) {
+        let context = context ?? newTaskContext()
 
-        context.perform {
-            let fetchRequest = Board.fetchRequest()
-            fetchRequest.predicate = NSPredicate(format: "%K == %@", #keyPath(Board.name), Board.inboxBoardName)
-            if let boards = try? context.fetch(fetchRequest) {
-                let boardsToDelete = boards.filter { $0.objectID != inboxBoardID }
-                for board in boardsToDelete {
-                    context.delete(board)
+        let fetchRequest = Board.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "%K == %@", #keyPath(Board.name), Board.inboxBoardName)
+        fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \Board.updateDate, ascending: true)]
+
+        context.performAndWait {
+            if let count = try? context.count(for: fetchRequest), count > 1 {
+                if var boards = try? context.fetch(fetchRequest) {
+                    let reserved = boards.removeLast()
+
+                    for board in boards {
+                        if let items = board.items {
+                            reserved.addToItems(items)
+                        }
+
+                        if let tags = board.tags {
+                            reserved.addToTags(tags)
+                        }
+
+                        context.delete(board)
+                    }
+
+                    try? context.save(situation: .mergeBoards)
+
+                    UserDefaults.defaultBoardURL = reserved.objectID.uriRepresentation().absoluteString
                 }
-                try? context.save(situation: .deleteBoard)
             }
         }
     }

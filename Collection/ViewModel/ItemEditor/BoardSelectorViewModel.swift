@@ -39,6 +39,8 @@ final class BoardSelectorViewModel {
         self.itemManager = itemManager
         self.boardManager = boardManager
         self.scenario = scenario
+
+        storageProvider.mergeDuplicateInboxIfNeeded()
     }
 
     // MARK: - Methods
@@ -48,15 +50,14 @@ final class BoardSelectorViewModel {
 
         do {
             let inboxBoardID = storageProvider.getInboxBoardID()
-            var boards = try await context.perform {
+            let boards = try await context.perform {
                 let fetchRequest = Board.fetchRequest()
-                fetchRequest.predicate = NSPredicate(format: "%K != %@", #keyPath(Board.name), Board.inboxBoardName)
+                fetchRequest.predicate = NSCompoundPredicate(orPredicateWithSubpredicates: [
+                    NSPredicate(format: "%K != %@", #keyPath(Board.name), Board.inboxBoardName),
+                    NSPredicate(format: "SELF == %@", inboxBoardID)
+                ])
                 fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \Board.sortOrder, ascending: false)]
                 return try context.fetch(fetchRequest) as [Board]
-            }
-
-            if let inboxBoard = try context.existingObject(with: inboxBoardID) as? Board {
-                boards.insert(inboxBoard, at: boards.startIndex)
             }
 
             self.boards = boards
