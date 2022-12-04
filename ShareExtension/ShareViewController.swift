@@ -19,14 +19,23 @@ enum ShareExtensionError: Error {
     case failedToRetrieveAttachments
 }
 
-class ShareViewController: SLComposeServiceViewController {
+class ShareViewController: UIViewController {
 
-    override func isContentValid() -> Bool {
-        // Do validation of contentText and/or NSExtensionContext attachments here
-        return true
+    override func viewDidLoad() {
+        super.viewDidLoad()
+
+        view.backgroundColor = .clear
     }
 
-    override func didSelectPost() {
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+
+        processInput()
+    }
+
+    private func processInput() {
+        HUD.showProcessing()
+
         guard var attachments = (extensionContext?.inputItems as? [NSExtensionItem])?.first?.attachments else {
             extensionContext?.cancelRequest(withError: ShareExtensionError.failedToRetrieveAttachments)
             return
@@ -47,14 +56,11 @@ class ShareViewController: SLComposeServiceViewController {
                 print("#\(#function): Failed to process attachments: \(error)")
             }
 
-            await MainActor.run {
-                extensionContext?.completeRequest(returningItems: [], completionHandler: nil)
+            HUD.showSucceeded("Added to Inbox")
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(700)) {
+                self.extensionContext?.completeRequest(returningItems: [], completionHandler: nil)
             }
         }
-    }
-
-    override func configurationItems() -> [Any]! {
-        // To add configuration options via table cells at the bottom of the sheet, return an array of SLComposeSheetConfigurationItem here.
-        return []
     }
 }

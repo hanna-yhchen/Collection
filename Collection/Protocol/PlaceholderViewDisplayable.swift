@@ -8,12 +8,16 @@
 import UIKit
 
 protocol PlaceholderViewDisplayable: UIViewController {
+    var isShowingPlaceholder: Bool { get set }
     var placeholderView: HintPlaceholderView? { get set }
 }
 
 extension PlaceholderViewDisplayable {
     func showPlaceholderView() {
-        DispatchQueue.main.async {[self] in
+        guard !isShowingPlaceholder else { return }
+        isShowingPlaceholder.toggle()
+
+        DispatchQueue.main.async { [self] in
             let placeholderView = HintPlaceholderView()
             view.addSubview(placeholderView)
             placeholderView.translatesAutoresizingMaskIntoConstraints = false
@@ -27,7 +31,10 @@ extension PlaceholderViewDisplayable {
     }
 
     func removePlaceholderView() {
-        DispatchQueue.main.async {[self] in
+        guard isShowingPlaceholder else { return }
+        isShowingPlaceholder.toggle()
+
+        DispatchQueue.main.async { [self] in
             placeholderView?.removeFromSuperview()
             placeholderView = nil
             view.layoutIfNeeded()

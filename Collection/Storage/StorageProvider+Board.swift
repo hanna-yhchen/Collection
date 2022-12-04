@@ -69,9 +69,57 @@ extension StorageProvider {
             let url = URL(string: UserDefaults.defaultBoardURL),
             let boardID = persistentContainer.persistentStoreCoordinator
                 .managedObjectID(forURIRepresentation: url)
-        else { fatalError("#\(#function): Failed to retrieve default inbox board") }
+        else {
+            prepareInboxBoard()
+            return getInboxBoardID()
+        }
 
         return boardID
+    }
+
+    func prepareInboxBoard() {
+        let context = persistentContainer.viewContext
+        addBoard(name: "Inbox", context: context)
+
+        let fetchRequest = Board.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "%K = %@", #keyPath(Board.name), Board.inboxBoardName)
+        fetchRequest.fetchLimit = 1
+
+        if let inboxBoard = try? context.fetch(fetchRequest).first {
+            UserDefaults.defaultBoardURL = inboxBoard.objectID.uriRepresentation().absoluteString
+        }
+    }
+
+    func mergeDuplicateInboxIfNeeded(context: NSManagedObjectContext? = nil) {
+        let context = context ?? newTaskContext()
+
+        let fetchRequest = Board.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "%K == %@", #keyPath(Board.name), Board.inboxBoardName)
+        fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \Board.updateDate, ascending: true)]
+
+        context.performAndWait {
+            if let count = try? context.count(for: fetchRequest), count > 1 {
+                if var boards = try? context.fetch(fetchRequest) {
+                    let reserved = boards.removeLast()
+
+                    for board in boards {
+                        if let items = board.items {
+                            reserved.addToItems(items)
+                        }
+
+                        if let tags = board.tags {
+                            reserved.addToTags(tags)
+                        }
+
+                        context.delete(board)
+                    }
+
+                    try? context.save(situation: .mergeBoards)
+
+                    UserDefaults.defaultBoardURL = reserved.objectID.uriRepresentation().absoluteString
+                }
+            }
+        }
     }
 
     private func hasExistingBoardName(_ name: String, context: NSManagedObjectContext) -> Bool {

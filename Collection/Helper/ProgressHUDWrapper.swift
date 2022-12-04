@@ -9,25 +9,22 @@ import ProgressHUD
 
 enum HUD {
     static func show() {
-        ProgressHUD.animationType = .circleRotateChase
         ProgressHUD.show()
     }
 
-    static func showProgressing() {
-        ProgressHUD.animationType = .circleRotateChase
-        ProgressHUD.show("Progressing")
+    static func showProcessing() {
+        ProgressHUD.show("Processing")
     }
 
     static func showImporting() {
-        ProgressHUD.animationType = .circleRotateChase
         ProgressHUD.show("Importing")
     }
 
-    static func showSucceeded() {
-        ProgressHUD.showSucceed()
+    static func showSucceeded(_ message: String? = nil) {
+        ProgressHUD.showSucceed(message)
     }
 
-    static func showFailed(message: String? = nil) {
+    static func showFailed(_ message: String? = nil) {
         ProgressHUD.showFailed(message)
     }
 

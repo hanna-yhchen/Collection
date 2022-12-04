@@ -37,6 +37,8 @@ class BoardListViewController: UIViewController, PlaceholderViewDisplayable {
     @IBOutlet var collectionView: UICollectionView!
     var placeholderView: HintPlaceholderView?
 
+    var isShowingPlaceholder = false
+
     // MARK: - Lifecycle
 
     override func viewDidLoad() {
@@ -137,7 +139,7 @@ class BoardListViewController: UIViewController, PlaceholderViewDisplayable {
             nameEditorVC.cancellable = nameEditorVC.newNamePublisher
                 .sink {[unowned self] newName in
                     guard !newName.isEmpty else {
-                        HUD.showFailed(message: "The name of a board cannot be empty.")
+                        HUD.showFailed("The name of a board cannot be empty.")
                         return
                     }
 
@@ -226,10 +228,12 @@ class BoardListViewController: UIViewController, PlaceholderViewDisplayable {
 
     // TODO: abstract sharing functionality into StorageProvider
     private func startSharingFlow(boardID: ObjectID) {
-        HUD.showProgressing()
+        HUD.showProcessing()
 
-        Task {
-            let context = fetchedResultsController.managedObjectContext
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
+
+            let context = self.fetchedResultsController.managedObjectContext
             guard let board = try? context.existingObject(with: boardID) as? Board else {
                 HUD.showFailed()
                 return
@@ -239,8 +243,16 @@ class BoardListViewController: UIViewController, PlaceholderViewDisplayable {
 
             if let existingShare = board.shareRecord {
                 share = existingShare
-            } else if let newShare = await newShare(board: board) {
-                share = newShare
+            } else {
+                let semaphore = DispatchSemaphore(value: 0)
+                self.storageProvider.persistentContainer.share([board], to: nil) { _, newShare, _, error in
+                    if let error = error {
+                        print("#\(#function): Failed to create new share, \(error)")
+                    }
+                    share = newShare
+                    semaphore.signal()
+                }
+                semaphore.wait()
             }
 
             guard let share = share else {
@@ -249,28 +261,22 @@ class BoardListViewController: UIViewController, PlaceholderViewDisplayable {
             }
 
             share[CKShare.SystemFieldKey.title] = board.name
-            if let image = UIImage(named: "logo"), let data = image.jpegData(compressionQuality: 0.5) {
+            if let image = UIImage(named: "logo-icon"), let data = image.jpegData(compressionQuality: 0.5) {
                 share[CKShare.SystemFieldKey.thumbnailImageData] = data
             }
 
-            let sharingController = UICloudSharingController(share: share, container: storageProvider.cloudKitContainer)
-            sharingController.delegate = self
-            sharingController.modalPresentationStyle = .formSheet
+            DispatchQueue.main.async { [weak self] in
+                guard let self = self else { return }
 
-            await MainActor.run {
-                HUD.dismiss()
-                present(sharingController, animated: true)
+                let sharingController = UICloudSharingController(
+                    share: share,
+                    container: self.storageProvider.cloudKitContainer)
+                sharingController.delegate = self
+                sharingController.modalPresentationStyle = .formSheet
+                self.present(sharingController, animated: true) {
+                    HUD.dismiss()
+                }
             }
-        }
-    }
-
-    private func newShare(board: Board) async -> CKShare? {
-        do {
-            let (_, share, _) = try await storageProvider.persistentContainer.share([board], to: nil)
-            return share
-        } catch {
-            print("#\(#function): Failed to create new CKShare, \(error)")
-            return nil
         }
     }
 }
@@ -284,7 +290,7 @@ extension BoardListViewController: NSFetchedResultsControllerDelegate {
         var newSnapshot = snapshot as Snapshot
         if newSnapshot.numberOfItems == 0 {
             showPlaceholderView()
-        } else if placeholderView != nil {
+        } else if isShowingPlaceholder {
             removePlaceholderView()
         }
 

@@ -36,7 +36,7 @@ class StorageProvider {
         #endif
     }()
     let persistentContainer: NSPersistentCloudKitContainer
-    lazy var historyManager: StorageHistoryManager = StorageHistoryManager(storageProvider: self, actor: actor)
+    lazy var historyManager = StorageHistoryManager(storageProvider: self, actor: actor)
 
     // swiftlint:disable:next implicitly_unwrapped_optional
     private var _privatePersistentStore: NSPersistentStore!

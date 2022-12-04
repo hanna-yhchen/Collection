@@ -24,7 +24,7 @@ extension NSManagedObjectContext {
     enum SituationForSaving: String {
         case addItem, updateItem, deleteItem, copyItem
         case addTag, updateTag, deleteTag, toggleTagging, reorderTags
-        case addBoard, updateBoard, deleteBoard
+        case addBoard, updateBoard, deleteBoard, mergeBoards
     }
 
     func save(situation: SituationForSaving) throws {
@@ -91,7 +91,7 @@ extension NSManagedObject {
         guard
             let owner = owner,
             let name = owner.userIdentity.nameComponents?.formatted()
-        else { return "Unknown" }
+        else { return "" }
 
         return name
     }
@@ -145,4 +145,10 @@ extension CKShare {
 
         return nil
     }
+}
+
+// MARK: - Default Board
+
+extension Board {
+    static let inboxBoardName = "Inbox"
 }

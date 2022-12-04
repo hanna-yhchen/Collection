@@ -18,7 +18,6 @@ class ItemListViewController: UIViewController, PlaceholderViewDisplayable {
     enum Scope {
         case allItems
         case board(ObjectID)
-        case tag(ObjectID)
 
         var predicate: NSPredicate? {
             switch self {
@@ -26,8 +25,6 @@ class ItemListViewController: UIViewController, PlaceholderViewDisplayable {
                 return nil
             case .board(let boardID):
                 return NSPredicate(format: "%K == %@", #keyPath(Item.board), boardID)
-            case .tag(let tagID):
-                return NSPredicate(format: "%K CONTAINS %@", #keyPath(Item.tags), tagID)
             }
         }
     }
@@ -43,17 +40,8 @@ class ItemListViewController: UIViewController, PlaceholderViewDisplayable {
     // MARK: - Properties
 
     private let scope: Scope
+    private let boardID: ObjectID
     private var snapshotStrategy: SnapshotStrategy = .normal
-
-    #warning("NEED refactoring. This is only used for importing now.")
-    private lazy var boardID: ObjectID = {
-        switch scope {
-        case .allItems, .tag:
-            return storageProvider.getInboxBoardID()
-        case .board(let boardID):
-            return boardID
-        }
-    }()
 
     private let itemManager: ItemManager
     private let storageProvider: StorageProvider
@@ -77,10 +65,12 @@ class ItemListViewController: UIViewController, PlaceholderViewDisplayable {
 
     private var previewingItem: PreviewItem?
     private lazy var dataSource = createDataSource()
-    private var subscriptions = CancellableSet()
+    private lazy var subscriptions = CancellableSet()
 
     private lazy var collectionView = ItemCollectionView(frame: view.bounds, traits: view.traitCollection)
+
     var placeholderView: HintPlaceholderView?
+    var isShowingPlaceholder = false
 
     @IBOutlet var plusButton: UIButton!
     private lazy var optionButton = UIBarButtonItem(
@@ -122,13 +112,20 @@ class ItemListViewController: UIViewController, PlaceholderViewDisplayable {
         coder: NSCoder,
         scope: Scope,
         storageProvider: StorageProvider,
-        itemManager: ItemManager = ItemManager.shared,
-        menuProvider: OptionMenuProvider = OptionMenuProvider()
+        itemManager: ItemManager = ItemManager.shared
     ) {
         self.scope = scope
         self.storageProvider = storageProvider
         self.itemManager = itemManager
-        self.menuProvider = menuProvider
+
+        switch scope {
+        case .allItems:
+            self.boardID = storageProvider.getInboxBoardID()
+            self.menuProvider = OptionMenuProvider(boardID: nil)
+        case .board(let boardID):
+            self.boardID = boardID
+            self.menuProvider = OptionMenuProvider(boardID: boardID, storageProvider: storageProvider)
+        }
 
         super.init(coder: coder)
     }
@@ -198,18 +195,6 @@ extension ItemListViewController {
             } catch {
                 fatalError("#\(#function): failed to retrieve board object by id, \(error)")
             }
-        case .tag(let tagID):
-            plusButton.isHidden = true
-
-            let context = storageProvider.persistentContainer.viewContext
-            do {
-                guard let tag = try context.existingObject(with: tagID) as? Tag else {
-                    fatalError("#\(#function): failed to downcast to board object")
-                }
-                title = tag.name
-            } catch {
-                fatalError("#\(#function): failed to retrieve board object by id, \(error)")
-            }
         }
 
         plusButton.layer.shadowColor = UIColor.black.cgColor
@@ -237,7 +222,7 @@ extension ItemListViewController {
 
             cell.configure(for: item)
 
-            if var sender = cell as? ItemActionSendable {
+            if let sender = cell as? ItemActionSendable {
                 sender.actionPublisher
                     .sink { itemAction, itemID in
                         self.perform(itemAction, itemID: itemID)
@@ -286,7 +271,7 @@ extension ItemListViewController {
                 let item = try? context.existingObject(with: itemID) as? Item,
                 let board = item.board
             else {
-                HUD.showFailed(message: "Missing data")
+                HUD.showFailed("Missing data")
                 return
             }
 
@@ -311,21 +296,29 @@ extension ItemListViewController {
 //        case .comments:
 //            break
         case .move:
+            HUD.showProcessing()
+
             let selectorVC = UIStoryboard.main
                 .instantiateViewController(identifier: BoardSelectorViewController.storyboardID) { coder in
                     let viewModel = BoardSelectorViewModel(scenario: .move(itemID))
                     return BoardSelectorViewController(coder: coder, viewModel: viewModel)
                 }
 
-            present(selectorVC, animated: true)
+            present(selectorVC, animated: true) {
+                HUD.dismiss()
+            }
         case .copy:
+            HUD.showProcessing()
+
             let selectorVC = UIStoryboard.main
                 .instantiateViewController(identifier: BoardSelectorViewController.storyboardID) { coder in
                     let viewModel = BoardSelectorViewModel(scenario: .copy(itemID))
                     return BoardSelectorViewController(coder: coder, viewModel: viewModel)
                 }
 
-            present(selectorVC, animated: true)
+            present(selectorVC, animated: true) {
+                HUD.dismiss()
+            }
         case .delete:
             let alert = UIAlertController(
                 title: "Delete the item",
@@ -333,13 +326,17 @@ extension ItemListViewController {
                 preferredStyle: UIDevice.current.userInterfaceIdiom == .phone ? .actionSheet : .alert)
             alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
             alert.addAction(UIAlertAction(title: "Delete", style: .destructive) {[unowned self] _ in
+                HUD.showProcessing()
+
                 Task {
                     do {
                         try await itemManager.deleteItem(
                             itemID: itemID,
                             context: fetchedResultsController.managedObjectContext)
+                        HUD.showSucceeded("Deleted")
                     } catch {
                         print("#\(#function): Failed to delete board, \(error)")
+                        HUD.showFailed()
                     }
                 }
             })
@@ -360,8 +357,6 @@ extension ItemListViewController {
                             return changes.contains { $0.changedObjectID.entity.name == itemEntityName }
                         case .board(let boardID):
                             return changes.contains { $0.changedObjectID == boardID }
-                        case .tag(let tagID):
-                            return changes.contains { $0.changedObjectID == tagID }
                         }
                     }
                     return false
@@ -400,10 +395,10 @@ extension ItemListViewController {
             }
             .store(in: &subscriptions)
 
-        menuProvider.$currentFilterType
+        menuProvider.currentFilter
             .receive(on: DispatchQueue.main)
-            .sink { [unowned self] type in
-                applyFilter(type)
+            .sink { [unowned self] type, tagIDs in
+                applyFilter(type: type, tagIDs: tagIDs)
             }
             .store(in: &subscriptions)
 
@@ -452,6 +447,32 @@ extension ItemListViewController {
         try? fetchedResultsController.performFetch()
     }
 
+    private func applyFilter(type: DisplayType?, tagIDs: [ObjectID]) {
+        snapshotStrategy = .reload
+        let fetchRequest = fetchedResultsController.fetchRequest
+
+        var predicates: [NSPredicate] = []
+
+        if let basePredicate = scope.predicate {
+            predicates.append(basePredicate)
+        }
+
+        if let type = type {
+            predicates.append(type.predicate)
+        }
+
+        for tagID in tagIDs {
+            predicates.append(NSPredicate(format: "%K CONTAINS %@", #keyPath(Item.tags), tagID))
+        }
+//        if !tagIDs.isEmpty {
+//            predicates.append(NSPredicate(format: "%K CONTAINS %@", #keyPath(Item.tags), tagIDs))
+//        }
+
+        fetchRequest.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: predicates)
+
+        try? fetchedResultsController.performFetch()
+    }
+
     private func showDocumentPicker() {
         let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.data])
         picker.delegate = self
@@ -489,7 +510,9 @@ extension ItemListViewController {
     private func showNoteEditor() {
         let editorVC = UIStoryboard.main
             .instantiateViewController(identifier: NoteEditorViewController.storyboardID) { coder in
-                let viewModel = NoteEditorViewModel(itemManager: self.itemManager, scenario: .create(boardID: self.boardID))
+                let viewModel = NoteEditorViewModel(
+                    itemManager: self.itemManager,
+                    scenario: .create(boardID: self.boardID))
                 return NoteEditorViewController(coder: coder, viewModel: viewModel)
             }
 
@@ -506,7 +529,7 @@ extension ItemListViewController {
         let recorderVC = UIStoryboard.main
             .instantiateViewController(identifier: AudioRecorderController.storyboardID) { coder in
                 return AudioRecorderController(coder: coder) {[unowned self] result in
-                    HUD.showProgressing()
+                    HUD.showProcessing()
 
                     switch result {
                     case .success(let record):
@@ -565,8 +588,7 @@ extension ItemListViewController {
             let itemType = UTType(typeIdentifier),
             let filenameExtension = itemType.preferredFilenameExtension
         else {
-            // TODO: show alert
-            HUD.showFailed()
+            HUD.showFailed("Missing data information")
             return
         }
 
@@ -586,15 +608,12 @@ extension ItemListViewController {
         }
 
         guard writingError == nil && coordinatingError == nil else {
-            // TODO: show alert
-            HUD.showFailed()
+            HUD.showFailed("Unable to read the file")
             return
         }
 
-
         guard QLPreviewController.canPreview(fileURL as QLPreviewItem) else {
-            // TODO: show alert
-            HUD.showFailed()
+            HUD.showFailed("Preview of this file type is not supported")
             return
         }
 
@@ -722,7 +741,7 @@ extension ItemListViewController: PHPickerViewControllerDelegate {
 
 extension ItemListViewController: UIImagePickerControllerDelegate & UINavigationControllerDelegate {
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
-        HUD.showProgressing()
+        HUD.showProcessing()
 
         guard
             let typeIdentifier = info[.mediaType] as? String,
@@ -770,9 +789,9 @@ extension ItemListViewController: NSFetchedResultsControllerDelegate {
     func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChangeContentWith snapshot: NSDiffableDataSourceSnapshotReference) {
         var newSnapshot = snapshot as Snapshot
 
-        if newSnapshot.numberOfItems == 0, placeholderView == nil {
+        if newSnapshot.numberOfItems == 0 {
             showPlaceholderView()
-        } else if placeholderView != nil {
+        } else if isShowingPlaceholder {
             removePlaceholderView()
         }
 

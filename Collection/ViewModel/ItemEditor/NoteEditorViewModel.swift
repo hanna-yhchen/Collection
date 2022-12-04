@@ -44,6 +44,8 @@ final class NoteEditorViewModel {
         }
     }
 
+    var updateHandler: ((Bool) -> Void)?
+
     // MARK: - Initializers
 
     init(itemManager: ItemManager, scenario: Scenario) {
@@ -73,6 +75,7 @@ final class NoteEditorViewModel {
         case .update(let item):
             do {
                 try await itemManager.updateNote(itemID: item.objectID, name: name, note: note)
+                updateHandler?(true)
             } catch {
                 print("#\(#function): Failed to update note item, \(error)")
             }

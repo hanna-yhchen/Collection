@@ -6,15 +6,19 @@
 //
 
 import IQKeyboardManagerSwift
+import ProgressHUD
 import UIKit
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        ProgressHUD.animationType = .circleStrokeSpin
         configureKeyboardManager()
         prepareForFirstLaunch()
+        StorageProvider.shared.mergeDuplicateInboxIfNeeded()
 
+        Thread.sleep(forTimeInterval: 0.1)
         return true
     }
 
@@ -46,19 +50,7 @@ extension AppDelegate {
 
     private func prepareForFirstLaunch() {
         if UserDefaults.isFirstLaunch {
-            let viewContext = StorageProvider.shared.persistentContainer.viewContext
-            StorageProvider.shared.addBoard(name: "Inbox", context: viewContext)
-
-            let fetchRequest = Board.fetchRequest()
-            fetchRequest.predicate = NSPredicate(format: "%K = %@", #keyPath(Board.name), "Inbox" as String)
-            fetchRequest.fetchLimit = 1
-
-            if let inboxBoard = try? viewContext.fetch(fetchRequest).first {
-                UserDefaults.defaultBoardURL = inboxBoard.objectID.uriRepresentation().absoluteString
-            }
-
-            // FIXME: (concurrency issue) there will be duplicate inbox board if user ever installed this app and sync with iCloud before
-
+            StorageProvider.shared.prepareInboxBoard()
             UserDefaults.isFirstLaunch = false
         }
     }

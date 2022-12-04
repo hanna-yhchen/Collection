@@ -56,18 +56,11 @@ class RichLinkProvider {
         let conciseHost = host?.replacingOccurrences(of: "^www.", with: "", options: .regularExpression)
 
         if let imageProvider = metadata.imageProvider {
-            imageProvider.loadDataRepresentation(forTypeIdentifier: UTType.image.identifier) { data, error in
+            imageProvider.loadObject(ofClass: UIImage.self) { image, error in
                 if let error = error {
                     print("#\(#function): Failed to load image data from LPLinkMetadata, \(error)")
                 }
-
-                var image: UIImage?
-
-                if let data = data {
-                    image = UIImage(data: data)
-                }
-
-                completion((metadata.title, conciseHost ?? host, image))
+                completion((metadata.title, conciseHost ?? host, (image as? UIImage)))
             }
         } else {
             completion((metadata.title, conciseHost ?? host, nil))

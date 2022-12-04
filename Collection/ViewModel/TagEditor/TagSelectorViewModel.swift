@@ -147,7 +147,10 @@ final class TagSelectorViewModel: NSObject {
     }
 
     func newTagViewModel() -> TagEditorViewModel {
-        TagEditorViewModel(storageProvider: storageProvider, context: context, scenario: .create(relatedBoardID: boardID))
+        TagEditorViewModel(
+            storageProvider: storageProvider,
+            context: context,
+            scenario: .create(relatedBoardID: boardID))
     }
 
     func editTagViewModel(at indexPath: IndexPath) -> TagEditorViewModel {
