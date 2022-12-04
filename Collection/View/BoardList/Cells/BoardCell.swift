@@ -47,14 +47,13 @@ class BoardCell: UICollectionViewCell, ContextMenuActionSendable {
         itemCountLabel.text = "\(board.itemCount) items"
 
         var shareStatus = ""
-        // FIXME: shareRecord exists after stop sharing
-        if board.isPrivate && board.shareRecord == nil {
-            shareStatus = "Private"
-        } else if board.isOwnedByCurrentUser {
-            shareStatus = "Shared"
+
+        if !board.ownerName.isEmpty {
+            shareStatus = "Shared (\(board.ownerName))"
         } else {
-            shareStatus = "Shared by \(board.ownerName)"
+            shareStatus = "Private"
         }
+
         shareStatusLabel.text = shareStatus
     }
 
