@@ -46,6 +46,14 @@ class NotePreviewController: UIViewController {
         let editorVC = UIStoryboard.main
             .instantiateViewController(identifier: NoteEditorViewController.storyboardID) { coder in
                 let viewModel = NoteEditorViewModel(itemManager: self.itemManager, scenario: .update(item: self.item))
+                viewModel.updateHandler = { [unowned self] isUpdated in
+                    if isUpdated {
+                        item.managedObjectContext?.refresh(item, mergeChanges: true)
+                        DispatchQueue.main.async {
+                            self.configureContent()
+                        }
+                    }
+                }
                 return NoteEditorViewController(coder: coder, viewModel: viewModel)
             }
         present(editorVC, animated: true)

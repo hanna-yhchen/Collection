@@ -35,6 +35,8 @@
 		B523E93629164B4F00180B36 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B523E93529164B4F00180B36 /* ShareViewController.swift */; };
 		B523E93929164B4F00180B36 /* MainInterface.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = B523E93729164B4F00180B36 /* MainInterface.storyboard */; };
 		B523E93D29164B4F00180B36 /* ShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B523E93329164B4F00180B36 /* ShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		B52AC8EB293C7302004654A3 /* ProgressHUDWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = B520A5C9292B82F700A76E9A /* ProgressHUDWrapper.swift */; };
+		B52AC8ED293C73FF004654A3 /* ProgressHUD in Frameworks */ = {isa = PBXBuildFile; productRef = B52AC8EC293C73FF004654A3 /* ProgressHUD */; };
 		B52FF8FB29273BFE0023481D /* TagSelectorViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B52FF8FA29273BFE0023481D /* TagSelectorViewModel.swift */; };
 		B52FF900292759CA0023481D /* TagEditorViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B52FF8FF292759CA0023481D /* TagEditorViewController.swift */; };
 		B538E9E32910255100DF5DEB /* NoteEditorViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B538E9E22910255100DF5DEB /* NoteEditorViewController.swift */; };
@@ -208,6 +210,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B52AC8ED293C73FF004654A3 /* ProgressHUD in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -518,6 +521,9 @@
 			dependencies = (
 			);
 			name = ShareExtension;
+			packageProductDependencies = (
+				B52AC8EC293C73FF004654A3 /* ProgressHUD */,
+			);
 			productName = ShareExtension;
 			productReference = B523E93329164B4F00180B36 /* ShareExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
@@ -645,6 +651,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				B5DE8852291F7864009B0957 /* DisplayType.swift in Sources */,
+				B52AC8EB293C7302004654A3 /* ProgressHUDWrapper.swift in Sources */,
 				B51968C4291CBA38003CBDD0 /* UTType+Extension.swift in Sources */,
 				B5D6C13029174C150050A3E0 /* Collection.xcdatamodeld in Sources */,
 				B5D6C12B29174BA90050A3E0 /* StorageProvider.swift in Sources */,
@@ -1085,6 +1092,11 @@
 			productName = TTGTags;
 		};
 		B520A5C6292B823F00A76E9A /* ProgressHUD */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B520A5C5292B823F00A76E9A /* XCRemoteSwiftPackageReference "ProgressHUD" */;
+			productName = ProgressHUD;
+		};
+		B52AC8EC293C73FF004654A3 /* ProgressHUD */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = B520A5C5292B823F00A76E9A /* XCRemoteSwiftPackageReference "ProgressHUD" */;
 			productName = ProgressHUD;

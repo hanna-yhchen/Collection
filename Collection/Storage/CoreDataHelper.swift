@@ -91,7 +91,7 @@ extension NSManagedObject {
         guard
             let owner = owner,
             let name = owner.userIdentity.nameComponents?.formatted()
-        else { return "Unknown" }
+        else { return "" }
 
         return name
     }

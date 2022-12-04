@@ -88,9 +88,8 @@ class NoteEditorViewController: UIViewController {
         Task {
             do {
                 try await viewModel.save()
-                dismiss(animated: true) {
-                    HUD.showSucceeded()
-                }
+                HUD.showSucceeded()
+                dismiss(animated: true)
             } catch {
                 // TODO: handle error
                 print("#\(#function): Failed to save new note, \(error)")
