@@ -18,7 +18,6 @@ class ItemListViewController: UIViewController, PlaceholderViewDisplayable {
     enum Scope {
         case allItems
         case board(ObjectID)
-        case tag(ObjectID)
 
         var predicate: NSPredicate? {
             switch self {
@@ -26,8 +25,6 @@ class ItemListViewController: UIViewController, PlaceholderViewDisplayable {
                 return nil
             case .board(let boardID):
                 return NSPredicate(format: "%K == %@", #keyPath(Item.board), boardID)
-            case .tag(let tagID):
-                return NSPredicate(format: "%K CONTAINS %@", #keyPath(Item.tags), tagID)
             }
         }
     }
@@ -43,17 +40,8 @@ class ItemListViewController: UIViewController, PlaceholderViewDisplayable {
     // MARK: - Properties
 
     private let scope: Scope
+    private let boardID: ObjectID
     private var snapshotStrategy: SnapshotStrategy = .normal
-
-    #warning("NEED refactoring. This is only used for importing now.")
-    private lazy var boardID: ObjectID = {
-        switch scope {
-        case .allItems, .tag:
-            return storageProvider.getInboxBoardID()
-        case .board(let boardID):
-            return boardID
-        }
-    }()
 
     private let itemManager: ItemManager
     private let storageProvider: StorageProvider
@@ -77,7 +65,7 @@ class ItemListViewController: UIViewController, PlaceholderViewDisplayable {
 
     private var previewingItem: PreviewItem?
     private lazy var dataSource = createDataSource()
-    private var subscriptions = CancellableSet()
+    private lazy var subscriptions = CancellableSet()
 
     private lazy var collectionView = ItemCollectionView(frame: view.bounds, traits: view.traitCollection)
 
@@ -124,13 +112,20 @@ class ItemListViewController: UIViewController, PlaceholderViewDisplayable {
         coder: NSCoder,
         scope: Scope,
         storageProvider: StorageProvider,
-        itemManager: ItemManager = ItemManager.shared,
-        menuProvider: OptionMenuProvider = OptionMenuProvider()
+        itemManager: ItemManager = ItemManager.shared
     ) {
         self.scope = scope
         self.storageProvider = storageProvider
         self.itemManager = itemManager
-        self.menuProvider = menuProvider
+
+        switch scope {
+        case .allItems:
+            self.boardID = storageProvider.getInboxBoardID()
+            self.menuProvider = OptionMenuProvider(boardID: nil)
+        case .board(let boardID):
+            self.boardID = boardID
+            self.menuProvider = OptionMenuProvider(boardID: boardID, storageProvider: storageProvider)
+        }
 
         super.init(coder: coder)
     }
@@ -197,18 +192,6 @@ extension ItemListViewController {
                     fatalError("#\(#function): failed to downcast to board object")
                 }
                 title = board.name
-            } catch {
-                fatalError("#\(#function): failed to retrieve board object by id, \(error)")
-            }
-        case .tag(let tagID):
-            plusButton.isHidden = true
-
-            let context = storageProvider.persistentContainer.viewContext
-            do {
-                guard let tag = try context.existingObject(with: tagID) as? Tag else {
-                    fatalError("#\(#function): failed to downcast to board object")
-                }
-                title = tag.name
             } catch {
                 fatalError("#\(#function): failed to retrieve board object by id, \(error)")
             }
@@ -374,8 +357,6 @@ extension ItemListViewController {
                             return changes.contains { $0.changedObjectID.entity.name == itemEntityName }
                         case .board(let boardID):
                             return changes.contains { $0.changedObjectID == boardID }
-                        case .tag(let tagID):
-                            return changes.contains { $0.changedObjectID == tagID }
                         }
                     }
                     return false
@@ -414,10 +395,10 @@ extension ItemListViewController {
             }
             .store(in: &subscriptions)
 
-        menuProvider.$currentFilterType
+        menuProvider.currentFilter
             .receive(on: DispatchQueue.main)
-            .sink { [unowned self] type in
-                applyFilter(type)
+            .sink { [unowned self] type, tagIDs in
+                applyFilter(type: type, tagIDs: tagIDs)
             }
             .store(in: &subscriptions)
 
@@ -462,6 +443,32 @@ extension ItemListViewController {
             predicate = scope.predicate
         }
         fetchRequest.predicate = predicate
+
+        try? fetchedResultsController.performFetch()
+    }
+
+    private func applyFilter(type: DisplayType?, tagIDs: [ObjectID]) {
+        snapshotStrategy = .reload
+        let fetchRequest = fetchedResultsController.fetchRequest
+
+        var predicates: [NSPredicate] = []
+
+        if let basePredicate = scope.predicate {
+            predicates.append(basePredicate)
+        }
+
+        if let type = type {
+            predicates.append(type.predicate)
+        }
+
+        for tagID in tagIDs {
+            predicates.append(NSPredicate(format: "%K CONTAINS %@", #keyPath(Item.tags), tagID))
+        }
+//        if !tagIDs.isEmpty {
+//            predicates.append(NSPredicate(format: "%K CONTAINS %@", #keyPath(Item.tags), tagIDs))
+//        }
+
+        fetchRequest.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: predicates)
 
         try? fetchedResultsController.performFetch()
     }
