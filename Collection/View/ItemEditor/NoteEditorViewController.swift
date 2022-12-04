@@ -84,7 +84,7 @@ class NoteEditorViewController: UIViewController {
     // MARK: - Actions
 
     @IBAction private func saveButtonTapped() {
-        HUD.showProgressing()
+        HUD.showProcessing()
         Task {
             do {
                 try await viewModel.save()

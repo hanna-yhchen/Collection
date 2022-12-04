@@ -118,16 +118,18 @@ class BoardSelectorViewController: UIViewController {
 extension BoardSelectorViewController: UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         collectionView.deselectItem(at: indexPath, animated: true)
+        HUD.showProcessing()
         Task {
             do {
                 let board = boards[indexPath.row]
                 try await viewModel.moveItem(to: board.objectID)
                 await MainActor.run {
                     dismiss(animated: true)
+                    HUD.showSucceeded()
                 }
             } catch {
                 print("#\(#function): Failed to move item, \(error)")
-                // TODO: UI reaction
+                HUD.showFailed()
             }
         }
     }

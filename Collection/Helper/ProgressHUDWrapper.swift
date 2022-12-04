@@ -12,19 +12,19 @@ enum HUD {
         ProgressHUD.show()
     }
 
-    static func showProgressing() {
-        ProgressHUD.show("Progressing")
+    static func showProcessing() {
+        ProgressHUD.show("Processing")
     }
 
     static func showImporting() {
         ProgressHUD.show("Importing")
     }
 
-    static func showSucceeded() {
-        ProgressHUD.showSucceed()
+    static func showSucceeded(_ message: String? = nil) {
+        ProgressHUD.showSucceed(message)
     }
 
-    static func showFailed(message: String? = nil) {
+    static func showFailed(_ message: String? = nil) {
         ProgressHUD.showFailed(message)
     }
 

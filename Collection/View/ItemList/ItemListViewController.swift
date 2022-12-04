@@ -288,7 +288,7 @@ extension ItemListViewController {
                 let item = try? context.existingObject(with: itemID) as? Item,
                 let board = item.board
             else {
-                HUD.showFailed(message: "Missing data")
+                HUD.showFailed("Missing data")
                 return
             }
 
@@ -313,21 +313,29 @@ extension ItemListViewController {
 //        case .comments:
 //            break
         case .move:
+            HUD.showProcessing()
+
             let selectorVC = UIStoryboard.main
                 .instantiateViewController(identifier: BoardSelectorViewController.storyboardID) { coder in
                     let viewModel = BoardSelectorViewModel(scenario: .move(itemID))
                     return BoardSelectorViewController(coder: coder, viewModel: viewModel)
                 }
 
-            present(selectorVC, animated: true)
+            present(selectorVC, animated: true) {
+                HUD.dismiss()
+            }
         case .copy:
+            HUD.showProcessing()
+
             let selectorVC = UIStoryboard.main
                 .instantiateViewController(identifier: BoardSelectorViewController.storyboardID) { coder in
                     let viewModel = BoardSelectorViewModel(scenario: .copy(itemID))
                     return BoardSelectorViewController(coder: coder, viewModel: viewModel)
                 }
 
-            present(selectorVC, animated: true)
+            present(selectorVC, animated: true) {
+                HUD.dismiss()
+            }
         case .delete:
             let alert = UIAlertController(
                 title: "Delete the item",
@@ -335,13 +343,17 @@ extension ItemListViewController {
                 preferredStyle: UIDevice.current.userInterfaceIdiom == .phone ? .actionSheet : .alert)
             alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
             alert.addAction(UIAlertAction(title: "Delete", style: .destructive) {[unowned self] _ in
+                HUD.showProcessing()
+
                 Task {
                     do {
                         try await itemManager.deleteItem(
                             itemID: itemID,
                             context: fetchedResultsController.managedObjectContext)
+                        HUD.showSucceeded("Deleted")
                     } catch {
                         print("#\(#function): Failed to delete board, \(error)")
+                        HUD.showFailed()
                     }
                 }
             })
@@ -510,7 +522,7 @@ extension ItemListViewController {
         let recorderVC = UIStoryboard.main
             .instantiateViewController(identifier: AudioRecorderController.storyboardID) { coder in
                 return AudioRecorderController(coder: coder) {[unowned self] result in
-                    HUD.showProgressing()
+                    HUD.showProcessing()
 
                     switch result {
                     case .success(let record):
@@ -569,8 +581,7 @@ extension ItemListViewController {
             let itemType = UTType(typeIdentifier),
             let filenameExtension = itemType.preferredFilenameExtension
         else {
-            // TODO: show alert
-            HUD.showFailed()
+            HUD.showFailed("Missing data information")
             return
         }
 
@@ -590,15 +601,12 @@ extension ItemListViewController {
         }
 
         guard writingError == nil && coordinatingError == nil else {
-            // TODO: show alert
-            HUD.showFailed()
+            HUD.showFailed("Unable to read the file")
             return
         }
 
-
         guard QLPreviewController.canPreview(fileURL as QLPreviewItem) else {
-            // TODO: show alert
-            HUD.showFailed()
+            HUD.showFailed("Preview of this file type is not supported")
             return
         }
 
@@ -726,7 +734,7 @@ extension ItemListViewController: PHPickerViewControllerDelegate {
 
 extension ItemListViewController: UIImagePickerControllerDelegate & UINavigationControllerDelegate {
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
-        HUD.showProgressing()
+        HUD.showProcessing()
 
         guard
             let typeIdentifier = info[.mediaType] as? String,

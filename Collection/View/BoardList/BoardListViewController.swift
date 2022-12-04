@@ -139,7 +139,7 @@ class BoardListViewController: UIViewController, PlaceholderViewDisplayable {
             nameEditorVC.cancellable = nameEditorVC.newNamePublisher
                 .sink {[unowned self] newName in
                     guard !newName.isEmpty else {
-                        HUD.showFailed(message: "The name of a board cannot be empty.")
+                        HUD.showFailed("The name of a board cannot be empty.")
                         return
                     }
 
@@ -228,7 +228,7 @@ class BoardListViewController: UIViewController, PlaceholderViewDisplayable {
 
     // TODO: abstract sharing functionality into StorageProvider
     private func startSharingFlow(boardID: ObjectID) {
-        HUD.showProgressing()
+        HUD.showProcessing()
 
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
