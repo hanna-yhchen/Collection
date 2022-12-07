@@ -224,123 +224,13 @@ extension ItemListViewController {
 
             if let sender = cell as? ItemActionSendable {
                 sender.actionPublisher
-                    .sink { itemAction, itemID in
-                        self.perform(itemAction, itemID: itemID)
+                    .sink { [unowned self] itemAction, itemID in
+                        performItemAction(itemAction, itemID: itemID)
                     }
                     .store(in: &sender.subscriptions)
             }
 
             return cell
-        }
-    }
-
-    private func perform(_ action: ItemAction, itemID: ObjectID) {
-        switch action {
-        case .rename:
-            let context = fetchedResultsController.managedObjectContext
-            let item = try? context.existingObject(with: itemID) as? Item
-            let nameEditorVC = UIStoryboard.main
-                .instantiateViewController(identifier: NameEditorViewController.storyboardID) { coder in
-                    NameEditorViewController(coder: coder, originalName: item?.name)
-                }
-
-            nameEditorVC.modalPresentationStyle = .overCurrentContext
-            nameEditorVC.cancellable = nameEditorVC.newNamePublisher
-                .sink {[unowned self] newName in
-                    Task {
-                        do {
-                            try await itemManager.updateItem(
-                                itemID: itemID,
-                                name: newName,
-                                context: context)
-                            await MainActor.run {
-                                nameEditorVC.animateDismissSheet()
-                            }
-                        } catch {
-                            HUD.showFailed()
-                            print("#\(#function): Failed to rename item, \(error)")
-                        }
-                    }
-                }
-
-            present(nameEditorVC, animated: false)
-        case .tags:
-            let context = fetchedResultsController.managedObjectContext
-
-            guard
-                let item = try? context.existingObject(with: itemID) as? Item,
-                let board = item.board
-            else {
-                HUD.showFailed("Missing data")
-                return
-            }
-
-            let selectorVC = UIStoryboard.main
-                .instantiateViewController(identifier: TagSelectorViewController.storyboardID) { coder in
-                    let viewModel = TagSelectorViewModel(
-                        storageProvider: self.storageProvider,
-                        itemID: itemID,
-                        boardID: board.objectID,
-                        context: context)
-                    return TagSelectorViewController(coder: coder, viewModel: viewModel)
-                }
-
-            let nav = UINavigationController(rootViewController: selectorVC)
-            if let sheet = nav.sheetPresentationController {
-                sheet.detents = [.medium(), .large()]
-                sheet.prefersEdgeAttachedInCompactHeight = true
-                sheet.preferredCornerRadius = 30
-            }
-
-            present(nav, animated: true)
-//        case .comments:
-//            break
-        case .move:
-            HUD.showProcessing()
-
-            let selectorVC = UIStoryboard.main
-                .instantiateViewController(identifier: BoardSelectorViewController.storyboardID) { coder in
-                    let viewModel = BoardSelectorViewModel(scenario: .move(itemID))
-                    return BoardSelectorViewController(coder: coder, viewModel: viewModel)
-                }
-
-            present(selectorVC, animated: true) {
-                HUD.dismiss()
-            }
-        case .copy:
-            HUD.showProcessing()
-
-            let selectorVC = UIStoryboard.main
-                .instantiateViewController(identifier: BoardSelectorViewController.storyboardID) { coder in
-                    let viewModel = BoardSelectorViewModel(scenario: .copy(itemID))
-                    return BoardSelectorViewController(coder: coder, viewModel: viewModel)
-                }
-
-            present(selectorVC, animated: true) {
-                HUD.dismiss()
-            }
-        case .delete:
-            let alert = UIAlertController(
-                title: "Delete the item",
-                message: "Are you sure you want to delete this item permanently?",
-                preferredStyle: UIDevice.current.userInterfaceIdiom == .phone ? .actionSheet : .alert)
-            alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-            alert.addAction(UIAlertAction(title: "Delete", style: .destructive) {[unowned self] _ in
-                HUD.showProcessing()
-
-                Task {
-                    do {
-                        try await itemManager.deleteItem(
-                            itemID: itemID,
-                            context: fetchedResultsController.managedObjectContext)
-                        HUD.showSucceeded("Deleted")
-                    } catch {
-                        print("#\(#function): Failed to delete board, \(error)")
-                        HUD.showFailed()
-                    }
-                }
-            })
-            present(alert, animated: true)
         }
     }
 
@@ -428,25 +318,6 @@ extension ItemListViewController {
         try? fetchedResultsController.performFetch()
     }
 
-    private func applyFilter(_ type: DisplayType?) {
-        snapshotStrategy = .reload
-        let fetchRequest = fetchedResultsController.fetchRequest
-
-        var predicate: NSPredicate?
-        if let type = type {
-            if let basePredicate = scope.predicate {
-                predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [basePredicate, type.predicate])
-            } else {
-                predicate = type.predicate
-            }
-        } else {
-            predicate = scope.predicate
-        }
-        fetchRequest.predicate = predicate
-
-        try? fetchedResultsController.performFetch()
-    }
-
     private func applyFilter(type: DisplayType?, tagIDs: [ObjectID]) {
         snapshotStrategy = .reload
         let fetchRequest = fetchedResultsController.fetchRequest
@@ -464,13 +335,120 @@ extension ItemListViewController {
         for tagID in tagIDs {
             predicates.append(NSPredicate(format: "%K CONTAINS %@", #keyPath(Item.tags), tagID))
         }
-//        if !tagIDs.isEmpty {
-//            predicates.append(NSPredicate(format: "%K CONTAINS %@", #keyPath(Item.tags), tagIDs))
-//        }
 
         fetchRequest.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: predicates)
 
         try? fetchedResultsController.performFetch()
+    }
+
+    private func performItemAction(_ itemAction: ItemAction, itemID: ObjectID) {
+        switch itemAction {
+        case .rename:
+            showNameEditor(itemID: itemID)
+        case .tags:
+            showTagSelector(itemID: itemID)
+        case .move:
+            showBoardSelector(scenario: .move(itemID))
+        case .copy:
+            showBoardSelector(scenario: .copy(itemID))
+        case .delete:
+            showDeletionAlert(itemID: itemID)
+        }
+    }
+
+    private func showNameEditor(itemID: ObjectID) {
+        let context = fetchedResultsController.managedObjectContext
+        guard let item = try? context.existingObject(with: itemID) as? Item else {
+            HUD.showFailed(Constant.Message.missingData)
+            return
+        }
+        let nameEditorVC = UIStoryboard.main.instantiateViewController(
+            identifier: NameEditorViewController.storyboardID
+        ) { NameEditorViewController(coder: $0, originalName: item.name) }
+
+        nameEditorVC.modalPresentationStyle = .overCurrentContext
+        nameEditorVC.cancellable = nameEditorVC.newNamePublisher
+            .sink { [unowned self] newName in
+                Task {
+                    do {
+                        try await itemManager.updateItem(
+                            itemID: itemID,
+                            name: newName,
+                            context: context)
+                        await MainActor.run {
+                            nameEditorVC.animateDismissSheet()
+                        }
+                    } catch {
+                        HUD.showFailed()
+                        print("#\(#function): Failed to rename item, \(error)")
+                    }
+                }
+            }
+
+        present(nameEditorVC, animated: false)
+    }
+
+    private func showTagSelector(itemID: ObjectID) {
+        let context = fetchedResultsController.managedObjectContext
+
+        guard
+            let item = try? context.existingObject(with: itemID) as? Item,
+            let board = item.board
+        else {
+            HUD.showFailed(Constant.Message.missingData)
+            return
+        }
+
+        let viewModel = TagSelectorViewModel(
+            storageProvider: storageProvider,
+            itemID: itemID,
+            boardID: board.objectID,
+            context: context)
+        let selectorVC = UIStoryboard.main.instantiateViewController(
+            identifier: TagSelectorViewController.storyboardID
+        ) { TagSelectorViewController(coder: $0, viewModel: viewModel) }
+
+        let nav = UINavigationController(rootViewController: selectorVC)
+        if let sheet = nav.sheetPresentationController {
+            sheet.detents = [.medium(), .large()]
+            sheet.prefersEdgeAttachedInCompactHeight = true
+            sheet.preferredCornerRadius = Constant.Layout.sheetCornerRadius
+        }
+
+        present(nav, animated: true)
+    }
+
+    private func showBoardSelector(scenario: BoardSelectorViewModel.Scenario) {
+        let viewModel = BoardSelectorViewModel(scenario: scenario)
+        let selectorVC = UIStoryboard.main.instantiateViewController(
+            identifier: BoardSelectorViewController.storyboardID
+        ) { BoardSelectorViewController(coder: $0, viewModel: viewModel) }
+
+        present(selectorVC, animated: true)
+    }
+
+    private func showDeletionAlert(itemID: ObjectID) {
+        let alert = UIAlertController(
+            title: "Delete the item",
+            message: "Are you sure you want to delete this item permanently?",
+            preferredStyle: UIDevice.current.userInterfaceIdiom == .phone ? .actionSheet : .alert)
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        alert.addAction(UIAlertAction(title: "Delete", style: .destructive) {[unowned self] _ in
+            HUD.showProcessing()
+
+            Task {
+                do {
+                    try await itemManager.deleteItem(
+                        itemID: itemID,
+                        context: fetchedResultsController.managedObjectContext)
+                    HUD.showSucceeded("Deleted")
+                } catch {
+                    print("#\(#function): Failed to delete board, \(error)")
+                    HUD.showFailed()
+                }
+            }
+        })
+        present(alert, animated: true)
     }
 
     private func showDocumentPicker() {
@@ -496,15 +474,16 @@ extension ItemListViewController {
             UIImagePickerController.isSourceTypeAvailable(camera),
             UIImagePickerController.availableMediaTypes(for: camera) != nil
         else {
-            // TODO: show alert
+            HUD.showFailed()
             return
         }
+
         let picker = UIImagePickerController()
         picker.sourceType = camera
         picker.mediaTypes = [UTType.movie.identifier, UTType.image.identifier]
         picker.delegate = self
 
-        self.present(picker, animated: true)
+        present(picker, animated: true)
     }
 
     private func showNoteEditor() {
@@ -565,7 +544,6 @@ extension ItemListViewController {
             let item = context.object(with: id) as? Item,
             let displayType = DisplayType(rawValue: item.displayType)
         else {
-            // TODO: show alert
             HUD.showFailed()
             return
         }
@@ -638,7 +616,6 @@ extension ItemListViewController {
             let data = item.itemData?.data,
             let url = URL(dataRepresentation: data, relativeTo: nil)
         else {
-            // TODO: show alert
             HUD.showFailed()
             return
         }
@@ -673,7 +650,7 @@ extension ItemListViewController: UICollectionViewDelegate {
         return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { _ in
             let children = ItemAction.allCases.map { itemAction in
                 let action = UIAction(title: itemAction.title) { [unowned self] _ in
-                    perform(itemAction, itemID: itemID)
+                    performItemAction(itemAction, itemID: itemID)
                 }
                 if itemAction == .delete {
                     action.attributes = .destructive

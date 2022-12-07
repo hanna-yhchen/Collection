@@ -39,6 +39,7 @@
 		B52AC8ED293C73FF004654A3 /* ProgressHUD in Frameworks */ = {isa = PBXBuildFile; productRef = B52AC8EC293C73FF004654A3 /* ProgressHUD */; };
 		B52FF8FB29273BFE0023481D /* TagSelectorViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B52FF8FA29273BFE0023481D /* TagSelectorViewModel.swift */; };
 		B52FF900292759CA0023481D /* TagEditorViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B52FF8FF292759CA0023481D /* TagEditorViewController.swift */; };
+		B5363906293F512E00054836 /* Constant.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5363905293F512E00054836 /* Constant.swift */; };
 		B538E9E32910255100DF5DEB /* NoteEditorViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B538E9E22910255100DF5DEB /* NoteEditorViewController.swift */; };
 		B538E9E62910277300DF5DEB /* UIStoryboard+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = B538E9E52910277300DF5DEB /* UIStoryboard+Extension.swift */; };
 		B53CD12429399F24006E9B4A /* OptionMenuProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = B53CD12329399F24006E9B4A /* OptionMenuProvider.swift */; };
@@ -153,6 +154,7 @@
 		B523E93A29164B4F00180B36 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		B52FF8FA29273BFE0023481D /* TagSelectorViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagSelectorViewModel.swift; sourceTree = "<group>"; };
 		B52FF8FF292759CA0023481D /* TagEditorViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagEditorViewController.swift; sourceTree = "<group>"; };
+		B5363905293F512E00054836 /* Constant.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constant.swift; sourceTree = "<group>"; };
 		B538E9E22910255100DF5DEB /* NoteEditorViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NoteEditorViewController.swift; path = Collection/View/ItemEditor/NoteEditorViewController.swift; sourceTree = SOURCE_ROOT; };
 		B538E9E52910277300DF5DEB /* UIStoryboard+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIStoryboard+Extension.swift"; sourceTree = "<group>"; };
 		B53CD12329399F24006E9B4A /* OptionMenuProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OptionMenuProvider.swift; sourceTree = "<group>"; };
@@ -294,6 +296,7 @@
 			isa = PBXGroup;
 			children = (
 				B50E8F74291BB2FB00E64E36 /* CombineWrapper.swift */,
+				B5363905293F512E00054836 /* Constant.swift */,
 				B520A5C9292B82F700A76E9A /* ProgressHUDWrapper.swift */,
 			);
 			path = Helper;
@@ -722,6 +725,7 @@
 				B52FF8FB29273BFE0023481D /* TagSelectorViewModel.swift in Sources */,
 				B59544102924E3C700665868 /* ItemAction.swift in Sources */,
 				B520A5C4292B734F00A76E9A /* KeyboardHandling.swift in Sources */,
+				B5363906293F512E00054836 /* Constant.swift in Sources */,
 				B5E50E18290F72F2006A7B22 /* StorageProvider.swift in Sources */,
 				B5C40F752935F80700AB2C8B /* PlaceholderViewDisplayable.swift in Sources */,
 				B515D5EB29124CC400072CBC /* StorageProvider+Board.swift in Sources */,
