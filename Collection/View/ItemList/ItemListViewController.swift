@@ -14,58 +14,14 @@ import UniformTypeIdentifiers
 import UIKit
 
 class ItemListViewController: UIViewController, PlaceholderViewDisplayable {
-
-    enum Scope {
-        case allItems
-        case board(ObjectID)
-
-        var predicate: NSPredicate? {
-            switch self {
-            case .allItems:
-                return nil
-            case .board(let boardID):
-                return NSPredicate(format: "%K == %@", #keyPath(Item.board), boardID)
-            }
-        }
-    }
-
-    enum SnapshotStrategy {
-        case normal
-        case reload
-    }
-
-    typealias Snapshot = NSDiffableDataSourceSnapshot<Int, NSManagedObjectID>
-    typealias DataSource = UICollectionViewDiffableDataSource<Int, NSManagedObjectID>
-
     // MARK: - Properties
 
-    private let scope: Scope
-    private let boardID: ObjectID
-    private var snapshotStrategy: SnapshotStrategy = .normal
+    private let viewModel: ItemListViewModel
+    private lazy var boardID: ObjectID = viewModel.boardID
 
     private let itemManager: ItemManager
     private let storageProvider: StorageProvider
-    private let menuProvider: OptionMenuProvider
-
-    // TODO: move fetchedResultsController logic to viewModel
-    private lazy var fetchedResultsController: NSFetchedResultsController<Item> = {
-        let fetchRequest = Item.fetchRequest()
-        fetchRequest.predicate = scope.predicate
-        fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \Item.creationDate, ascending: false)]
-
-        let controller = NSFetchedResultsController(
-            fetchRequest: fetchRequest,
-            managedObjectContext: storageProvider.persistentContainer.viewContext,
-            sectionNameKeyPath: nil,
-            cacheName: nil)
-        controller.delegate = self
-
-        return controller
-    }()
-
     private var previewingItem: PreviewItem?
-    private lazy var dataSource = createDataSource()
-    private lazy var subscriptions = CancellableSet()
 
     private lazy var collectionView = ItemCollectionView(frame: view.bounds, traits: view.traitCollection)
 
@@ -73,11 +29,11 @@ class ItemListViewController: UIViewController, PlaceholderViewDisplayable {
     var isShowingPlaceholder = false
 
     @IBOutlet var plusButton: UIButton!
-    private lazy var optionButton = UIBarButtonItem(
-        image: UIImage(systemName: "slider.horizontal.3"),
-        menu: menuProvider.currentMenu)
+    private lazy var optionButton = UIBarButtonItem(image: UIImage(systemName: "slider.horizontal.3"))
 
     private var topContentOffset: CGPoint?
+
+    private lazy var subscriptions = CancellableSet()
 
     // MARK: - Lifecycle
 
@@ -85,47 +41,33 @@ class ItemListViewController: UIViewController, PlaceholderViewDisplayable {
         super.viewDidLoad()
 
         configureHierarchy()
-        addObservers()
+        addBindings()
     }
 
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
 
-        if topContentOffset == nil {
-            let statusBarHeight = view.window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0
-            let navBarHeight = navigationController?.navigationBar.frame.height ?? 0
-            let safeAreaHeight = statusBarHeight + navBarHeight
-            topContentOffset = CGPoint(x: 0, y: -safeAreaHeight)
-        }
+        calculateTopContentOffset()
     }
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
 
-        collectionView.setLayout(menuProvider.currentLayout, animated: false)
-        try? fetchedResultsController.performFetch()
+        collectionView.setLayout(viewModel.currentLayout, animated: false)
+        viewModel.fetchItems()
     }
 
     // MARK: - Initializers
 
     init?(
         coder: NSCoder,
-        scope: Scope,
+        viewModel: ItemListViewModel,
         storageProvider: StorageProvider,
         itemManager: ItemManager = ItemManager.shared
     ) {
-        self.scope = scope
+        self.viewModel = viewModel
         self.storageProvider = storageProvider
         self.itemManager = itemManager
-
-        switch scope {
-        case .allItems:
-            self.boardID = storageProvider.getInboxBoardID()
-            self.menuProvider = OptionMenuProvider(boardID: nil)
-        case .board(let boardID):
-            self.boardID = boardID
-            self.menuProvider = OptionMenuProvider(boardID: boardID, storageProvider: storageProvider)
-        }
 
         super.init(coder: coder)
     }
@@ -182,20 +124,7 @@ class ItemListViewController: UIViewController, PlaceholderViewDisplayable {
 
 extension ItemListViewController {
     private func configureHierarchy() {
-        switch scope {
-        case .allItems:
-            title = "All Items"
-        case .board(let boardID):
-            let context = storageProvider.persistentContainer.viewContext
-            do {
-                guard let board = try context.existingObject(with: boardID) as? Board else {
-                    fatalError("#\(#function): failed to downcast to board object")
-                }
-                title = board.name
-            } catch {
-                fatalError("#\(#function): failed to retrieve board object by id, \(error)")
-            }
-        }
+        title = viewModel.title
 
         plusButton.layer.shadowColor = UIColor.black.cgColor
         plusButton.layer.shadowOpacity = 0.7
@@ -205,24 +134,15 @@ extension ItemListViewController {
         collectionView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         collectionView.delegate = self
 
-        navigationItem.rightBarButtonItem = optionButton
-    }
-
-    private func createDataSource() -> DataSource {
-        DataSource(collectionView: collectionView) {[unowned self] collectionView, indexPath, objectID in
+        viewModel.configureDataSource(for: collectionView) { [unowned self] indexPath, item in
             guard let cell = collectionView.dequeueReusableCell(
-                withReuseIdentifier: menuProvider.currentLayout.cellIdentifier,
+                withReuseIdentifier: viewModel.currentLayout.cellIdentifier,
                 for: indexPath) as? ItemCell
             else { fatalError("#\(#function): Failed to dequeue ItemCollectionViewCell") }
 
-            guard let item = try? fetchedResultsController
-                .managedObjectContext
-                .existingObject(with: objectID) as? Item
-            else { fatalError("#\(#function): Failed to retrieve item by objectID") }
-
             cell.configure(for: item)
 
-            if let sender = cell as? ItemActionSendable {
+            if let sender = cell as? any ItemActionSendable {
                 sender.actionPublisher
                     .sink { [unowned self] itemAction, itemID in
                         performItemAction(itemAction, itemID: itemID)
@@ -232,113 +152,36 @@ extension ItemListViewController {
 
             return cell
         }
+
+        navigationItem.rightBarButtonItem = optionButton
     }
 
-    private func addObservers() {
-        storageProvider.historyManager.storeDidChangePublisher
-            .map {[weak self] transactions -> [NSPersistentHistoryTransaction] in
-                guard let `self` = self else { return [] }
-                let itemEntityName = Item.entity().name
-
-                return transactions.filter { transaction in
-                    if let changes = transaction.changes {
-                        switch self.scope {
-                        case .allItems:
-                            return changes.contains { $0.changedObjectID.entity.name == itemEntityName }
-                        case .board(let boardID):
-                            return changes.contains { $0.changedObjectID == boardID }
-                        }
-                    }
-                    return false
+    private func addBindings() {
+        viewModel.shouldDisplayPlaceholder
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] shouldDisplay in
+                if shouldDisplay {
+                    showPlaceholderView()
+                } else {
+                    removePlaceholderView()
                 }
             }
-            .receive(on: DispatchQueue.main)
-            .sink {[weak self] transactions in
-                guard let self = self, !transactions.isEmpty else { return }
-
-                self.storageProvider.mergeTransactions(
-                    transactions,
-                    to: self.fetchedResultsController.managedObjectContext)
-            }
             .store(in: &subscriptions)
 
-        NotificationCenter.default.publisher(for: .tagObjectDidChange, object: storageProvider)
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] _ in
-                guard let self = self else { return }
-                self.snapshotStrategy = .reload
-                try? self.fetchedResultsController.performFetch()
-            }
-            .store(in: &subscriptions)
-
-        menuProvider.$currentLayout
-            .receive(on: DispatchQueue.main)
-            .sink { [unowned self] layout in
-                switchLayout(layout)
-            }
-            .store(in: &subscriptions)
-
-        menuProvider.$currentSort
-            .receive(on: DispatchQueue.main)
-            .sink { [unowned self] sort in
-                switchSort(sort)
-            }
-            .store(in: &subscriptions)
-
-        menuProvider.currentFilter
-            .receive(on: DispatchQueue.main)
-            .sink { [unowned self] type, tagIDs in
-                applyFilter(type: type, tagIDs: tagIDs)
-            }
-            .store(in: &subscriptions)
-
-        menuProvider.$currentMenu
-            .compactMap { $0 }
+        viewModel.currentMenu
             .receive(on: DispatchQueue.main)
             .assign(to: \.menu, on: optionButton)
             .store(in: &subscriptions)
-    }
 
-    private func switchLayout(_ layout: ItemLayout) {
-        var snapshot = dataSource.snapshot()
-        snapshot.reloadItems(snapshot.itemIdentifiers)
-
-        dataSource.applySnapshotUsingReloadData(snapshot) { [unowned self] in
-            collectionView.setLayout(layout, animated: true)
-            if let topContentOffset = topContentOffset {
-                collectionView.setContentOffset(topContentOffset, animated: true)
+        viewModel.switchLayout
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] layout in
+                collectionView.setLayout(layout, animated: true)
+                if let topContentOffset = topContentOffset {
+                    collectionView.setContentOffset(topContentOffset, animated: true)
+                }
             }
-        }
-    }
-
-    private func switchSort(_ sort: ItemSort) {
-        snapshotStrategy = .reload
-        let fetchRequest = fetchedResultsController.fetchRequest
-        fetchRequest.sortDescriptors = [sort.sortDescriptor]
-        try? fetchedResultsController.performFetch()
-    }
-
-    private func applyFilter(type: DisplayType?, tagIDs: [ObjectID]) {
-        snapshotStrategy = .reload
-        let fetchRequest = fetchedResultsController.fetchRequest
-
-        var predicates: [NSPredicate] = []
-
-        if let basePredicate = scope.predicate {
-            predicates.append(basePredicate)
-        }
-
-        if let type = type {
-            predicates.append(type.predicate)
-        }
-
-        for tagID in tagIDs {
-            predicates.append(NSPredicate(format: "%K CONTAINS %@", #keyPath(Item.tags), tagID))
-        }
-
-        fetchRequest.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: predicates)
-
-        try? fetchedResultsController.performFetch()
+            .store(in: &subscriptions)
     }
 
     private func performItemAction(_ itemAction: ItemAction, itemID: ObjectID) {
@@ -357,7 +200,7 @@ extension ItemListViewController {
     }
 
     private func showNameEditor(itemID: ObjectID) {
-        let context = fetchedResultsController.managedObjectContext
+        let context = storageProvider.persistentContainer.viewContext
         guard let item = try? context.existingObject(with: itemID) as? Item else {
             HUD.showFailed(Constant.Message.missingData)
             return
@@ -389,7 +232,7 @@ extension ItemListViewController {
     }
 
     private func showTagSelector(itemID: ObjectID) {
-        let context = fetchedResultsController.managedObjectContext
+        let context = storageProvider.persistentContainer.viewContext
 
         guard
             let item = try? context.existingObject(with: itemID) as? Item,
@@ -428,6 +271,8 @@ extension ItemListViewController {
     }
 
     private func showDeletionAlert(itemID: ObjectID) {
+        let context = storageProvider.persistentContainer.viewContext
+
         let alert = UIAlertController(
             title: "Delete the item",
             message: "Are you sure you want to delete this item permanently?",
@@ -440,7 +285,7 @@ extension ItemListViewController {
                 do {
                     try await itemManager.deleteItem(
                         itemID: itemID,
-                        context: fetchedResultsController.managedObjectContext)
+                        context: context)
                     HUD.showSucceeded("Deleted")
                 } catch {
                     print("#\(#function): Failed to delete board, \(error)")
@@ -538,7 +383,7 @@ extension ItemListViewController {
     }
 
     private func showItem(id: NSManagedObjectID) {
-        let context = fetchedResultsController.managedObjectContext
+        let context = storageProvider.persistentContainer.viewContext
 
         guard
             let item = context.object(with: id) as? Item,
@@ -626,11 +471,12 @@ extension ItemListViewController {
         present(safariController, animated: true)
     }
 
-    @MainActor
-    private func reconfigureItems(_ items: [NSManagedObjectID]) async {
-        var newSnapshot = dataSource.snapshot()
-        newSnapshot.reconfigureItems(items)
-        await dataSource.apply(newSnapshot, animatingDifferences: true)
+    private func calculateTopContentOffset() {
+        guard topContentOffset != nil else { return }
+        let statusBarHeight = view.window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0
+        let navBarHeight = navigationController?.navigationBar.frame.height ?? 0
+        let safeAreaHeight = statusBarHeight + navBarHeight
+        topContentOffset = CGPoint(x: 0, y: -safeAreaHeight)
     }
 }
 
@@ -639,13 +485,13 @@ extension ItemListViewController {
 extension ItemListViewController: UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         collectionView.deselectItem(at: indexPath, animated: true)
-        guard let itemID = dataSource.itemIdentifier(for: indexPath) else { return }
+        guard let itemID = viewModel.objectID(for: indexPath) else { return }
 
         showItem(id: itemID)
     }
 
     func collectionView(_ collectionView: UICollectionView, contextMenuConfigurationForItemAt indexPath: IndexPath, point: CGPoint) -> UIContextMenuConfiguration? {
-        guard let itemID = dataSource.itemIdentifier(for: indexPath) else { return nil }
+        guard let itemID = viewModel.objectID(for: indexPath) else { return nil }
 
         return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { _ in
             let children = ItemAction.allCases.map { itemAction in
@@ -664,7 +510,7 @@ extension ItemListViewController: UICollectionViewDelegate {
 
 extension ItemListViewController: UICollectionViewDelegateFlowLayout {
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        self.collectionView.itemSize(for: menuProvider.currentLayout)
+        self.collectionView.itemSize(for: viewModel.currentLayout)
     }
 }
 
@@ -760,45 +606,6 @@ extension ItemListViewController: UIImagePickerControllerDelegate & UINavigation
     }
 }
 
-// MARK: - NSFetchedResultsControllerDelegate
-
-extension ItemListViewController: NSFetchedResultsControllerDelegate {
-    func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChangeContentWith snapshot: NSDiffableDataSourceSnapshotReference) {
-        var newSnapshot = snapshot as Snapshot
-
-        if newSnapshot.numberOfItems == 0 {
-            showPlaceholderView()
-        } else if isShowingPlaceholder {
-            removePlaceholderView()
-        }
-
-        if snapshotStrategy == .normal {
-            let currentSnapshot = dataSource.snapshot()
-
-            let updatedIDs = newSnapshot.itemIdentifiers.filter { objectID in
-                guard
-                    let currentIndex = currentSnapshot.indexOfItem(objectID),
-                    let newIndex = newSnapshot.indexOfItem(objectID),
-                    newIndex == currentIndex,
-                    let item = try? controller.managedObjectContext.existingObject(with: objectID) as? Item
-                else { return false }
-
-                if let tags = item.tags?.allObjects as? [Tag], tags.contains(where: { $0.isUpdated }) {
-                    return true
-                }
-
-                return item.isUpdated
-            }
-            newSnapshot.reloadItems(updatedIDs)
-        } else {
-            newSnapshot.reloadItems(newSnapshot.itemIdentifiers)
-        }
-
-        dataSource.apply(newSnapshot, animatingDifferences: true)
-        snapshotStrategy = .normal
-    }
-}
-
 // MARK: - UIPasteConfigurationSupporting
 
 extension ItemListViewController {
@@ -857,7 +664,7 @@ extension ItemListViewController: QLPreviewControllerDelegate {
                 print("\(#function): Failed to update changes on previewing item, \(error)")
             }
 
-            await reconfigureItems([itemID])
+            viewModel.reconfigureItems([itemID])
         }
     }
 
@@ -868,7 +675,7 @@ extension ItemListViewController: QLPreviewControllerDelegate {
     func previewController(_ controller: QLPreviewController, transitionViewFor item: QLPreviewItem) -> UIView? {
         guard
             let previewItem = item as? PreviewItem,
-            let indexPath = dataSource.indexPath(for: previewItem.objectID),
+            let indexPath = viewModel.indexPath(for: previewItem.objectID),
             let cell = collectionView.cellForItem(at: indexPath) as? ItemCell
         else { return nil }
 

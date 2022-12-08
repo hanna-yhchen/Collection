@@ -93,10 +93,7 @@ class MainFlowController: LGSideMenuController {
 
         rootNavigation.navigationBar.prefersLargeTitles = true
 
-        let rootVC = UIStoryboard.main
-            .instantiateViewController(identifier: ItemListViewController.storyboardID) { coder in
-                ItemListViewController(coder: coder, scope: .allItems, storageProvider: self.storageProvider)
-            }
+        let rootVC = createItemListVC(scope: .allItems)
         configureNavigationItem(for: rootVC)
         rootNavigation.setViewControllers([rootVC], animated: false)
     }
@@ -107,27 +104,21 @@ class MainFlowController: LGSideMenuController {
         toggleLeftView(animated: true)
     }
 
-    // MARK: - Navigations
+    // MARK: - Private
 
     private func transitionTo(_ destination: SideMenuDestination) {
         var destinationVC: UIViewController
 
         switch destination {
         case .itemList(let scope):
-            let itemListVC = UIStoryboard.main
-                .instantiateViewController(identifier: ItemListViewController.storyboardID) { coder in
-                    ItemListViewController(coder: coder, scope: scope, storageProvider: self.storageProvider)
-                }
+            let itemListVC = createItemListVC(scope: scope)
             destinationVC = itemListVC
         case .boardList:
-            let boardListVC = UIStoryboard.main
-                .instantiateViewController(identifier: String(describing: BoardListViewController.self)) { coder in
-                    BoardListViewController(coder: coder, storageProvider: self.storageProvider)
-                }
+            let boardListVC = UIStoryboard.main.instantiateViewController(
+                identifier: String(describing: BoardListViewController.self)
+            ) { BoardListViewController(coder: $0, storageProvider: self.storageProvider) }
+            boardListVC.delegate = self
             destinationVC = boardListVC
-        case .tagList:
-            // TODO: instantiate tag list vc
-            destinationVC = UIViewController()
         }
 
         configureNavigationItem(for: destinationVC)
@@ -140,9 +131,44 @@ class MainFlowController: LGSideMenuController {
             animations: nil)
         hideLeftView(animated: true)
     }
+
+    private func createItemListVC(scope: ItemListViewModel.Scope) -> ItemListViewController {
+        let menuProvider: OptionMenuProvider
+        switch scope {
+        case .allItems:
+            menuProvider = OptionMenuProvider(boardID: nil)
+        case .board(let boardID):
+            menuProvider = OptionMenuProvider(boardID: boardID, storageProvider: storageProvider)
+        }
+
+        let itemProvider = ItemProvider(
+            predicate: scope.predicate,
+            context: storageProvider.persistentContainer.viewContext)
+
+        let viewModel = ItemListViewModel(
+            scope: scope,
+            storageProvider: storageProvider,
+            itemProvider: itemProvider,
+            menuProvider: menuProvider)
+
+        let itemListVC = UIStoryboard.main.instantiateViewController(
+            identifier: ItemListViewController.storyboardID
+        ) { ItemListViewController(coder: $0, viewModel: viewModel, storageProvider: self.storageProvider) }
+
+        return itemListVC
+    }
 }
 
-// MARK: - Helper
+// MARK: - BoardListViewControllerDelegate
+
+extension MainFlowController: BoardListViewControllerDelegate {
+    func navigateToItemList(boardID: ObjectID) {
+        let itemListVC = createItemListVC(scope: .board(boardID))
+        rootNavigation.pushViewController(itemListVC, animated: true)
+    }
+}
+
+// MARK: - Helpers
 
 extension MainFlowController {
     private func configureNavigationItem(for viewController: UIViewController) {

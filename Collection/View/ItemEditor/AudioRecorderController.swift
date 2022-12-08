@@ -147,7 +147,7 @@ class AudioRecorderController: UIViewController {
     }
 
     private func startTimer() {
-        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) {[weak self] timer in
+        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] timer in
             guard let `self` = self else {
                 timer.invalidate()
                 return
@@ -155,7 +155,8 @@ class AudioRecorderController: UIViewController {
 
             var timeInterval: TimeInterval = 0
 
-            if self.state == .recording {
+            switch self.state {
+            case .recording:
                 guard
                     let recorder = self.recorder,
                     recorder.isRecording
@@ -165,7 +166,7 @@ class AudioRecorderController: UIViewController {
                 }
 
                 timeInterval = recorder.currentTime
-            } else if self.state == .playing {
+            case .playing:
                 guard
                     let player = self.player,
                     player.isPlaying
@@ -175,7 +176,7 @@ class AudioRecorderController: UIViewController {
                 }
 
                 timeInterval = player.currentTime
-            } else {
+            default:
                 timer.invalidate()
                 return
             }

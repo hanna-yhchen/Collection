@@ -8,9 +8,8 @@
 import UIKit
 
 enum SideMenuDestination {
-    case itemList(ItemListViewController.Scope)
+    case itemList(ItemListViewModel.Scope)
     case boardList
-    case tagList
 }
 
 class SideMenuItem: Hashable {

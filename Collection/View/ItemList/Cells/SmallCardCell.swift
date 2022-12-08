@@ -35,7 +35,7 @@ class SmallCardCell: UICollectionViewCell, ItemCell, ItemActionSendable {
         super.awakeFromNib()
 
         reset()
-        addActionMenu(for: actionButton)
+        addContextMenu(for: actionButton)
         self.layer.cornerRadius = 10
     }
 

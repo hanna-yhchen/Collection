@@ -9,6 +9,10 @@ import CloudKit
 import CoreData
 import UIKit
 
+protocol BoardListViewControllerDelegate: AnyObject {
+    func navigateToItemList(boardID: ObjectID)
+}
+
 class BoardListViewController: UIViewController, PlaceholderViewDisplayable {
 
     typealias Snapshot = NSDiffableDataSourceSnapshot<Int, NSManagedObjectID>
@@ -20,6 +24,7 @@ class BoardListViewController: UIViewController, PlaceholderViewDisplayable {
         let fetchRequest = Board.fetchRequest()
         fetchRequest.predicate = NSPredicate(format: "%K != %@", #keyPath(Board.name), "Inbox")
         fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \Board.sortOrder, ascending: false)]
+        fetchRequest.shouldRefreshRefetchedObjects = true
 
         let controller = NSFetchedResultsController(
             fetchRequest: fetchRequest,
@@ -38,6 +43,8 @@ class BoardListViewController: UIViewController, PlaceholderViewDisplayable {
     var placeholderView: HintPlaceholderView?
 
     var isShowingPlaceholder = false
+
+    var delegate: BoardListViewControllerDelegate?
 
     // MARK: - Lifecycle
 
@@ -114,8 +121,8 @@ class BoardListViewController: UIViewController, PlaceholderViewDisplayable {
             cell.configure(for: board)
 
             cell.actionPublisher
-                .sink { boardAction, boardID in
-                    self.perform(boardAction, boardID: boardID)
+                .sink { [unowned self] boardAction, boardID in
+                    perform(boardAction, boardID: boardID)
                 }
                 .store(in: &cell.subscriptions)
         }
@@ -320,15 +327,7 @@ extension BoardListViewController: UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         collectionView.deselectItem(at: indexPath, animated: true)
         guard let boardID = dataSource?.itemIdentifier(for: indexPath) else { return }
-
-        let itemListVC = UIStoryboard.main
-            .instantiateViewController(identifier: ItemListViewController.storyboardID) { coder in
-                ItemListViewController(
-                    coder: coder,
-                    scope: .board(boardID),
-                    storageProvider: self.storageProvider)
-            }
-        navigationController?.pushViewController(itemListVC, animated: true)
+        delegate?.navigateToItemList(boardID: boardID)
     }
 }
 

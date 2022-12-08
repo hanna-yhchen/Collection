@@ -10,8 +10,6 @@ import CoreData
 
 private let storageProvider = StorageProvider.shared
 
-typealias ObjectID = NSManagedObjectID
-
 enum CoreDataError: Error {
     case unfoundObjectInContext
     case duplicateName
