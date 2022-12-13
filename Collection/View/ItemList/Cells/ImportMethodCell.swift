@@ -12,12 +12,7 @@ class ImportMethodCell: UICollectionViewCell {
     @IBOutlet var iconImageView: UIImageView!
     @IBOutlet var titleLabel: UILabel!
 
-    override func awakeFromNib() {
-        super.awakeFromNib()
-        // Initialization code
-    }
-
-    func configure(for method: ItemImportController.ImportMethod) {
+    func configure(for method: ImportMethod) {
         iconImageView.image = method.icon
         titleLabel.text = method.title
     }

@@ -5,22 +5,27 @@
 //  Created by Hanna Chen on 2022/10/28.
 //
 
-import CoreData
 import Combine
-import PhotosUI
 import QuickLook
 import SafariServices
-import UniformTypeIdentifiers
 import UIKit
+import PhotosUI
+
+protocol ItemListViewControllerDelegate: AnyObject {
+    func showItemImportController(handler: ImportMethodHandling, boardID: ObjectID)
+    func showNameEditorViewController(itemID: ObjectID)
+    func showBoardSelectorViewController(scenario: BoardSelectorViewModel.Scenario)
+    func showTagSelectorViewController(itemID: ObjectID)
+}
 
 class ItemListViewController: UIViewController, PlaceholderViewDisplayable {
     // MARK: - Properties
 
     private let viewModel: ItemListViewModel
-    private lazy var boardID: ObjectID = viewModel.boardID
+    lazy var boardID: ObjectID = viewModel.boardID
 
-    private let itemManager: ItemManager
-    private let storageProvider: StorageProvider
+    let itemManager: ItemManager
+    weak var delegate: ItemListViewControllerDelegate?
     private var previewingItem: PreviewItem?
 
     private lazy var collectionView = ItemCollectionView(frame: view.bounds, traits: view.traitCollection)
@@ -33,7 +38,7 @@ class ItemListViewController: UIViewController, PlaceholderViewDisplayable {
 
     private var topContentOffset: CGPoint?
 
-    private lazy var subscriptions = CancellableSet()
+    lazy var subscriptions = CancellableSet()
 
     // MARK: - Lifecycle
 
@@ -62,12 +67,12 @@ class ItemListViewController: UIViewController, PlaceholderViewDisplayable {
     init?(
         coder: NSCoder,
         viewModel: ItemListViewModel,
-        storageProvider: StorageProvider,
-        itemManager: ItemManager = ItemManager.shared
+        itemManager: ItemManager = ItemManager.shared,
+        delegate: ItemListViewControllerDelegate
     ) {
         self.viewModel = viewModel
-        self.storageProvider = storageProvider
         self.itemManager = itemManager
+        self.delegate = delegate
 
         super.init(coder: coder)
     }
@@ -76,53 +81,12 @@ class ItemListViewController: UIViewController, PlaceholderViewDisplayable {
         fatalError("init(coder:) has not been implemented")
     }
 
-    // MARK: - Actions
+    // MARK: - Private
 
-    @IBAction func plusButtonTapped() {
-        guard let importController = UIStoryboard.main.instantiateViewController(
-            withIdentifier: ItemImportController.storyboardID) as? ItemImportController
-        else { return }
-
-        importController.selectMethod
-            .receive(on: DispatchQueue.main)
-            .sink {[unowned self] method in
-                switch method {
-                case .paste:
-                    paste(itemProviders: UIPasteboard.general.itemProviders)
-                case .photos:
-                    showPhotoPicker()
-                case .camera:
-                    openCamera()
-                case .files:
-                    showDocumentPicker()
-                case .note:
-                    showNoteEditor()
-                case .audioRecorder:
-                    showAudioRecorder()
-                }
-            }
-            .store(in: &subscriptions)
-
-        importController.modalPresentationStyle = .formSheet
-        importController.preferredContentSize = CGSize(width: 300, height: 400)
-        if let sheet = importController.sheetPresentationController {
-            if #available(iOS 16.0, *) {
-                sheet.detents = [.custom { _ in importController.sheetHeight }]
-            } else {
-                sheet.detents = [.medium()]
-            }
-            sheet.prefersScrollingExpandsWhenScrolledToEdge = false
-            sheet.prefersEdgeAttachedInCompactHeight = true
-            sheet.preferredCornerRadius = 30
-        }
-
-        present(importController, animated: true)
+    @IBAction private func plusButtonTapped() {
+        delegate?.showItemImportController(handler: self, boardID: boardID)
     }
-}
 
-// MARK: - Private
-
-extension ItemListViewController {
     private func configureHierarchy() {
         title = viewModel.title
 
@@ -187,92 +151,19 @@ extension ItemListViewController {
     private func performItemAction(_ itemAction: ItemAction, itemID: ObjectID) {
         switch itemAction {
         case .rename:
-            showNameEditor(itemID: itemID)
+            delegate?.showNameEditorViewController(itemID: itemID)
         case .tags:
-            showTagSelector(itemID: itemID)
+            delegate?.showTagSelectorViewController(itemID: itemID)
         case .move:
-            showBoardSelector(scenario: .move(itemID))
+            delegate?.showBoardSelectorViewController(scenario: .move(itemID))
         case .copy:
-            showBoardSelector(scenario: .copy(itemID))
+            delegate?.showBoardSelectorViewController(scenario: .copy(itemID))
         case .delete:
             showDeletionAlert(itemID: itemID)
         }
     }
 
-    private func showNameEditor(itemID: ObjectID) {
-        let context = storageProvider.persistentContainer.viewContext
-        guard let item = try? context.existingObject(with: itemID) as? Item else {
-            HUD.showFailed(Constant.Message.missingData)
-            return
-        }
-        let nameEditorVC = UIStoryboard.main.instantiateViewController(
-            identifier: NameEditorViewController.storyboardID
-        ) { NameEditorViewController(coder: $0, originalName: item.name) }
-
-        nameEditorVC.modalPresentationStyle = .overCurrentContext
-        nameEditorVC.cancellable = nameEditorVC.newNamePublisher
-            .sink { [unowned self] newName in
-                Task {
-                    do {
-                        try await itemManager.updateItem(
-                            itemID: itemID,
-                            name: newName,
-                            context: context)
-                        await MainActor.run {
-                            nameEditorVC.animateDismissSheet()
-                        }
-                    } catch {
-                        HUD.showFailed()
-                        print("#\(#function): Failed to rename item, \(error)")
-                    }
-                }
-            }
-
-        present(nameEditorVC, animated: false)
-    }
-
-    private func showTagSelector(itemID: ObjectID) {
-        let context = storageProvider.persistentContainer.viewContext
-
-        guard
-            let item = try? context.existingObject(with: itemID) as? Item,
-            let board = item.board
-        else {
-            HUD.showFailed(Constant.Message.missingData)
-            return
-        }
-
-        let viewModel = TagSelectorViewModel(
-            storageProvider: storageProvider,
-            itemID: itemID,
-            boardID: board.objectID,
-            context: context)
-        let selectorVC = UIStoryboard.main.instantiateViewController(
-            identifier: TagSelectorViewController.storyboardID
-        ) { TagSelectorViewController(coder: $0, viewModel: viewModel) }
-
-        let nav = UINavigationController(rootViewController: selectorVC)
-        if let sheet = nav.sheetPresentationController {
-            sheet.detents = [.medium(), .large()]
-            sheet.prefersEdgeAttachedInCompactHeight = true
-            sheet.preferredCornerRadius = Constant.Layout.sheetCornerRadius
-        }
-
-        present(nav, animated: true)
-    }
-
-    private func showBoardSelector(scenario: BoardSelectorViewModel.Scenario) {
-        let viewModel = BoardSelectorViewModel(scenario: scenario)
-        let selectorVC = UIStoryboard.main.instantiateViewController(
-            identifier: BoardSelectorViewController.storyboardID
-        ) { BoardSelectorViewController(coder: $0, viewModel: viewModel) }
-
-        present(selectorVC, animated: true)
-    }
-
     private func showDeletionAlert(itemID: ObjectID) {
-        let context = storageProvider.persistentContainer.viewContext
-
         let alert = UIAlertController(
             title: "Delete the item",
             message: "Are you sure you want to delete this item permanently?",
@@ -283,9 +174,7 @@ extension ItemListViewController {
 
             Task {
                 do {
-                    try await itemManager.deleteItem(
-                        itemID: itemID,
-                        context: context)
+                    try await viewModel.deleteItem(itemID: itemID)
                     HUD.showSucceeded("Deleted")
                 } catch {
                     print("#\(#function): Failed to delete board, \(error)")
@@ -296,104 +185,13 @@ extension ItemListViewController {
         present(alert, animated: true)
     }
 
-    private func showDocumentPicker() {
-        let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.data])
-        picker.delegate = self
-        picker.allowsMultipleSelection = true
-
-        present(picker, animated: true)
-    }
-
-    private func showPhotoPicker() {
-        var config = PHPickerConfiguration()
-        config.selectionLimit = 10
-        let picker = PHPickerViewController(configuration: config)
-        picker.delegate = self
-
-        present(picker, animated: true)
-    }
-
-    private func openCamera() {
-        let camera = UIImagePickerController.SourceType.camera
-        guard
-            UIImagePickerController.isSourceTypeAvailable(camera),
-            UIImagePickerController.availableMediaTypes(for: camera) != nil
-        else {
+    private func showItem(id: ObjectID) {
+        guard let item = viewModel.item(with: id) else {
             HUD.showFailed()
             return
         }
 
-        let picker = UIImagePickerController()
-        picker.sourceType = camera
-        picker.mediaTypes = [UTType.movie.identifier, UTType.image.identifier]
-        picker.delegate = self
-
-        present(picker, animated: true)
-    }
-
-    private func showNoteEditor() {
-        let editorVC = UIStoryboard.main
-            .instantiateViewController(identifier: NoteEditorViewController.storyboardID) { coder in
-                let viewModel = NoteEditorViewModel(
-                    itemManager: self.itemManager,
-                    scenario: .create(boardID: self.boardID))
-                return NoteEditorViewController(coder: coder, viewModel: viewModel)
-            }
-
-        if let sheet = editorVC.sheetPresentationController {
-            sheet.detents = [.medium(), .large()]
-            sheet.prefersEdgeAttachedInCompactHeight = true
-            sheet.preferredCornerRadius = 30
-        }
-
-        present(editorVC, animated: true)
-    }
-
-    private func showAudioRecorder() {
-        let recorderVC = UIStoryboard.main
-            .instantiateViewController(identifier: AudioRecorderController.storyboardID) { coder in
-                return AudioRecorderController(coder: coder) {[unowned self] result in
-                    HUD.showProcessing()
-
-                    switch result {
-                    case .success(let record):
-                        Task {
-                            do {
-                                try await itemManager.process(record, saveInto: boardID)
-                            } catch {
-                                print("#\(#function): Failed to save new record, \(error)")
-                            }
-                            dismissForSuccess()
-                        }
-                    case .failure(let error):
-                        print("#\(#function): Failed to record new void memo, \(error)")
-                        dismissForFailure()
-                    }
-                }
-            }
-
-        if let sheet = recorderVC.sheetPresentationController {
-            sheet.detents = [.medium()]
-            sheet.prefersScrollingExpandsWhenScrolledToEdge = false
-            sheet.prefersEdgeAttachedInCompactHeight = true
-            sheet.preferredCornerRadius = 30
-        }
-
-        present(recorderVC, animated: true, completion: nil)
-    }
-
-    private func showItem(id: NSManagedObjectID) {
-        let context = storageProvider.persistentContainer.viewContext
-
-        guard
-            let item = context.object(with: id) as? Item,
-            let displayType = DisplayType(rawValue: item.displayType)
-        else {
-            HUD.showFailed()
-            return
-        }
-
-        switch displayType {
+        switch item.type {
         case .note:
             showNotePreview(item)
         case .link:
@@ -480,6 +278,33 @@ extension ItemListViewController {
     }
 }
 
+extension ItemListViewController: ImportMethodHandling,
+    UIDocumentPickerDelegate,
+    PHPickerViewControllerDelegate,
+    UIImagePickerControllerDelegate,
+    UINavigationControllerDelegate {
+    func didSelectImportMethod(_ method: ImportMethod) {
+        switch method {
+        case .paste:
+            paste(UIPasteboard.general.itemProviders)
+        case .photos:
+            showPhotoPicker()
+        case .camera:
+            openCamera()
+        case .files:
+            showDocumentPicker()
+        case .note:
+            showNoteEditor()
+        case .audioRecorder:
+            showAudioRecorder()
+        }
+    }
+
+    func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+        didPickDocument(controller, urls: urls)
+    }
+}
+
 // MARK: - UICollectionViewDelegate
 
 extension ItemListViewController: UICollectionViewDelegate {
@@ -511,118 +336,6 @@ extension ItemListViewController: UICollectionViewDelegate {
 extension ItemListViewController: UICollectionViewDelegateFlowLayout {
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         self.collectionView.itemSize(for: viewModel.currentLayout)
-    }
-}
-
-// MARK: - UIDocumentPickerDelegate
-
-extension ItemListViewController: UIDocumentPickerDelegate {
-    func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
-        HUD.showImporting()
-
-        Task {
-            do {
-                try await itemManager.process(urls, saveInto: boardID)
-                DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(200)) {
-                    HUD.showSucceeded()
-                }
-            } catch {
-                print("#\(#function): Failed to process input from document picker, \(error)")
-                HUD.showFailed()
-            }
-        }
-    }
-}
-
-// MARK: - PHPickerViewControllerDelegate
-
-extension ItemListViewController: PHPickerViewControllerDelegate {
-    func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
-        picker.dismiss(animated: true)
-        guard !results.isEmpty else { return }
-
-        HUD.showImporting()
-
-        Task {
-            do {
-                #if targetEnvironment(simulator)
-                try await itemManager.process(results.map(\.itemProvider), saveInto: boardID)
-                #else
-                try await itemManager.process(results.map(\.itemProvider), saveInto: boardID, isSecurityScoped: false)
-                #endif
-
-                HUD.showSucceeded()
-            } catch {
-                print("#\(#function): Failed to process input from photo picker, \(error)")
-                dismissForFailure()
-            }
-        }
-    }
-}
-
-// MARK: - UIImagePickerControllerDelegate & UINavigationControllerDelegate
-
-extension ItemListViewController: UIImagePickerControllerDelegate & UINavigationControllerDelegate {
-    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
-        HUD.showProcessing()
-
-        guard
-            let typeIdentifier = info[.mediaType] as? String,
-            let type = UTType(typeIdentifier)
-        else {
-            dismissForFailure()
-            return
-        }
-
-        switch type {
-        case .image:
-            guard let image = info[.originalImage] as? UIImage else {
-                dismissForFailure()
-                return
-            }
-
-            Task {
-                await itemManager.process(image, saveInto: boardID)
-                dismissForSuccess()
-            }
-        case .movie:
-            guard let movieURL = info[.mediaURL] as? URL else {
-                dismissForFailure()
-                return
-            }
-
-            Task {
-                do {
-                    try await itemManager.process([movieURL], saveInto: boardID, isSecurityScoped: false)
-                    dismissForSuccess()
-                } catch {
-                    print("#\(#function): Failed to process movie captured from image picker, \(error)")
-                    dismissForFailure()
-                }
-            }
-        default:
-            dismissForFailure()
-        }
-    }
-}
-
-// MARK: - UIPasteConfigurationSupporting
-
-extension ItemListViewController {
-    override func paste(itemProviders: [NSItemProvider]) {
-        guard !itemProviders.isEmpty else { return }
-
-        HUD.showImporting()
-
-        Task {
-            do {
-                try await itemManager.process(itemProviders, saveInto: boardID, isSecurityScoped: false)
-                HUD.showSucceeded()
-            } catch {
-                print("#\(#function): Failed to process input from pasteboard, \(error)")
-                HUD.showFailed()
-            }
-        }
     }
 }
 

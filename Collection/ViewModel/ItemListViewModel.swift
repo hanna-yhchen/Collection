@@ -41,6 +41,8 @@ final class ItemListViewModel: ManagedObjectDataSourceProviding {
             .eraseToAnyPublisher()
     }
 
+    var context: NSManagedObjectContext { storageProvider.persistentContainer.viewContext }
+
     lazy var switchLayout = PassthroughSubject<ItemLayout, Never>()
     lazy var shouldDisplayPlaceholder = PassthroughSubject<Bool, Never>()
 
@@ -106,6 +108,10 @@ final class ItemListViewModel: ManagedObjectDataSourceProviding {
         }
     }
 
+    func item(with itemID: ObjectID) -> Item? {
+        try? context.existingObject(with: itemID) as? Item
+    }
+
     func reconfigureItems(_ items: [NSManagedObjectID]) {
         guard let dataSource = dataSource else { return }
 
@@ -113,6 +119,12 @@ final class ItemListViewModel: ManagedObjectDataSourceProviding {
         newSnapshot.reconfigureItems(items)
 
         itemProvider.currentSnapshot = newSnapshot
+    }
+
+    func deleteItem(itemID: ObjectID) async throws {
+        try await storageProvider.deleteItem(
+            itemID: itemID,
+            context: context)
     }
 
     // MARK: - Private
@@ -160,7 +172,7 @@ final class ItemListViewModel: ManagedObjectDataSourceProviding {
 
                 self.storageProvider.mergeTransactions(
                     transactions,
-                    to: self.itemProvider.fetchedResultsController.managedObjectContext)
+                    to: self.context)
             }
             .store(in: &subscriptions)
 

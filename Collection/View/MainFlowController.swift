@@ -98,13 +98,11 @@ class MainFlowController: LGSideMenuController {
         rootNavigation.setViewControllers([rootVC], animated: false)
     }
 
-    // MARK: - Actions
+    // MARK: - Private
 
     @objc private func showSideMenu() {
         toggleLeftView(animated: true)
     }
-
-    // MARK: - Private
 
     private func transitionTo(_ destination: SideMenuDestination) {
         var destinationVC: UIViewController
@@ -153,7 +151,12 @@ class MainFlowController: LGSideMenuController {
 
         let itemListVC = UIStoryboard.main.instantiateViewController(
             identifier: ItemListViewController.storyboardID
-        ) { ItemListViewController(coder: $0, viewModel: viewModel, storageProvider: self.storageProvider) }
+        ) { coder in
+            ItemListViewController(
+                coder: coder,
+                viewModel: viewModel,
+                delegate: self)
+        }
 
         return itemListVC
     }
@@ -165,6 +168,97 @@ extension MainFlowController: BoardListViewControllerDelegate {
     func navigateToItemList(boardID: ObjectID) {
         let itemListVC = createItemListVC(scope: .board(boardID))
         rootNavigation.pushViewController(itemListVC, animated: true)
+    }
+}
+
+// MARK: - ItemListViewControllerDelegate
+
+extension MainFlowController: ItemListViewControllerDelegate {
+    func showItemImportController(handler: ImportMethodHandling, boardID: ObjectID) {
+        guard let itemImportVC = UIStoryboard.main.instantiateViewController(
+            withIdentifier: ItemImportController.storyboardID
+        ) as? ItemImportController else { return }
+
+        itemImportVC.selectMethod
+            .receive(on: DispatchQueue.main)
+            .sink { method in
+                handler.didSelectImportMethod(method)
+            }
+            .store(in: &handler.subscriptions)
+
+        rootNavigation.present(itemImportVC, animated: true)
+    }
+
+    func showNameEditorViewController(itemID: ObjectID) {
+        let context = storageProvider.persistentContainer.viewContext
+        guard let item = try? context.existingObject(with: itemID) as? Item else {
+            HUD.showFailed(Constant.Message.missingData)
+            return
+        }
+
+        let nameEditorVC = UIStoryboard.main.instantiateViewController(
+            identifier: NameEditorViewController.storyboardID
+        ) { NameEditorViewController(coder: $0, originalName: item.name) }
+
+        nameEditorVC.modalPresentationStyle = .overCurrentContext
+        #warning("Move update-related logic to name editor view model")
+        nameEditorVC.cancellable = nameEditorVC.newNamePublisher
+            .sink { [unowned self] newName in
+                Task {
+                    do {
+                        try await storageProvider.updateItem(
+                            itemID: itemID,
+                            name: newName,
+                            context: context)
+                        await MainActor.run {
+                            nameEditorVC.animateDismissSheet()
+                        }
+                    } catch {
+                        HUD.showFailed()
+                        print("#\(#function): Failed to rename item, \(error)")
+                    }
+                }
+            }
+
+        rootNavigation.present(nameEditorVC, animated: false)
+    }
+
+    func showBoardSelectorViewController(scenario: BoardSelectorViewModel.Scenario) {
+        let viewModel = BoardSelectorViewModel(scenario: scenario)
+        let selectorVC = UIStoryboard.main.instantiateViewController(
+            identifier: BoardSelectorViewController.storyboardID
+        ) { BoardSelectorViewController(coder: $0, viewModel: viewModel) }
+
+        rootNavigation.present(selectorVC, animated: true)
+    }
+
+    func showTagSelectorViewController(itemID: ObjectID) {
+        let context = storageProvider.persistentContainer.viewContext
+        guard
+            let item = try? context.existingObject(with: itemID) as? Item,
+            let board = item.board
+        else {
+            HUD.showFailed(Constant.Message.missingData)
+            return
+        }
+
+        let viewModel = TagSelectorViewModel(
+            storageProvider: storageProvider,
+            itemID: itemID,
+            boardID: board.objectID,
+            context: context)
+        let selectorVC = UIStoryboard.main.instantiateViewController(
+            identifier: TagSelectorViewController.storyboardID
+        ) { TagSelectorViewController(coder: $0, viewModel: viewModel) }
+
+        let nav = UINavigationController(rootViewController: selectorVC)
+        if let sheet = nav.sheetPresentationController {
+            sheet.detents = [.medium(), .large()]
+            sheet.prefersEdgeAttachedInCompactHeight = true
+            sheet.preferredCornerRadius = Constant.Layout.sheetCornerRadius
+        }
+
+        present(nav, animated: true)
     }
 }
 

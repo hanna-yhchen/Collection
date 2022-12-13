@@ -52,7 +52,6 @@
 		B559BE542914FACF00F342C1 /* StorageHistoryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B559BE532914FACF00F342C1 /* StorageHistoryManager.swift */; };
 		B55B13812920CFEC00607345 /* RichLinkProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = B55B13802920CFEC00607345 /* RichLinkProvider.swift */; };
 		B55B138329215ACC00607345 /* ItemImportController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B55B138229215ACC00607345 /* ItemImportController.swift */; };
-		B55B138529215E3100607345 /* ItemImportController+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = B55B138429215E3100607345 /* ItemImportController+Extension.swift */; };
 		B55B1388292164D200607345 /* ImportMethodCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = B55B1386292164D200607345 /* ImportMethodCell.swift */; };
 		B55B1389292164D200607345 /* ImportMethodCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = B55B1387292164D200607345 /* ImportMethodCell.xib */; };
 		B5606F2A2933CFB500E2EA52 /* BoardAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5606F292933CFB500E2EA52 /* BoardAction.swift */; };
@@ -60,6 +59,8 @@
 		B573118D2913B0F000AD129F /* UserDefault.swift in Sources */ = {isa = PBXBuildFile; fileRef = B573118C2913B0F000AD129F /* UserDefault.swift */; };
 		B57F94E7293265EB00696E8E /* SideMenuViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B57F94E6293265EB00696E8E /* SideMenuViewController.swift */; };
 		B57F94E92932F4EA00696E8E /* SideMenuItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = B57F94E82932F4EA00696E8E /* SideMenuItem.swift */; };
+		B57FC3FA29461B3500018E39 /* ImportMethodHandling.swift in Sources */ = {isa = PBXBuildFile; fileRef = B57FC3F929461B3500018E39 /* ImportMethodHandling.swift */; };
+		B57FC3FC29461E6700018E39 /* StorageProvider+Item.swift in Sources */ = {isa = PBXBuildFile; fileRef = B57FC3FB29461E6700018E39 /* StorageProvider+Item.swift */; };
 		B5810CBF2930A2FE00EFB41C /* UIViewController+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5810CBE2930A2FE00EFB41C /* UIViewController+Extension.swift */; };
 		B59544102924E3C700665868 /* ItemAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = B595440F2924E3C700665868 /* ItemAction.swift */; };
 		B59544122925549400665868 /* NameEditorViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B59544112925549400665868 /* NameEditorViewController.swift */; };
@@ -105,6 +106,7 @@
 		B5E50E18290F72F2006A7B22 /* StorageProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5E50E17290F72F2006A7B22 /* StorageProvider.swift */; };
 		B5E50E1A290F7A31006A7B22 /* CoreDataHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5E50E19290F7A31006A7B22 /* CoreDataHelper.swift */; };
 		B5F72D2929111859007B4B06 /* CloudKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B5F72D2829111859007B4B06 /* CloudKit.framework */; };
+		B5FE2E7D29483B710023A8BB /* ImportMethod.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5FE2E7C29483B710023A8BB /* ImportMethod.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -172,7 +174,6 @@
 		B559BE532914FACF00F342C1 /* StorageHistoryManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageHistoryManager.swift; sourceTree = "<group>"; };
 		B55B13802920CFEC00607345 /* RichLinkProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RichLinkProvider.swift; sourceTree = "<group>"; };
 		B55B138229215ACC00607345 /* ItemImportController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemImportController.swift; sourceTree = "<group>"; };
-		B55B138429215E3100607345 /* ItemImportController+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ItemImportController+Extension.swift"; sourceTree = "<group>"; };
 		B55B1386292164D200607345 /* ImportMethodCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportMethodCell.swift; sourceTree = "<group>"; };
 		B55B1387292164D200607345 /* ImportMethodCell.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = ImportMethodCell.xib; sourceTree = "<group>"; };
 		B5606F292933CFB500E2EA52 /* BoardAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardAction.swift; sourceTree = "<group>"; };
@@ -180,6 +181,8 @@
 		B573118C2913B0F000AD129F /* UserDefault.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDefault.swift; sourceTree = "<group>"; };
 		B57F94E6293265EB00696E8E /* SideMenuViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SideMenuViewController.swift; sourceTree = "<group>"; };
 		B57F94E82932F4EA00696E8E /* SideMenuItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SideMenuItem.swift; sourceTree = "<group>"; };
+		B57FC3F929461B3500018E39 /* ImportMethodHandling.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportMethodHandling.swift; sourceTree = "<group>"; };
+		B57FC3FB29461E6700018E39 /* StorageProvider+Item.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "StorageProvider+Item.swift"; sourceTree = "<group>"; };
 		B5810CBE2930A2FE00EFB41C /* UIViewController+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIViewController+Extension.swift"; sourceTree = "<group>"; };
 		B595440F2924E3C700665868 /* ItemAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemAction.swift; sourceTree = "<group>"; };
 		B59544112925549400665868 /* NameEditorViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NameEditorViewController.swift; sourceTree = "<group>"; };
@@ -216,6 +219,7 @@
 		B5E50E19290F7A31006A7B22 /* CoreDataHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataHelper.swift; sourceTree = "<group>"; };
 		B5F72D2629111852007B4B06 /* Collection.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Collection.entitlements; sourceTree = "<group>"; };
 		B5F72D2829111859007B4B06 /* CloudKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CloudKit.framework; path = System/Library/Frameworks/CloudKit.framework; sourceTree = SDKROOT; };
+		B5FE2E7C29483B710023A8BB /* ImportMethod.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportMethod.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -247,6 +251,7 @@
 			children = (
 				B5606F292933CFB500E2EA52 /* BoardAction.swift */,
 				B5DE8850291F728D009B0957 /* DisplayType.swift */,
+				B5FE2E7C29483B710023A8BB /* ImportMethod.swift */,
 				B595440F2924E3C700665868 /* ItemAction.swift */,
 				B59BE4082923643F00E50B30 /* ItemLayout.swift */,
 				B51656B82938971200965F3B /* ItemSort.swift */,
@@ -298,10 +303,11 @@
 			isa = PBXGroup;
 			children = (
 				B5606F2B2933F7BA00E2EA52 /* ContextMenuActionSendable.swift */,
+				B57FC3F929461B3500018E39 /* ImportMethodHandling.swift */,
 				B520A5C3292B734F00A76E9A /* KeyboardHandling.swift */,
+				B5A298922941C409007ED048 /* ManagedObjectDataSourceProviding.swift */,
 				B5D4BB3229406B3300118588 /* ManagedObjectProvidable.swift */,
 				B5C40F742935F80700AB2C8B /* PlaceholderViewDisplayable.swift */,
-				B5A298922941C409007ED048 /* ManagedObjectDataSourceProviding.swift */,
 			);
 			path = Protocol;
 			sourceTree = "<group>";
@@ -337,7 +343,6 @@
 			children = (
 				B52203F629101C7100F2224B /* DateFormatter+Extension.swift */,
 				B5136DAA29246793009F26F3 /* Item+Extension.swift */,
-				B55B138429215E3100607345 /* ItemImportController+Extension.swift */,
 				B51656B629385D7500965F3B /* NSNotification+Extension.swift */,
 				B52203F4290FCA2200F2224B /* UICollectionViewCell+Extension.swift */,
 				B538E9E52910277300DF5DEB /* UIStoryboard+Extension.swift */,
@@ -511,6 +516,7 @@
 				B559BE532914FACF00F342C1 /* StorageHistoryManager.swift */,
 				B5E50E17290F72F2006A7B22 /* StorageProvider.swift */,
 				B515D5EA29124CC400072CBC /* StorageProvider+Board.swift */,
+				B57FC3FB29461E6700018E39 /* StorageProvider+Item.swift */,
 				B55298A32926F03600EF3D52 /* StorageProvider+Tag.swift */,
 			);
 			path = Storage;
@@ -700,10 +706,11 @@
 				B5606F2C2933F7BA00E2EA52 /* ContextMenuActionSendable.swift in Sources */,
 				B52203F5290FCA2200F2224B /* UICollectionViewCell+Extension.swift in Sources */,
 				B5136DAB29246793009F26F3 /* Item+Extension.swift in Sources */,
+				B57FC3FA29461B3500018E39 /* ImportMethodHandling.swift in Sources */,
 				B55298A42926F03600EF3D52 /* StorageProvider+Tag.swift in Sources */,
 				B5DE884F291E3A83009B0957 /* ItemCollectionView.swift in Sources */,
 				B55298A62926F09F00EF3D52 /* TagColor.swift in Sources */,
-				B55B138529215E3100607345 /* ItemImportController+Extension.swift in Sources */,
+				B57FC3FC29461E6700018E39 /* StorageProvider+Item.swift in Sources */,
 				B5606F2A2933CFB500E2EA52 /* BoardAction.swift in Sources */,
 				B515D5E82912215400072CBC /* BoardCell.swift in Sources */,
 				B59BE4092923643F00E50B30 /* ItemLayout.swift in Sources */,
@@ -755,6 +762,7 @@
 				B5AEC1A92926409300AA4072 /* BoardSelectorViewController.swift in Sources */,
 				B5D4BB372940956200118588 /* CoreDataWrapper.swift in Sources */,
 				B515D5EF291371D700072CBC /* UserDefaults+Extension.swift in Sources */,
+				B5FE2E7D29483B710023A8BB /* ImportMethod.swift in Sources */,
 				B50E8F73291BB14900E64E36 /* UITextField+Extension.swift in Sources */,
 				B50E8F68291B706B00E64E36 /* NotePreviewController.swift in Sources */,
 			);
