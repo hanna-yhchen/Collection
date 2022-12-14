@@ -67,9 +67,6 @@ class MainFlowController: LGSideMenuController {
         rootViewCoverAlpha = 0.5
         rootViewCoverBlurEffect = UIBlurEffect(style: .regular)
         leftViewCoverBlurEffect = UIBlurEffect(style: .regular)
-
-//        rootViewLayerShadowRadius = 0
-//        leftViewLayerShadowRadius = 0
     }
 
     private func addObservers() {
@@ -97,8 +94,6 @@ class MainFlowController: LGSideMenuController {
         configureNavigationItem(for: rootVC)
         rootNavigation.setViewControllers([rootVC], animated: false)
     }
-
-    // MARK: - Private
 
     @objc private func showSideMenu() {
         toggleLeftView(animated: true)

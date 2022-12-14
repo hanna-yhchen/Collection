@@ -7,6 +7,7 @@
 
 import Combine
 import CoreData
+import UniformTypeIdentifiers
 import UIKit
 
 final class ItemListViewModel: ManagedObjectDataSourceProviding {
@@ -125,6 +126,50 @@ final class ItemListViewModel: ManagedObjectDataSourceProviding {
         try await storageProvider.deleteItem(
             itemID: itemID,
             context: context)
+    }
+
+    func temporaryFileURL(of item: Item) throws -> URL {
+        guard
+            let data = item.itemData?.data,
+            let uuid = item.uuid,
+            let typeIdentifier = item.uti,
+            let itemType = UTType(typeIdentifier),
+            let filenameExtension = itemType.preferredFilenameExtension
+        else {
+            throw ItemListError.missingFileInformation
+        }
+
+        let fileURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(uuid.uuidString)
+            .appendingPathExtension(filenameExtension)
+
+        var writingError: Error?
+        var coordinatingError: NSError?
+
+        NSFileCoordinator().coordinate(writingItemAt: fileURL, error: &coordinatingError) { url in
+            do {
+                try data.write(to: url, options: .atomic)
+            } catch {
+                writingError = error
+            }
+        }
+
+        guard writingError == nil && coordinatingError == nil else {
+            throw ItemListError.failedWritingToTempFile
+        }
+
+        return fileURL
+    }
+
+    func linkURL(of item: Item) throws -> URL {
+        guard
+            let data = item.itemData?.data,
+            let url = URL(dataRepresentation: data, relativeTo: nil)
+        else {
+            throw ItemListError.missingFileInformation
+        }
+
+        return url
     }
 
     // MARK: - Private

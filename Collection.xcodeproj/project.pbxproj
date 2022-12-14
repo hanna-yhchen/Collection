@@ -107,6 +107,7 @@
 		B5E50E1A290F7A31006A7B22 /* CoreDataHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5E50E19290F7A31006A7B22 /* CoreDataHelper.swift */; };
 		B5F72D2929111859007B4B06 /* CloudKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B5F72D2829111859007B4B06 /* CloudKit.framework */; };
 		B5FE2E7D29483B710023A8BB /* ImportMethod.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5FE2E7C29483B710023A8BB /* ImportMethod.swift */; };
+		B5FE2E7F29497D9D0023A8BB /* ItemListError.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5FE2E7E29497D9D0023A8BB /* ItemListError.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -220,6 +221,7 @@
 		B5F72D2629111852007B4B06 /* Collection.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Collection.entitlements; sourceTree = "<group>"; };
 		B5F72D2829111859007B4B06 /* CloudKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CloudKit.framework; path = System/Library/Frameworks/CloudKit.framework; sourceTree = SDKROOT; };
 		B5FE2E7C29483B710023A8BB /* ImportMethod.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportMethod.swift; sourceTree = "<group>"; };
+		B5FE2E7E29497D9D0023A8BB /* ItemListError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemListError.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -254,6 +256,7 @@
 				B5FE2E7C29483B710023A8BB /* ImportMethod.swift */,
 				B595440F2924E3C700665868 /* ItemAction.swift */,
 				B59BE4082923643F00E50B30 /* ItemLayout.swift */,
+				B5FE2E7E29497D9D0023A8BB /* ItemListError.swift */,
 				B51656B82938971200965F3B /* ItemSort.swift */,
 				B50E0A8B2922372300E00432 /* PreviewItem.swift */,
 				B57F94E82932F4EA00696E8E /* SideMenuItem.swift */,
@@ -715,6 +718,7 @@
 				B515D5E82912215400072CBC /* BoardCell.swift in Sources */,
 				B59BE4092923643F00E50B30 /* ItemLayout.swift in Sources */,
 				B559BE542914FACF00F342C1 /* StorageHistoryManager.swift in Sources */,
+				B5FE2E7F29497D9D0023A8BB /* ItemListError.swift in Sources */,
 				B55B1388292164D200607345 /* ImportMethodCell.swift in Sources */,
 				B59B050B29358984003B913C /* TagEditorViewModel.swift in Sources */,
 				B50E0A8C2922372300E00432 /* PreviewItem.swift in Sources */,

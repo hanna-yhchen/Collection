@@ -202,43 +202,23 @@ class ItemListViewController: UIViewController, PlaceholderViewDisplayable {
     }
 
     private func showQuickLook(_ item: Item) {
-        guard
-            let data = item.itemData?.data,
-            let uuid = item.uuid,
-            let typeIdentifier = item.uti,
-            let itemType = UTType(typeIdentifier),
-            let filenameExtension = itemType.preferredFilenameExtension
-        else {
-            HUD.showFailed("Missing data information")
-            return
-        }
+        do {
+            let fileURL = try viewModel.temporaryFileURL(of: item)
 
-        let fileURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent(uuid.uuidString)
-            .appendingPathExtension(filenameExtension)
-
-        var writingError: Error?
-        var coordinatingError: NSError?
-
-        NSFileCoordinator().coordinate(writingItemAt: fileURL, error: &coordinatingError) { url in
-            do {
-                try data.write(to: url, options: .atomic)
-            } catch {
-                writingError = error
+            guard QLPreviewController.canPreview(fileURL as QLPreviewItem) else {
+                HUD.showFailed(Constant.Message.unsupportedFileTypeForPreview)
+                return
             }
-        }
 
-        guard writingError == nil && coordinatingError == nil else {
-            HUD.showFailed("Unable to read the file")
-            return
+            self.previewingItem = PreviewItem(
+                objectID: item.objectID,
+                previewItemURL: fileURL,
+                previewItemTitle: item.name)
+        } catch let error as ItemListError {
+            HUD.showFailed(error.message)
+        } catch {
+            print("#\(#function): Failed to create temporary file for preview, \(error)")
         }
-
-        guard QLPreviewController.canPreview(fileURL as QLPreviewItem) else {
-            HUD.showFailed("Preview of this file type is not supported")
-            return
-        }
-
-        self.previewingItem = PreviewItem(objectID: item.objectID, previewItemURL: fileURL, previewItemTitle: item.name)
 
         let previewController = QLPreviewController()
         previewController.dataSource = self
@@ -255,18 +235,17 @@ class ItemListViewController: UIViewController, PlaceholderViewDisplayable {
     }
 
     private func openLink(_ item: Item) {
-        guard
-            let data = item.itemData?.data,
-            let url = URL(dataRepresentation: data, relativeTo: nil)
-        else {
-            HUD.showFailed()
-            return
+        do {
+            let url = try viewModel.linkURL(of: item)
+            let safariController = SFSafariViewController(url: url)
+            safariController.preferredControlTintColor = .tintColor
+            safariController.dismissButtonStyle = .close
+            present(safariController, animated: true)
+        } catch let error as ItemListError {
+            HUD.showFailed(error.message)
+        } catch {
+            print("#\(#function): Failed to create temporary file for preview, \(error)")
         }
-
-        let safariController = SFSafariViewController(url: url)
-        safariController.preferredControlTintColor = .tintColor
-        safariController.dismissButtonStyle = .close
-        present(safariController, animated: true)
     }
 
     private func calculateTopContentOffset() {
@@ -277,6 +256,8 @@ class ItemListViewController: UIViewController, PlaceholderViewDisplayable {
         topContentOffset = CGPoint(x: 0, y: -safeAreaHeight)
     }
 }
+
+// MARK: - ImportMethodHandling
 
 extension ItemListViewController: ImportMethodHandling,
     UIDocumentPickerDelegate,

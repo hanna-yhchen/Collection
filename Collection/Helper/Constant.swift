@@ -11,6 +11,7 @@ enum Constant {
 
     enum Message {
         static let missingData = "Missing data"
+        static let unsupportedFileTypeForPreview = "Preview of this file type is not supported"
     }
 
     enum Layout {
