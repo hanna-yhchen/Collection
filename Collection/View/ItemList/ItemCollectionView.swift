@@ -5,11 +5,17 @@
 //  Created by Hanna Chen on 2022/11/11.
 //
 
+import Combine
 import UIKit
 
 protocol ItemCell: UICollectionViewCell {
     func configure(for item: Item)
     var viewForZooming: UIView? { get }
+    var actionPublisher: AnyPublisher<(ItemAction, ObjectID), Never>? { get }
+}
+
+extension ItemCell {
+    var actionPublisher: AnyPublisher<(ItemAction, ObjectID), Never>? { nil }
 }
 
 class ItemCollectionView: UICollectionView {
@@ -19,7 +25,7 @@ class ItemCollectionView: UICollectionView {
     lazy var flowLayouts: [ItemLayout: UICollectionViewFlowLayout] = {
         var flowLayouts: [ItemLayout: UICollectionViewFlowLayout] = [:]
         ItemLayout.allCases.forEach { itemLayout in
-            flowLayouts.updateValue(itemLayout.flowLayout(), forKey: itemLayout)
+            flowLayouts.updateValue(itemLayout.flowLayout, forKey: itemLayout)
         }
         return flowLayouts
     }()

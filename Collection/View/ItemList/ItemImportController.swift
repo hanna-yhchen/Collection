@@ -13,6 +13,7 @@ class ItemImportController: UIViewController {
     @IBOutlet var collectionView: UICollectionView!
 
     lazy var selectMethod = PassthroughSubject<ImportMethod, Never>()
+    @Published var selectedMethod: ImportMethod?
 
     lazy var sheetHeight: CGFloat = titleBarHeight
         + flowLayout.itemSize.height * 2
@@ -39,11 +40,16 @@ class ItemImportController: UIViewController {
         return layout
     }()
 
+    // MARK: - Lifecycle
+
     override func viewDidLoad() {
         super.viewDidLoad()
 
         configureCollectionView()
+        configureSheetPresentation()
     }
+
+    // MARK: - Private
 
     private func configureCollectionView() {
         collectionView.dataSource = self
@@ -53,6 +59,22 @@ class ItemImportController: UIViewController {
             UINib(nibName: ImportMethodCell.identifier, bundle: nil),
             forCellWithReuseIdentifier: ImportMethodCell.identifier)
         collectionView.collectionViewLayout = flowLayout
+    }
+
+    private func configureSheetPresentation() {
+        if let sheet = sheetPresentationController {
+            if #available(iOS 16.0, *) {
+                sheet.detents = [.custom { [unowned self] _ in self.sheetHeight }]
+            } else {
+                sheet.detents = [.medium()]
+            }
+            sheet.prefersScrollingExpandsWhenScrolledToEdge = false
+            sheet.prefersEdgeAttachedInCompactHeight = true
+            sheet.preferredCornerRadius = Constant.Layout.sheetCornerRadius
+        }
+
+        modalPresentationStyle = .formSheet
+        preferredContentSize = CGSize(width: 300, height: 400)
     }
 }
 

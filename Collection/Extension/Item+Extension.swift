@@ -24,4 +24,9 @@ extension Item {
     var type: DisplayType {
         return DisplayType(rawValue: displayType) ?? .file
     }
+
+    var utType: UTType? {
+        guard let uti = uti else { return nil }
+        return UTType(uti)
+    }
 }

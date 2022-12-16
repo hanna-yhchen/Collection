@@ -5,50 +5,11 @@
 //  Created by Hanna Chen on 2022/11/16.
 //
 
-import Combine
-import UIKit
+import Foundation
 
-protocol ItemActionSendable: AnyObject {
-    var objectID: ObjectID? { get set }
-    var subscriptions: Set<AnyCancellable> { get set }
-    var actionSubject: PassthroughSubject<(ItemAction, ObjectID), Never> { get set }
-    var actionPublisher: AnyPublisher<(ItemAction, ObjectID), Never> { get }
-    func sendAction(_ itemAction: ItemAction)
-}
-
-extension ItemActionSendable {
-    var actionPublisher: AnyPublisher<(ItemAction, ObjectID), Never> {
-        actionSubject
-            .receive(on: DispatchQueue.main)
-            .eraseToAnyPublisher()
-    }
-
-    func sendAction(_ itemAction: ItemAction) {
-        if let objectID = objectID {
-            actionSubject.send((itemAction, objectID))
-        }
-    }
-
-    func addActionMenu(for button: UIButton) {
-        let children = ItemAction.allCases.map { itemAction in
-            let action = UIAction(title: itemAction.title) { [unowned self] _ in
-                sendAction(itemAction)
-            }
-            if itemAction == .delete {
-                action.attributes = .destructive
-            }
-            return action
-        }
-
-        button.menu = UIMenu(children: children)
-        button.showsMenuAsPrimaryAction = true
-    }
-}
-
-enum ItemAction: Int, CaseIterable {
+enum ItemAction: Int, CaseIterable, TitleProvidable {
     case rename
     case tags
-//    case comments
     case move
     case copy
     case delete
@@ -59,8 +20,6 @@ enum ItemAction: Int, CaseIterable {
             return "Rename"
         case .tags:
             return "Tags"
-//        case .comments:
-//            return "Comments"
         case .move:
             return "Move to"
         case .copy:

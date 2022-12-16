@@ -10,10 +10,12 @@ import CoreData
 // MARK: - Board CRUD
 
 extension StorageProvider {
-    func addBoard(name: String, context: NSManagedObjectContext) {
+    func addBoard(name: String, context: NSManagedObjectContext? = nil) throws {
+        let context = context ?? newTaskContext()
+
         guard !hasExistingBoardName(name, context: context) else { return }
-        // TODO: error handling
-        try? context.performAndWait {
+
+        try context.performAndWait {
             let board = Board(context: context)
             board.name = name
 
@@ -64,6 +66,16 @@ extension StorageProvider {
 // MARK: - Helper
 
 extension StorageProvider {
+    func allBoards() async throws -> [Board] {
+        let context = persistentContainer.viewContext
+
+        return try await context.perform {
+            let fetchRequest = Board.fetchRequest()
+            fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \Board.sortOrder, ascending: false)]
+            return try context.fetch(fetchRequest) as [Board]
+        }
+    }
+
     func getInboxBoardID() -> ObjectID {
         guard
             let url = URL(string: UserDefaults.defaultBoardURL),
@@ -79,7 +91,7 @@ extension StorageProvider {
 
     func prepareInboxBoard() {
         let context = persistentContainer.viewContext
-        addBoard(name: "Inbox", context: context)
+        try? addBoard(name: "Inbox", context: context)
 
         let fetchRequest = Board.fetchRequest()
         fetchRequest.predicate = NSPredicate(format: "%K = %@", #keyPath(Board.name), Board.inboxBoardName)

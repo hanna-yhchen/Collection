@@ -29,15 +29,12 @@ final class BoardSelectorViewModel {
     let scenario: Scenario
     @Published var boards: [Board] = []
 
-    private let storageProvider = StorageProvider.shared
-    private let itemManager: ItemManager
-    private let boardManager: BoardManager
+    private let storageProvider: StorageProvider
 
     // MARK: - Initializers
 
-    init(itemManager: ItemManager = .shared, boardManager: BoardManager = .shared, scenario: Scenario) {
-        self.itemManager = itemManager
-        self.boardManager = boardManager
+    init(storageProvider: StorageProvider, scenario: Scenario) {
+        self.storageProvider = storageProvider
         self.scenario = scenario
 
         storageProvider.mergeDuplicateInboxIfNeeded()
@@ -69,9 +66,9 @@ final class BoardSelectorViewModel {
     func moveItem(to boardID: ObjectID) async throws {
         switch scenario {
         case .copy(let itemID):
-            try await itemManager.copyItem(itemID: itemID, toBoardID: boardID)
+            try await storageProvider.copyItem(itemID: itemID, toBoardID: boardID)
         case .move(let itemID):
-            try await itemManager.updateItem(itemID: itemID, boardID: boardID)
+            try await storageProvider.updateItem(itemID: itemID, boardID: boardID)
         }
     }
 }

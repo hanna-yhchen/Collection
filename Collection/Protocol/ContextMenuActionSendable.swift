@@ -8,7 +8,7 @@
 import Combine
 import UIKit
 
-protocol ContextMenuActionSendable {
+protocol ContextMenuActionSendable<MenuAction>: AnyObject {
     associatedtype MenuAction: TitleProvidable, CaseIterable
 
     var objectID: ObjectID? { get set }
@@ -33,8 +33,8 @@ extension ContextMenuActionSendable {
 
     func addContextMenu(for button: UIButton) {
         let children = MenuAction.allCases.map { menuItem in
-            let action = UIAction(title: menuItem.title) { _ in
-                self.sendAction(menuItem)
+            let action = UIAction(title: menuItem.title) { [unowned self] _ in
+                sendAction(menuItem)
             }
 
             if menuItem.title == "Delete" {
@@ -51,3 +51,6 @@ extension ContextMenuActionSendable {
 protocol TitleProvidable: RawRepresentable {
     var title: String { get }
 }
+
+@available(iOS, deprecated: 16.0.0, message: "Use generic ContextMenuActionSendable only")
+protocol ItemActionSendable: ContextMenuActionSendable<ItemAction> {}
