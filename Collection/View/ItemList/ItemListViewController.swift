@@ -264,6 +264,10 @@ extension ItemListViewController: ImportMethodHandling,
     func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
         didPickDocument(controller, urls: urls)
     }
+
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+        didPickMedia(picker, info: info)
+    }
 }
 
 // MARK: - UICollectionViewDelegate
