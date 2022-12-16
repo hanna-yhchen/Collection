@@ -10,6 +10,7 @@ import TTGTags
 import UIKit
 
 class LargeCardCell: UICollectionViewCell, ItemCell, ItemActionSendable {
+    typealias MenuAction = ItemAction
 
     static let minHeight: CGFloat = {
         let spacing: CGFloat = 4
@@ -42,7 +43,7 @@ class LargeCardCell: UICollectionViewCell, ItemCell, ItemActionSendable {
 
         self.layer.cornerRadius = 10
         reset()
-        addActionMenu(for: actionButton)
+        addContextMenu(for: actionButton)
     }
 
     override func prepareForReuse() {

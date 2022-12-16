@@ -62,7 +62,7 @@ final class ItemManager {
     // TODO: could be replaced by general core data method?
     func addNote(name: String, note: String, saveInto boardID: ObjectID) async throws {
         // TODO: throwable
-        addItem(
+        try await storageProvider.addItem(
             name: name,
             displayType: .note,
             uti: UTType.utf8PlainText.identifier,
@@ -72,7 +72,7 @@ final class ItemManager {
     }
 
     func updateNote(itemID: ObjectID, name: String, note: String) async throws {
-        try await updateItem(
+        try await storageProvider.updateItem(
             itemID: itemID,
             name: name,
             note: note,
@@ -83,7 +83,7 @@ final class ItemManager {
         let data = try Data(contentsOf: url)
         let thumbnailData = try? await thumbnailProvider.generateThumbnailData(url: url).get()
 
-        try await updateItem(
+        try await storageProvider.updateItem(
             itemID: itemID,
             itemData: data,
             thumbnailData: thumbnailData,
@@ -102,7 +102,7 @@ final class ItemManager {
                 await taskCounter.increment()
 
                 group.addTask {[unowned self] in
-                    try processFile(url, saveInto: boardID, isSecurityScoped: isSecurityScoped)
+                    try processFile(url: url, saveInto: boardID, isSecurityScoped: isSecurityScoped)
                     await taskCounter.decrement()
                 }
             }
@@ -136,7 +136,7 @@ final class ItemManager {
 
                     if provider.hasItemConformingToTypeIdentifier(UTType.url.identifier)
                         && !provider.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier) {
-                        try await processURL(provider: provider, saveInto: boardID)
+                        try await processLink(provider: provider, saveInto: boardID)
                     } else if provider.hasItemConformingToTypeIdentifier(UTType.plainText.identifier) {
                         try await processText(provider: provider, saveInto: boardID)
                     } else {
@@ -158,16 +158,15 @@ final class ItemManager {
         let thumbnail = image.preparingThumbnail(of: CGSize(width: 400, height: 400))
         let thumbnailData = thumbnail?.jpegData(compressionQuality: 1)
 
-        addItem(
+        try? await storageProvider.addItem(
             displayType: .image,
             uti: UTType.jpeg.identifier,
             itemData: data,
             thumbnailData: thumbnailData,
-            boardID: boardID,
-            context: storageProvider.newTaskContext())
+            boardID: boardID)
     }
 
-    func process(_ record: AudioRecord, saveInto boardID: ObjectID) async throws {
+    func process(_ record: AudioRecord, saveInto boardID: ObjectID) throws {
         var nserror: NSError?
         var error: Error?
 
@@ -183,13 +182,12 @@ final class ItemManager {
                 return
             }
 
-            addItem(
+            try? storageProvider.addItem(
                 name: record.name,
                 displayType: .audio,
                 uti: uti,
                 itemData: data,
-                boardID: boardID,
-                context: storageProvider.newTaskContext())
+                boardID: boardID)
         }
 
         if let error = error {
@@ -205,47 +203,41 @@ final class ItemManager {
 // MARK: - Private
 
 extension ItemManager {
-    private func processURL(provider: NSItemProvider, saveInto boardID: ObjectID) async throws {
+    private func processLink(provider: NSItemProvider, saveInto boardID: ObjectID) async throws {
         guard let url = try await provider.loadObject(ofClass: URL.self) else {
             throw ImportError.invalidData
         }
 
-        addItem(
+        try await storageProvider.addItem(
             displayType: .link,
             uti: UTType.url.identifier,
             itemData: url.dataRepresentation,
-            boardID: boardID,
-            context: storageProvider.newTaskContext()
-        )
+            boardID: boardID)
     }
 
     private func processText(provider: NSItemProvider, saveInto boardID: ObjectID) async throws {
         if let string = try? await provider.loadItem(forTypeIdentifier: UTType.plainText.identifier) as? String {
-            processString(string, saveInto: boardID)
+            try await processString(string, saveInto: boardID)
         } else if let string = try? await provider.loadObject(ofClass: String.self) {
-            processString(string, saveInto: boardID)
+            try await processString(string, saveInto: boardID)
         }
     }
 
-    private func processString(_ string: String, saveInto boardID: ObjectID) {
+    private func processString(_ string: String, saveInto boardID: ObjectID) async throws {
         if let url = string.validURL {
-            addItem(
+            try await storageProvider.addItem(
                 displayType: .link,
                 uti: UTType.url.identifier,
                 itemData: url.dataRepresentation,
-                boardID: boardID,
-                context: storageProvider.newTaskContext()
-            )
+                boardID: boardID)
             return
         }
 
-        addItem(
+        try await storageProvider.addItem(
             displayType: .note,
             uti: UTType.utf8PlainText.identifier,
             note: string,
-            boardID: boardID,
-            context: storageProvider.newTaskContext()
-        )
+            boardID: boardID)
     }
 
     private func processFile(provider: NSItemProvider, saveInto boardID: ObjectID, isSecurityScoped: Bool) async throws {
@@ -277,7 +269,7 @@ extension ItemManager {
                 }
 
                 do {
-                    try processFile(url, saveInto: boardID, isSecurityScoped: isSecurityScoped)
+                    try processFile(url: url, saveInto: boardID, isSecurityScoped: isSecurityScoped)
                     continuation.resume()
                 } catch {
                     continuation.resume(throwing: error)
@@ -286,7 +278,7 @@ extension ItemManager {
         }
     }
 
-    private func processFile(_ url: URL, saveInto boardID: ObjectID, isSecurityScoped: Bool) throws {
+    private func processFile(url: URL, saveInto boardID: ObjectID, isSecurityScoped: Bool) throws {
         if isSecurityScoped {
             guard url.startAccessingSecurityScopedResource() else {
                 throw ImportError.inaccessibleFile
@@ -314,28 +306,25 @@ extension ItemManager {
             let keepSourceName = type == .file
             let sourceName = (values.name as? NSString)?.deletingPathExtension
 
-            let semaphore = DispatchSemaphore(value: 0)
+            thumbnailProvider.generateThumbnailData(url: url) { [unowned self] result in
+                var thumbnailData: Data?
 
-            Task {
-                defer { semaphore.signal() }
-
-                let thumbnailData = try? await thumbnailProvider.generateThumbnailData(url: url).get()
-                if thumbnailData == nil {
-                    print("#\(#function): Failed to generate thumbnail data")
+                switch result {
+                case .success(let data):
+                    thumbnailData = data
+                case .failure(let thumbnailError):
+                    print("#\(#function): Failed to generate thumbnail, \(thumbnailError)")
+                    error = thumbnailError
                 }
 
-                addItem(
+                try? storageProvider.addItem(
                     name: keepSourceName ? sourceName : nil,
                     displayType: type,
                     uti: uti,
                     itemData: data,
                     thumbnailData: thumbnailData,
-                    boardID: boardID,
-                    context: storageProvider.newTaskContext()
-                )
+                    boardID: boardID)
             }
-
-            semaphore.wait()
         }
 
         if let error = error {
@@ -373,148 +362,6 @@ extension ItemManager {
             return .video
         } else {
             return .file
-        }
-    }
-}
-
-// MARK: - CoreData Methods
-
-extension ItemManager {
-    private func addItem(
-        name: String? = nil,
-        displayType: DisplayType,
-        uti: String,
-        note: String? = nil,
-        itemData: Data? = nil,
-        thumbnailData: Data? = nil,
-        boardID: NSManagedObjectID,
-        context: NSManagedObjectContext
-    ) {
-        context.perform {
-            let item = Item(context: context)
-            item.name = name
-            item.uti = uti
-            item.note = note
-            item.uuid = UUID()
-            item.displayType = displayType.rawValue
-
-            let thumbnail = Thumbnail(context: context)
-            thumbnail.data = thumbnailData
-            thumbnail.item = item
-
-            let itemDataObject = ItemData(context: context)
-            itemDataObject.data = itemData
-            itemDataObject.item = item
-
-            let currentDate = Date()
-            item.creationDate = currentDate
-            item.updateDate = currentDate
-
-            if let board = context.object(with: boardID) as? Board {
-                board.addToItems(item)
-            }
-
-            // TODO: error handling
-            try? context.save(situation: .addItem)
-        }
-    }
-
-    func updateItem(
-        itemID: NSManagedObjectID,
-        name: String? = nil,
-        note: String? = nil,
-        itemData: Data? = nil,
-        thumbnailData: Data? = nil,
-        boardID: NSManagedObjectID? = nil,
-        context: NSManagedObjectContext? = nil
-    ) async throws {
-        let context = context ?? storageProvider.newTaskContext()
-
-        guard let item = try context.existingObject(with: itemID) as? Item else {
-            throw CoreDataError.unfoundObjectInContext
-        }
-
-        try await context.perform {
-            if let name = name {
-                item.name = name
-            }
-            if let note = note {
-                item.note = note
-            }
-            if let itemData = itemData, let itemDataObject = item.itemData {
-                itemDataObject.data = itemData
-            }
-            if let thumbnailData = thumbnailData, let thumbnail = item.thumbnail {
-                thumbnail.data = thumbnailData
-            }
-            if let boardID = boardID, let board = try context.existingObject(with: boardID) as? Board {
-                board.addToItems(item)
-                if let tags = item.tags {
-                    board.addToTags(tags)
-                }
-            }
-
-            let currentDate = Date()
-            item.updateDate = currentDate
-
-            try context.save(situation: .updateItem)
-        }
-    }
-
-    func copyItem(
-        itemID: NSManagedObjectID,
-        toBoardID boardID: NSManagedObjectID,
-        context: NSManagedObjectContext? = nil
-    ) async throws {
-        let context = context ?? storageProvider.newTaskContext()
-
-        guard let item = try context.existingObject(with: itemID) as? Item else {
-            throw CoreDataError.unfoundObjectInContext
-        }
-
-        try await context.perform {
-            let copy = Item(context: context)
-            copy.name = item.name
-            copy.uti = item.uti
-            copy.note = item.note
-            copy.uuid = UUID()
-            copy.displayType = item.displayType
-
-            let thumbnail = Thumbnail(context: context)
-            thumbnail.data = item.thumbnail?.data
-            thumbnail.item = copy
-
-            let itemDataObject = ItemData(context: context)
-            itemDataObject.data = item.itemData?.data
-            itemDataObject.item = copy
-
-            let currentDate = Date()
-            copy.creationDate = currentDate
-            copy.updateDate = currentDate
-
-            if let board = try context.existingObject(with: boardID) as? Board {
-                board.addToItems(copy)
-                if let tags = item.tags {
-                    copy.addToTags(tags)
-                    board.addToTags(tags)
-                }
-            }
-
-            try context.save(situation: .copyItem)
-        }
-    }
-
-    func deleteItem(
-        itemID: NSManagedObjectID,
-        context: NSManagedObjectContext
-    ) async throws {
-        guard let item = try context.existingObject(with: itemID) as? Item else {
-            throw CoreDataError.unfoundObjectInContext
-        }
-
-        try await context.perform {
-            context.delete(item)
-            try context.save(situation: .deleteItem)
         }
     }
 }

@@ -8,6 +8,8 @@
 import UIKit
 
 enum ItemLayout: Int, CaseIterable {
+    static var initialLayout: ItemLayout { .smallCard }
+
     case largeCard
     case smallCard
     case grid
@@ -78,7 +80,7 @@ enum ItemLayout: Int, CaseIterable {
         }
     }
 
-    func flowLayout() -> UICollectionViewFlowLayout {
+    var flowLayout: UICollectionViewFlowLayout {
         let flowLayout = UICollectionViewFlowLayout()
 
         flowLayout.minimumLineSpacing = spacing

@@ -12,7 +12,7 @@ import UIKit
 final class OptionMenuProvider: NSObject {
     // MARK: - Publishers
 
-    @Published private(set) var currentLayout: ItemLayout = .smallCard
+    @Published private(set) var currentLayout: ItemLayout = .initialLayout
     @Published private(set) var currentSort: ItemSort = .creationDate(ascending: false)
     @Published private(set) var currentMenu: UIMenu?
 
