@@ -99,7 +99,7 @@ extension ImportMethodHandling where Self: UIDocumentPickerDelegate {
         Task {
             do {
                 try await itemManager.process(urls, saveInto: boardID)
-                DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(200)) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(100)) {
                     HUD.showSucceeded()
                 }
             } catch {
@@ -128,16 +128,13 @@ extension ImportMethodHandling where Self: PHPickerViewControllerDelegate {
 
         Task {
             do {
-                #if targetEnvironment(simulator)
-                try await itemManager.process(results.map(\.itemProvider), saveInto: boardID)
-                #else
                 try await itemManager.process(results.map(\.itemProvider), saveInto: boardID, isSecurityScoped: false)
-                #endif
-
-                HUD.showSucceeded()
+                DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(100)) {
+                    HUD.showSucceeded()
+                }
             } catch {
                 print("#\(#function): Failed to process input from photo picker, \(error)")
-                await dismissForFailure()
+                HUD.showFailed()
             }
         }
     }
