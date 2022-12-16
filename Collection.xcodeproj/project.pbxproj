@@ -61,6 +61,8 @@
 		B57FC3FA29461B3500018E39 /* ImportMethodHandling.swift in Sources */ = {isa = PBXBuildFile; fileRef = B57FC3F929461B3500018E39 /* ImportMethodHandling.swift */; };
 		B57FC3FC29461E6700018E39 /* StorageProvider+Item.swift in Sources */ = {isa = PBXBuildFile; fileRef = B57FC3FB29461E6700018E39 /* StorageProvider+Item.swift */; };
 		B5810CBF2930A2FE00EFB41C /* UIViewController+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5810CBE2930A2FE00EFB41C /* UIViewController+Extension.swift */; };
+		B593A596294C0DEA0038521B /* DeviceKit in Frameworks */ = {isa = PBXBuildFile; productRef = B593A595294C0DEA0038521B /* DeviceKit */; };
+		B593A598294C0E870038521B /* DeviceKit in Frameworks */ = {isa = PBXBuildFile; productRef = B593A597294C0E870038521B /* DeviceKit */; };
 		B59544102924E3C700665868 /* ItemAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = B595440F2924E3C700665868 /* ItemAction.swift */; };
 		B59544122925549400665868 /* NameEditorViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B59544112925549400665868 /* NameEditorViewController.swift */; };
 		B59B050B29358984003B913C /* TagEditorViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B59B050A29358984003B913C /* TagEditorViewModel.swift */; };
@@ -229,6 +231,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				B52AC8ED293C73FF004654A3 /* ProgressHUD in Frameworks */,
+				B593A598294C0E870038521B /* DeviceKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -241,6 +244,7 @@
 				B559B724293128FB00A53D73 /* LGSideMenuController in Frameworks */,
 				B5F72D2929111859007B4B06 /* CloudKit.framework in Frameworks */,
 				B5D90E64291D623600BB59F9 /* IQKeyboardManagerSwift in Frameworks */,
+				B593A596294C0DEA0038521B /* DeviceKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -549,6 +553,7 @@
 			name = ShareExtension;
 			packageProductDependencies = (
 				B52AC8EC293C73FF004654A3 /* ProgressHUD */,
+				B593A597294C0E870038521B /* DeviceKit */,
 			);
 			productName = ShareExtension;
 			productReference = B523E93329164B4F00180B36 /* ShareExtension.appex */;
@@ -575,6 +580,7 @@
 				B50D6CB22923990A006DB343 /* TTGTags */,
 				B520A5C6292B823F00A76E9A /* ProgressHUD */,
 				B559B723293128FB00A53D73 /* LGSideMenuController */,
+				B593A595294C0DEA0038521B /* DeviceKit */,
 			);
 			productName = Collection;
 			productReference = B5E50DF6290BDF16006A7B22 /* Collection.app */;
@@ -612,6 +618,7 @@
 				B50D6CB12923990A006DB343 /* XCRemoteSwiftPackageReference "TTGTagCollectionView" */,
 				B520A5C5292B823F00A76E9A /* XCRemoteSwiftPackageReference "ProgressHUD" */,
 				B559B722293128FB00A53D73 /* XCRemoteSwiftPackageReference "LGSideMenuController" */,
+				B593A594294C0DEA0038521B /* XCRemoteSwiftPackageReference "DeviceKit" */,
 			);
 			productRefGroup = B5E50DF7290BDF16006A7B22 /* Products */;
 			projectDirPath = "";
@@ -1111,6 +1118,14 @@
 				minimumVersion = 3.0.0;
 			};
 		};
+		B593A594294C0DEA0038521B /* XCRemoteSwiftPackageReference "DeviceKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/devicekit/DeviceKit.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.0.0;
+			};
+		};
 		B5D90E62291D623600BB59F9 /* XCRemoteSwiftPackageReference "IQKeyboardManager" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/hackiftekhar/IQKeyboardManager.git";
@@ -1141,6 +1156,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = B559B722293128FB00A53D73 /* XCRemoteSwiftPackageReference "LGSideMenuController" */;
 			productName = LGSideMenuController;
+		};
+		B593A595294C0DEA0038521B /* DeviceKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B593A594294C0DEA0038521B /* XCRemoteSwiftPackageReference "DeviceKit" */;
+			productName = DeviceKit;
+		};
+		B593A597294C0E870038521B /* DeviceKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B593A594294C0DEA0038521B /* XCRemoteSwiftPackageReference "DeviceKit" */;
+			productName = DeviceKit;
 		};
 		B5D90E63291D623600BB59F9 /* IQKeyboardManagerSwift */ = {
 			isa = XCSwiftPackageProductDependency;
