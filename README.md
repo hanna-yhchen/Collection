@@ -26,3 +26,11 @@ An iOS application storing files of various types and synchronizing them automat
 - Quick Look Thumbnailing
 - GCD + Swift Concurrency (async/await)
 - Swift Package Manager
+
+## Contact
+Hanna Chen<br>
+hanna.yhchen@gmail.com
+
+## License
+This project is licensed under the terms of the MIT license.<br>
+See the [LICENSE](/LICENSE) file for more info.
