@@ -159,7 +159,7 @@ extension ImportMethodHandling where Self: UIImagePickerControllerDelegate & UIN
         present(picker, animated: true)
     }
 
-    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
+    func didPickMedia(_ picker: UIImagePickerController, info: [UIImagePickerController.InfoKey: Any]) {
         HUD.showProcessing()
 
         guard
