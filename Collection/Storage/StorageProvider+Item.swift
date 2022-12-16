@@ -8,7 +8,7 @@
 import CoreData
 
 extension StorageProvider {
-    private func addItem(
+    func addItem(
         name: String? = nil,
         displayType: DisplayType,
         uti: String,
@@ -21,6 +21,46 @@ extension StorageProvider {
         let context = context ?? newTaskContext()
 
         try await context.perform {
+            let item = Item(context: context)
+            item.name = name
+            item.uti = uti
+            item.note = note
+            item.uuid = UUID()
+            item.displayType = displayType.rawValue
+
+            let thumbnail = Thumbnail(context: context)
+            thumbnail.data = thumbnailData
+            thumbnail.item = item
+
+            let itemDataObject = ItemData(context: context)
+            itemDataObject.data = itemData
+            itemDataObject.item = item
+
+            let currentDate = Date()
+            item.creationDate = currentDate
+            item.updateDate = currentDate
+
+            if let board = context.object(with: boardID) as? Board {
+                board.addToItems(item)
+            }
+
+            try context.save(situation: .addItem)
+        }
+    }
+
+    func addItem(
+        name: String? = nil,
+        displayType: DisplayType,
+        uti: String,
+        note: String? = nil,
+        itemData: Data? = nil,
+        thumbnailData: Data? = nil,
+        boardID: ObjectID,
+        context: NSManagedObjectContext? = nil
+    ) throws {
+        let context = context ?? newTaskContext()
+
+        try context.performAndWait {
             let item = Item(context: context)
             item.name = name
             item.uti = uti
@@ -130,20 +170,6 @@ extension StorageProvider {
             }
 
             try context.save(situation: .copyItem)
-        }
-    }
-
-    func deleteItem(
-        itemID: ObjectID,
-        context: NSManagedObjectContext
-    ) async throws {
-        guard let item = try context.existingObject(with: itemID) as? Item else {
-            throw CoreDataError.unfoundObjectInContext
-        }
-
-        try await context.perform {
-            context.delete(item)
-            try context.save(situation: .deleteItem)
         }
     }
 }

@@ -7,11 +7,9 @@
 
 import Combine
 import CoreData
-import UniformTypeIdentifiers
 import UIKit
 
-final class ItemListViewModel: ManagedObjectDataSourceProviding {
-    typealias Object = Item
+final class ItemListViewModel: NSObject, FetchedResultsProviding {
 
     enum Scope {
         case allItems
@@ -42,8 +40,6 @@ final class ItemListViewModel: ManagedObjectDataSourceProviding {
             .eraseToAnyPublisher()
     }
 
-    var context: NSManagedObjectContext { storageProvider.persistentContainer.viewContext }
-
     lazy var switchLayout = PassthroughSubject<ItemLayout, Never>()
     lazy var shouldDisplayPlaceholder = PassthroughSubject<Bool, Never>()
 
@@ -52,10 +48,23 @@ final class ItemListViewModel: ManagedObjectDataSourceProviding {
     let title: String?
 
     private let storageProvider: StorageProvider
-    private let itemProvider: ItemProvider
     private let menuProvider: OptionMenuProvider
 
-    var dataSource: ManagedObjectDataSource?
+    let context: NSManagedObjectContext
+    lazy var fetchedResultsController: NSFetchedResultsController<Item> = {
+        let fetchRequest = Item.fetchRequest()
+        fetchRequest.predicate = scope.predicate
+        fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \Item.creationDate, ascending: false)]
+        fetchRequest.shouldRefreshRefetchedObjects = true
+
+        return NSFetchedResultsController(
+            fetchRequest: fetchRequest,
+            managedObjectContext: context,
+            sectionNameKeyPath: nil,
+            cacheName: nil)
+    }()
+
+    var dataSource: DataSource?
     private var snapshotStrategy: SnapshotStrategy
 
     private var subscriptions = CancellableSet()
@@ -65,12 +74,11 @@ final class ItemListViewModel: ManagedObjectDataSourceProviding {
     init(
         scope: Scope,
         storageProvider: StorageProvider,
-        itemProvider: ItemProvider,
         menuProvider: OptionMenuProvider
     ) {
         self.scope = scope
         self.storageProvider = storageProvider
-        self.itemProvider = itemProvider
+        self.context = storageProvider.persistentContainer.viewContext
         self.menuProvider = menuProvider
         self.snapshotStrategy = .normal
         self.currentLayout = .initialLayout
@@ -81,37 +89,17 @@ final class ItemListViewModel: ManagedObjectDataSourceProviding {
             self.title = "All Items"
         case .board(let boardID):
             self.boardID = boardID
-
-            let context = storageProvider.persistentContainer.viewContext
             let board = try? context.existingObject(with: boardID) as? Board
             self.title = board?.name
         }
 
+        super.init()
+
+        fetchedResultsController.delegate = self
         addBindings()
     }
 
     // MARK: - Methods
-
-    func fetchItems() {
-        itemProvider.performFetch()
-    }
-
-    func configureDataSource(
-        for collectionView: UICollectionView,
-        cellProvider: @escaping (IndexPath, Item) -> UICollectionViewCell?
-    ) {
-        dataSource = ManagedObjectDataSource(collectionView: collectionView) { [unowned self] _, indexPath, objectID in
-            guard let item = itemProvider.object(with: objectID) else {
-                fatalError("#\(#function): Failed to retrieve item by objectID")
-            }
-
-            return cellProvider(indexPath, item)
-        }
-    }
-
-    func item(with itemID: ObjectID) -> Item? {
-        try? context.existingObject(with: itemID) as? Item
-    }
 
     func reconfigureItems(_ items: [NSManagedObjectID]) {
         guard let dataSource = dataSource else { return }
@@ -119,21 +107,14 @@ final class ItemListViewModel: ManagedObjectDataSourceProviding {
         var newSnapshot = dataSource.snapshot()
         newSnapshot.reconfigureItems(items)
 
-        itemProvider.currentSnapshot = newSnapshot
-    }
-
-    func deleteItem(itemID: ObjectID) async throws {
-        try await storageProvider.deleteItem(
-            itemID: itemID,
-            context: context)
+        dataSource.apply(newSnapshot)
     }
 
     func temporaryFileURL(of item: Item) throws -> URL {
         guard
             let data = item.itemData?.data,
             let uuid = item.uuid,
-            let typeIdentifier = item.uti,
-            let itemType = UTType(typeIdentifier),
+            let itemType = item.utType,
             let filenameExtension = itemType.preferredFilenameExtension
         else {
             throw ItemListError.missingFileInformation
@@ -172,28 +153,22 @@ final class ItemListViewModel: ManagedObjectDataSourceProviding {
         return url
     }
 
+    func applySnapshot(_ snapshot: Snapshot) {
+        guard let dataSource = dataSource else { return }
+        var newSnapshot = snapshot
+        if snapshotStrategy == .reload {
+            newSnapshot.reloadItems(snapshot.itemIdentifiers)
+        }
+
+        dataSource.apply(newSnapshot)
+        shouldDisplayPlaceholder.send(newSnapshot.numberOfItems == 0 ? true : false)
+
+        snapshotStrategy = .normal
+    }
+
     // MARK: - Private
 
     private func addBindings() {
-        itemProvider.$currentSnapshot
-            .compactMap { [unowned self] snapshot -> ManagedObjectSnapshot? in
-                guard dataSource != nil else { return nil }
-                return snapshot
-            }
-            .receive(on: DispatchQueue.main)
-            .sink { [unowned self] snapshot in
-                var newSnapshot = snapshot
-                if snapshotStrategy == .reload {
-                    newSnapshot.reloadItems(snapshot.itemIdentifiers)
-                }
-
-                dataSource?.apply(newSnapshot)
-                shouldDisplayPlaceholder.send(newSnapshot.numberOfItems == 0 ? true : false)
-
-                snapshotStrategy = .normal
-            }
-            .store(in: &subscriptions)
-
         storageProvider.historyManager.storeDidChangePublisher
             .map { [weak self] transactions -> [NSPersistentHistoryTransaction] in
                 guard let self = self else { return [] }
@@ -226,7 +201,7 @@ final class ItemListViewModel: ManagedObjectDataSourceProviding {
             .sink { [weak self] _ in
                 guard let self = self else { return }
                 self.snapshotStrategy = .reload
-                self.itemProvider.performFetch()
+                self.performFetch()
             }
             .store(in: &subscriptions)
 
@@ -258,7 +233,7 @@ final class ItemListViewModel: ManagedObjectDataSourceProviding {
 
     private func switchSort(_ sort: ItemSort) {
         snapshotStrategy = .reload
-        itemProvider.updateSortDescriptors([sort.sortDescriptor])
+        updateSortDescriptors([sort.sortDescriptor])
     }
 
     private func applyFilter(type: DisplayType?, tagIDs: [ObjectID]) {
@@ -278,7 +253,7 @@ final class ItemListViewModel: ManagedObjectDataSourceProviding {
             predicates.append(NSPredicate(format: "%K CONTAINS %@", #keyPath(Item.tags), tagID))
         }
 
-        itemProvider.updatePredicate(NSCompoundPredicate(andPredicateWithSubpredicates: predicates))
+        updatePredicate(NSCompoundPredicate(andPredicateWithSubpredicates: predicates))
     }
 
     private func switchLayout(_ layout: ItemLayout) {
@@ -290,5 +265,13 @@ final class ItemListViewModel: ManagedObjectDataSourceProviding {
         dataSource.applySnapshotUsingReloadData(snapshot) { [unowned self] in
             switchLayout.send(layout)
         }
+    }
+}
+
+// MARK: - NSFetchedResultsControllerDelegate
+
+extension ItemListViewModel {
+    func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChangeContentWith snapshot: NSDiffableDataSourceSnapshotReference) {
+        didChangeContent(with: snapshot)
     }
 }

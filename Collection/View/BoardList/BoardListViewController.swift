@@ -11,61 +11,44 @@ import UIKit
 
 protocol BoardListViewControllerDelegate: AnyObject {
     func navigateToItemList(boardID: ObjectID)
+    func showNameEditorViewController(boardID: ObjectID)
+    func showDeletionAlert(object: ManagedObject)
 }
 
 class BoardListViewController: UIViewController, PlaceholderViewDisplayable {
-
-    typealias Snapshot = NSDiffableDataSourceSnapshot<Int, NSManagedObjectID>
-    typealias DataSource = UICollectionViewDiffableDataSource<Int, NSManagedObjectID>
-
-    private let storageProvider: StorageProvider
-    // TODO: move fetchedResultsController logic to viewModel
-    private lazy var fetchedResultsController: NSFetchedResultsController<Board> = {
-        let fetchRequest = Board.fetchRequest()
-        fetchRequest.predicate = NSPredicate(format: "%K != %@", #keyPath(Board.name), "Inbox")
-        fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \Board.sortOrder, ascending: false)]
-        fetchRequest.shouldRefreshRefetchedObjects = true
-
-        let controller = NSFetchedResultsController(
-            fetchRequest: fetchRequest,
-            managedObjectContext: storageProvider.persistentContainer.viewContext,
-            sectionNameKeyPath: nil,
-            cacheName: nil)
-        controller.delegate = self
-
-        return controller
-    }()
-
-    private var dataSource: DataSource?
-    private lazy var subscriptions = CancellableSet()
 
     @IBOutlet var collectionView: UICollectionView!
     var placeholderView: HintPlaceholderView?
 
     var isShowingPlaceholder = false
 
-    var delegate: BoardListViewControllerDelegate?
+    private let viewModel: BoardListViewModel
+    private weak var delegate: BoardListViewControllerDelegate?
+
+    private lazy var subscriptions = CancellableSet()
 
     // MARK: - Lifecycle
 
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        self.title = "Boards"
-        navigationController?.navigationBar.prefersLargeTitles = true
-        configureCollectionView()
-        configureDataSource()
-        addObservers()
+        configureHierarchy()
+        addBindings()
     }
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
 
-        try? fetchedResultsController.performFetch()
+        viewModel.performFetch()
     }
 
-    init?(coder: NSCoder, storageProvider: StorageProvider) {
-        self.storageProvider = storageProvider
+    init?(
+        coder: NSCoder,
+        viewModel: BoardListViewModel,
+        delegate: BoardListViewControllerDelegate
+    ) {
+        self.viewModel = viewModel
+        self.delegate = delegate
 
         super.init(coder: coder)
     }
@@ -83,16 +66,27 @@ class BoardListViewController: UIViewController, PlaceholderViewDisplayable {
             textField.placeholder = "Please enter a name for the new board."
         }
 
-        alert.addAction(UIAlertAction(title: "Create", style: .default) {[unowned self] _ in
+        alert.addAction(UIAlertAction(title: "Create", style: .default) { [unowned self] _ in
+            HUD.show()
+
             guard
                 let textField = alert.textFields?[0],
                 let name = textField.text
-            else { return }
+            else {
+                HUD.showFailed()
+                return
+            }
 
-            if !name.isEmpty, name != "Inbox" {
-                storageProvider.addBoard(name: name, context: storageProvider.newTaskContext())
-            } else {
-                // TODO: show warning
+            guard !name.isEmpty, name != "Inbox" else {
+                HUD.showFailed("Invalid name")
+                return
+            }
+
+            do {
+                try viewModel.addBoard(name: name)
+                HUD.showSucceeded()
+            } catch {
+                HUD.showFailed()
             }
         })
 
@@ -103,20 +97,33 @@ class BoardListViewController: UIViewController, PlaceholderViewDisplayable {
 
     // MARK: - Private Methods
 
-    private func configureCollectionView() {
+    private func addBindings() {
+        viewModel.shouldDisplayPlaceholder
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] shouldDisplay in
+                if shouldDisplay {
+                    showPlaceholderView()
+                } else {
+                    removePlaceholderView()
+                }
+            }
+            .store(in: &subscriptions)
+    }
+
+    private func configureHierarchy() {
+        title = "Boards"
+        navigationController?.navigationBar.prefersLargeTitles = true
+
         collectionView.collectionViewLayout = createCardLayout()
         collectionView.allowsSelection = true
         collectionView.delegate = self
-    }
 
-    private func configureDataSource() {
         let cellRegistration = UICollectionView.CellRegistration<BoardCell, NSManagedObjectID>(
             cellNib: UINib(nibName: BoardCell.identifier, bundle: nil)
-        ) {[unowned self] cell, _, objectID in
-            guard let board = try? fetchedResultsController
-                .managedObjectContext
-                .existingObject(with: objectID) as? Board
-            else { fatalError("#\(#function): Failed to retrieve item by objectID") }
+        ) { [unowned self] cell, _, objectID in
+            guard let board = viewModel.object(with: objectID) else {
+                fatalError("#\(#function): Failed to retrieve item by objectID")
+            }
 
             cell.configure(for: board)
 
@@ -127,89 +134,24 @@ class BoardListViewController: UIViewController, PlaceholderViewDisplayable {
                 .store(in: &cell.subscriptions)
         }
 
-        dataSource = DataSource(collectionView: collectionView) { collectionView, indexPath, item in
-            collectionView.dequeueConfiguredReusableCell(using: cellRegistration, for: indexPath, item: item)
+        viewModel.configureDataSource(for: collectionView) { collectionView, indexPath, board in
+            collectionView.dequeueConfiguredReusableCell(
+                using: cellRegistration,
+                for: indexPath,
+                item: board.objectID)
         }
     }
 
     private func perform(_ action: BoardAction, boardID: ObjectID) {
         switch action {
         case .rename:
-            let context = fetchedResultsController.managedObjectContext
-            let board = try? context.existingObject(with: boardID) as? Board
-            let nameEditorVC = UIStoryboard.main
-                .instantiateViewController(identifier: NameEditorViewController.storyboardID) { coder in
-                    NameEditorViewController(coder: coder, originalName: board?.name)
-                }
-
-            nameEditorVC.modalPresentationStyle = .overCurrentContext
-            nameEditorVC.cancellable = nameEditorVC.newNamePublisher
-                .sink {[unowned self] newName in
-                    guard !newName.isEmpty else {
-                        HUD.showFailed("The name of a board cannot be empty.")
-                        return
-                    }
-
-                    Task {
-                        do {
-                            try await storageProvider.updateBoard(
-                                boardID: boardID,
-                                name: newName,
-                                context: context)
-                            await MainActor.run {
-                                nameEditorVC.animateDismissSheet()
-                            }
-                        } catch {
-                            print("#\(#function): Failed to rename item, \(error)")
-                        }
-                    }
-                }
-
-            present(nameEditorVC, animated: false)
+            delegate?.showNameEditorViewController(boardID: boardID)
         case .share:
             startSharingFlow(boardID: boardID)
         case .delete:
-            let alert = UIAlertController(
-                title: "Delete the board",
-                message: "Are you sure you want to delete this board permanently?",
-                preferredStyle: UIDevice.current.userInterfaceIdiom == .phone ? .actionSheet : .alert)
-            alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-            alert.addAction(UIAlertAction(title: "Delete", style: .destructive) {[unowned self] _ in
-                Task {
-                    do {
-                        try await storageProvider.deleteBoard(
-                            boardID: boardID,
-                            context: fetchedResultsController.managedObjectContext)
-                    } catch {
-                        print("#\(#function): Failed to delete board, \(error)")
-                    }
-                }
-            })
-            present(alert, animated: true)
+            let boardObject = ManagedObject(entity: .board(boardID))
+            delegate?.showDeletionAlert(object: boardObject)
         }
-    }
-
-    private func addObservers() {
-        storageProvider.historyManager.storeDidChangePublisher
-            .map { transactions -> [NSPersistentHistoryTransaction] in
-                let boardEntityName = Board.entity().name
-
-                return transactions.filter { transaction in
-                    if let changes = transaction.changes {
-                        return changes.contains { $0.changedObjectID.entity.name == boardEntityName }
-                    }
-                    return false
-                }
-            }
-            .receive(on: DispatchQueue.main)
-            .sink {[weak self] transactions in
-                guard let self = self, !transactions.isEmpty else { return }
-
-                self.storageProvider.mergeTransactions(
-                    transactions,
-                    to: self.fetchedResultsController.managedObjectContext)
-            }
-            .store(in: &subscriptions)
     }
 
     private func createCardLayout() -> UICollectionViewLayout {
@@ -233,91 +175,29 @@ class BoardListViewController: UIViewController, PlaceholderViewDisplayable {
         return UICollectionViewCompositionalLayout(section: section)
     }
 
-    // TODO: abstract sharing functionality into StorageProvider
     private func startSharingFlow(boardID: ObjectID) {
         HUD.showProcessing()
 
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            guard let self = self else { return }
+        Task {
+            do {
+                let share = try await viewModel.ckShare(boardID: boardID)
 
-            let context = self.fetchedResultsController.managedObjectContext
-            guard let board = try? context.existingObject(with: boardID) as? Board else {
-                HUD.showFailed()
-                return
-            }
-
-            var share: CKShare?
-
-            if let existingShare = board.shareRecord {
-                share = existingShare
-            } else {
-                let semaphore = DispatchSemaphore(value: 0)
-                self.storageProvider.persistentContainer.share([board], to: nil) { _, newShare, _, error in
-                    if let error = error {
-                        print("#\(#function): Failed to create new share, \(error)")
+                await MainActor.run {
+                    let sharingController = UICloudSharingController(
+                        share: share,
+                        container: StorageProvider.shared.cloudKitContainer)
+                    sharingController.modalPresentationStyle = .formSheet
+                    present(sharingController, animated: true) {
+                        HUD.dismiss()
                     }
-                    share = newShare
-                    semaphore.signal()
                 }
-                semaphore.wait()
-            }
-
-            guard let share = share else {
-                HUD.showFailed()
-                return
-            }
-
-            share[CKShare.SystemFieldKey.title] = board.name
-            if let image = UIImage(named: "logo-icon"), let data = image.jpegData(compressionQuality: 0.5) {
-                share[CKShare.SystemFieldKey.thumbnailImageData] = data
-            }
-
-            DispatchQueue.main.async { [weak self] in
-                guard let self = self else { return }
-
-                let sharingController = UICloudSharingController(
-                    share: share,
-                    container: self.storageProvider.cloudKitContainer)
-                sharingController.delegate = self
-                sharingController.modalPresentationStyle = .formSheet
-                self.present(sharingController, animated: true) {
-                    HUD.dismiss()
+            } catch {
+                print("#\(#function): Failed to get CKShare object, \(error)")
+                await MainActor.run {
+                    HUD.showFailed()
                 }
             }
         }
-    }
-}
-
-// MARK: - NSFetchedResultsControllerDelegate
-
-extension BoardListViewController: NSFetchedResultsControllerDelegate {
-    func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChangeContentWith snapshot: NSDiffableDataSourceSnapshotReference) {
-        guard let dataSource = dataSource else { fatalError("#\(#function): Failed to unwrap data source") }
-
-        var newSnapshot = snapshot as Snapshot
-        if newSnapshot.numberOfItems == 0 {
-            showPlaceholderView()
-        } else if isShowingPlaceholder {
-            removePlaceholderView()
-        }
-
-        let currentSnapshot = dataSource.snapshot()
-
-        let updatedIDs = newSnapshot.itemIdentifiers.filter { objectID in
-            guard
-                let currentIndex = currentSnapshot.indexOfItem(objectID),
-                let newIndex = newSnapshot.indexOfItem(objectID),
-                newIndex == currentIndex,
-                let existingObject = try? controller.managedObjectContext.existingObject(with: objectID),
-                existingObject.isUpdated
-            else { return false }
-
-            return true
-        }
-        newSnapshot.reloadItems(updatedIDs)
-
-        let shouldAnimate = collectionView.numberOfSections != 0
-        dataSource.apply(newSnapshot, animatingDifferences: shouldAnimate)
     }
 }
 
@@ -326,19 +206,7 @@ extension BoardListViewController: NSFetchedResultsControllerDelegate {
 extension BoardListViewController: UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         collectionView.deselectItem(at: indexPath, animated: true)
-        guard let boardID = dataSource?.itemIdentifier(for: indexPath) else { return }
+        guard let boardID = viewModel.objectID(for: indexPath) else { return }
         delegate?.navigateToItemList(boardID: boardID)
-    }
-}
-
-// MARK: - UICloudSharingControllerDelegate
-
-extension BoardListViewController: UICloudSharingControllerDelegate {
-    func itemTitle(for csc: UICloudSharingController) -> String? {
-        nil
-    }
-
-    func cloudSharingController(_ csc: UICloudSharingController, failedToSaveShareWithError error: Error) {
-        print("#\(#function): Failed to save share, \(error)")
     }
 }

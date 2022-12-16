@@ -107,10 +107,7 @@ class MainFlowController: LGSideMenuController {
             let itemListVC = createItemListVC(scope: scope)
             destinationVC = itemListVC
         case .boardList:
-            let boardListVC = UIStoryboard.main.instantiateViewController(
-                identifier: String(describing: BoardListViewController.self)
-            ) { BoardListViewController(coder: $0, storageProvider: self.storageProvider) }
-            boardListVC.delegate = self
+            let boardListVC = createBoardListVC()
             destinationVC = boardListVC
         }
 
@@ -134,14 +131,9 @@ class MainFlowController: LGSideMenuController {
             menuProvider = OptionMenuProvider(boardID: boardID, storageProvider: storageProvider)
         }
 
-        let itemProvider = ItemProvider(
-            predicate: scope.predicate,
-            context: storageProvider.persistentContainer.viewContext)
-
         let viewModel = ItemListViewModel(
             scope: scope,
             storageProvider: storageProvider,
-            itemProvider: itemProvider,
             menuProvider: menuProvider)
 
         let itemListVC = UIStoryboard.main.instantiateViewController(
@@ -155,6 +147,41 @@ class MainFlowController: LGSideMenuController {
 
         return itemListVC
     }
+
+    private func createBoardListVC() -> BoardListViewController {
+        let viewModel = BoardListViewModel(storageProvider: storageProvider)
+
+        let boardListVC = UIStoryboard.main.instantiateViewController(
+            identifier: String(describing: BoardListViewController.self)
+        ) { coder in
+            BoardListViewController(
+                coder: coder,
+                viewModel: viewModel,
+                delegate: self)
+        }
+
+        return boardListVC
+    }
+
+    func showDeletionAlert(object: ManagedObject) {
+        let alert = UIAlertController(
+            title: String(format: Constant.Message.deletionTitleFormat, object.description),
+            message: String(format: Constant.Message.deletionMsgFormat, object.description),
+            preferredStyle: UIDevice.current.userInterfaceIdiom == .phone ? .actionSheet : .alert)
+        alert.addAction(UIAlertAction(title: Constant.Message.cancel, style: .cancel))
+        alert.addAction(UIAlertAction(title: Constant.Message.delete, style: .destructive) { [unowned self] _ in
+            Task {
+                do {
+                    try await object.delete(context: storageProvider.persistentContainer.viewContext)
+                    HUD.showSucceeded(Constant.Message.deleted)
+                } catch {
+                    print("#\(#function): Failed to delete board, \(error)")
+                    HUD.showFailed()
+                }
+            }
+        })
+        rootNavigation.present(alert, animated: true)
+    }
 }
 
 // MARK: - BoardListViewControllerDelegate
@@ -163,6 +190,44 @@ extension MainFlowController: BoardListViewControllerDelegate {
     func navigateToItemList(boardID: ObjectID) {
         let itemListVC = createItemListVC(scope: .board(boardID))
         rootNavigation.pushViewController(itemListVC, animated: true)
+    }
+
+    func showNameEditorViewController(boardID: ObjectID) {
+        let context = storageProvider.persistentContainer.viewContext
+        guard let board = try? context.existingObject(with: boardID) as? Board else {
+            HUD.showFailed(Constant.Message.missingData)
+            return
+        }
+
+        let nameEditorVC = UIStoryboard.main
+            .instantiateViewController(identifier: NameEditorViewController.storyboardID) { coder in
+                NameEditorViewController(coder: coder, originalName: board.name)
+            }
+        nameEditorVC.modalPresentationStyle = .overCurrentContext
+        #warning("Move update-related logic to name editor view model")
+        nameEditorVC.cancellable = nameEditorVC.newNamePublisher
+            .sink {[unowned self] newName in
+                guard !newName.isEmpty else {
+                    HUD.showFailed("The name of a board cannot be empty.")
+                    return
+                }
+
+                Task {
+                    do {
+                        try await storageProvider.updateBoard(
+                            boardID: boardID,
+                            name: newName,
+                            context: context)
+                        await MainActor.run {
+                            nameEditorVC.animateDismissSheet()
+                        }
+                    } catch {
+                        print("#\(#function): Failed to rename item, \(error)")
+                    }
+                }
+            }
+
+        present(nameEditorVC, animated: false)
     }
 }
 
@@ -219,7 +284,7 @@ extension MainFlowController: ItemListViewControllerDelegate {
     }
 
     func showBoardSelectorViewController(scenario: BoardSelectorViewModel.Scenario) {
-        let viewModel = BoardSelectorViewModel(scenario: scenario)
+        let viewModel = BoardSelectorViewModel(storageProvider: storageProvider, scenario: scenario)
         let selectorVC = UIStoryboard.main.instantiateViewController(
             identifier: BoardSelectorViewController.storyboardID
         ) { BoardSelectorViewController(coder: $0, viewModel: viewModel) }

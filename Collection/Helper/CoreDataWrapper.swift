@@ -9,6 +9,3 @@ import CoreData
 import UIKit
 
 typealias ObjectID = NSManagedObjectID
-typealias ManagedObject = NSManagedObject
-typealias ManagedObjectSnapshot = NSDiffableDataSourceSnapshot<Int, ObjectID>
-typealias ManagedObjectDataSource = UICollectionViewDiffableDataSource<Int, ObjectID>

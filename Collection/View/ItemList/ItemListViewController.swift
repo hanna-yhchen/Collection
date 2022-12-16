@@ -16,6 +16,7 @@ protocol ItemListViewControllerDelegate: AnyObject {
     func showNameEditorViewController(itemID: ObjectID)
     func showBoardSelectorViewController(scenario: BoardSelectorViewModel.Scenario)
     func showTagSelectorViewController(itemID: ObjectID)
+    func showDeletionAlert(object: ManagedObject)
 }
 
 class ItemListViewController: UIViewController, PlaceholderViewDisplayable {
@@ -25,7 +26,7 @@ class ItemListViewController: UIViewController, PlaceholderViewDisplayable {
     lazy var boardID: ObjectID = viewModel.boardID
 
     let itemManager: ItemManager
-    weak var delegate: ItemListViewControllerDelegate?
+    private weak var delegate: ItemListViewControllerDelegate?
     private var previewingItem: PreviewItem?
 
     private lazy var collectionView = ItemCollectionView(frame: view.bounds, traits: view.traitCollection)
@@ -59,7 +60,7 @@ class ItemListViewController: UIViewController, PlaceholderViewDisplayable {
         super.viewWillAppear(animated)
 
         collectionView.setLayout(viewModel.currentLayout, animated: false)
-        viewModel.fetchItems()
+        viewModel.performFetch()
     }
 
     // MARK: - Initializers
@@ -98,7 +99,7 @@ class ItemListViewController: UIViewController, PlaceholderViewDisplayable {
         collectionView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         collectionView.delegate = self
 
-        viewModel.configureDataSource(for: collectionView) { [unowned self] indexPath, item in
+        viewModel.configureDataSource(for: collectionView) { [unowned self] _, indexPath, item in
             guard let cell = collectionView.dequeueReusableCell(
                 withReuseIdentifier: viewModel.currentLayout.cellIdentifier,
                 for: indexPath) as? ItemCell
@@ -159,34 +160,13 @@ class ItemListViewController: UIViewController, PlaceholderViewDisplayable {
         case .copy:
             delegate?.showBoardSelectorViewController(scenario: .copy(itemID))
         case .delete:
-            showDeletionAlert(itemID: itemID)
+            let itemObject = ManagedObject(entity: .item(itemID))
+            delegate?.showDeletionAlert(object: itemObject)
         }
     }
 
-    private func showDeletionAlert(itemID: ObjectID) {
-        let alert = UIAlertController(
-            title: "Delete the item",
-            message: "Are you sure you want to delete this item permanently?",
-            preferredStyle: UIDevice.current.userInterfaceIdiom == .phone ? .actionSheet : .alert)
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-        alert.addAction(UIAlertAction(title: "Delete", style: .destructive) {[unowned self] _ in
-            HUD.showProcessing()
-
-            Task {
-                do {
-                    try await viewModel.deleteItem(itemID: itemID)
-                    HUD.showSucceeded("Deleted")
-                } catch {
-                    print("#\(#function): Failed to delete board, \(error)")
-                    HUD.showFailed()
-                }
-            }
-        })
-        present(alert, animated: true)
-    }
-
     private func showItem(id: ObjectID) {
-        guard let item = viewModel.item(with: id) else {
+        guard let item = viewModel.object(with: id) else {
             HUD.showFailed()
             return
         }

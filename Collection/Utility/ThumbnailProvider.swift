@@ -32,4 +32,25 @@ struct ThumbnailProvider {
             return .failure(error)
         }
     }
+
+    func generateThumbnailData(url: URL, completion: @escaping (Result<Data, Error>) -> Void) {
+        let request = QLThumbnailGenerator.Request(
+            fileAt: url,
+            size: CGSize(width: 400, height: 400),
+            scale: UIScreen.main.scale,
+            representationTypes: .thumbnail)
+
+        QLThumbnailGenerator.shared.generateBestRepresentation(for: request) { thumbnail, error in
+            if let error = error {
+                completion(.failure(error))
+                return
+            }
+
+            if let data = thumbnail?.uiImage.pngData() {
+                completion(.success(data))
+            } else {
+                completion(.failure(ThumbnailError.nilImageData))
+            }
+        }
+    }
 }
