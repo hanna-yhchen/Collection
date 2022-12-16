@@ -6,6 +6,7 @@
 //
 
 import CoreData
+import DeviceKit
 import UniformTypeIdentifiers
 import UIKit
 
@@ -16,6 +17,14 @@ enum ImportError: Error {
     case unsupportedType
     case inaccessibleFile
     case unfoundDefaultBoard
+}
+
+actor ErrorActor {
+    var error: Error?
+
+    func setError(_ newError: Error) {
+        error = newError
+    }
 }
 
 actor TaskCounter {
@@ -49,6 +58,16 @@ final class ItemManager {
     }()
 
     private lazy var fileCoordinator = NSFileCoordinator()
+
+    private lazy var queue = OperationQueue()
+
+    private lazy var maxTaskCount: Int = {
+        let oldDevices: [Device] = [.iPhone6s, .iPhone6sPlus, .iPhoneSE, .iPhone7, .iPhone7Plus, .iPhone8, .iPhone8Plus]
+        if Device.current.isOneOf(oldDevices) {
+            return 1
+        }
+        return 3
+    }()
 
     // MARK: - Initializers
 
@@ -93,21 +112,34 @@ final class ItemManager {
     func process(_ urls: [URL], saveInto boardID: ObjectID, isSecurityScoped: Bool = true) async throws {
         try await withThrowingTaskGroup(of: Void.self) { group in
             let taskCounter = TaskCounter()
+            let errorActor = ErrorActor()
 
             for url in urls {
-                while await taskCounter.count >= 3 {
+                while await taskCounter.count >= maxTaskCount {
                     try await group.next()
                 }
 
                 await taskCounter.increment()
 
-                group.addTask {[unowned self] in
-                    try processFile(url: url, saveInto: boardID, isSecurityScoped: isSecurityScoped)
-                    await taskCounter.decrement()
+                group.addTask { [unowned self] in
+                    processFile(url: url, saveInto: boardID, isSecurityScoped: isSecurityScoped) { error in
+                        Task {
+                            if let error = error {
+                                await errorActor.setError(error)
+                            }
+                            await taskCounter.decrement()
+                        }
+                    }
+
+                    if let error = await errorActor.error {
+                        throw error
+                    }
                 }
             }
 
-            try await group.next()
+            while await 0 < taskCounter.count {
+                try await group.next()
+            }
         }
     }
 
@@ -116,9 +148,10 @@ final class ItemManager {
 
         try await withThrowingTaskGroup(of: Void.self) { group in
             let taskCounter = TaskCounter()
+            let errorActor = ErrorActor()
 
             for provider in itemProviders {
-                while await taskCounter.count >= 3 {
+                while await taskCounter.count >= maxTaskCount {
                     try await group.next()
                 }
 
@@ -137,17 +170,30 @@ final class ItemManager {
                     if provider.hasItemConformingToTypeIdentifier(UTType.url.identifier)
                         && !provider.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier) {
                         try await processLink(provider: provider, saveInto: boardID)
+                        await taskCounter.decrement()
                     } else if provider.hasItemConformingToTypeIdentifier(UTType.plainText.identifier) {
                         try await processText(provider: provider, saveInto: boardID)
+                        await taskCounter.decrement()
                     } else {
-                        try await processFile(provider: provider, saveInto: boardID, isSecurityScoped: isSecurityScoped)
+                        processFile(provider: provider, saveInto: boardID, isSecurityScoped: isSecurityScoped) { error in
+                            Task {
+                                if let error = error {
+                                    await errorActor.setError(error)
+                                }
+                                await taskCounter.decrement()
+                            }
+                        }
                     }
 
-                    await taskCounter.decrement()
+                    if let error = await errorActor.error {
+                        throw error
+                    }
                 }
             }
 
-            try await group.next()
+            while await 0 < taskCounter.count {
+                try await group.next()
+            }
         }
     }
 
@@ -240,99 +286,116 @@ extension ItemManager {
             boardID: boardID)
     }
 
-    private func processFile(provider: NSItemProvider, saveInto boardID: ObjectID, isSecurityScoped: Bool) async throws {
-        guard let typeIdentifier = provider.registeredTypeIdentifiers
-            .compactMap({ UTType($0) })
-            .first(where: { type in
-                let isLivePhotoType = type.conforms(to: UTType.heif)
+    private func processFile(provider: NSItemProvider, saveInto boardID: ObjectID, isSecurityScoped: Bool, completion: @escaping (Error?) -> Void) {
+        queue.addOperation {
+            guard let typeIdentifier = provider.registeredTypeIdentifiers
+                .compactMap({ UTType($0) })
+                .first(where: { type in
+                    let isLivePhotoType = type.conforms(to: UTType.heif)
                     || type.conforms(to: .livePhoto)
                     || type.conforms(to: .livePhotoBundle)
 
-                return (type.isPublic || type.isDeclared) && !isLivePhotoType
-            })?
-            .identifier
-        else {
-            throw ImportError.unsupportedType
-        }
-        print("#\(#function) start process file type:", typeIdentifier)
+                    return (type.isPublic || type.isDeclared) && !isLivePhotoType
+                })?
+                .identifier
+            else {
+                completion(ImportError.unsupportedType)
+                return
+            }
 
-        return try await withCheckedThrowingContinuation { continuation in
-            provider.loadInPlaceFileRepresentation(forTypeIdentifier: typeIdentifier) {[unowned self] url, _, error in
+            print("#\(#function) start process file type:", typeIdentifier)
+
+            provider.loadInPlaceFileRepresentation(forTypeIdentifier: typeIdentifier) { [unowned self] url, _, error in
                 if let error = error {
-                    continuation.resume(throwing: error)
+                    completion(error)
                     return
                 }
 
                 guard let url = url else {
-                    continuation.resume(throwing: ImportError.invalidURL)
+                    completion(ImportError.invalidURL)
                     return
                 }
 
-                do {
-                    try processFile(url: url, saveInto: boardID, isSecurityScoped: isSecurityScoped)
-                    continuation.resume()
-                } catch {
-                    continuation.resume(throwing: error)
+                let semaphore = DispatchSemaphore(value: 0)
+
+                processFile(url: url, saveInto: boardID, isSecurityScoped: isSecurityScoped) { error in
+                    if let error = error {
+                        completion(error)
+                    } else {
+                        completion(nil)
+                    }
+                    semaphore.signal()
                 }
+
+                semaphore.wait()
             }
         }
     }
 
-    private func processFile(url: URL, saveInto boardID: ObjectID, isSecurityScoped: Bool) throws {
-        if isSecurityScoped {
-            guard url.startAccessingSecurityScopedResource() else {
-                throw ImportError.inaccessibleFile
+    private func processFile(url: URL, saveInto boardID: ObjectID, isSecurityScoped: Bool, completion: @escaping (Error?) -> Void) {
+        queue.addOperation { [unowned self] in
+            if isSecurityScoped {
+                guard url.startAccessingSecurityScopedResource() else {
+                    completion(ImportError.inaccessibleFile)
+                    return
+                }
             }
-        }
 
-        defer { url.stopAccessingSecurityScopedResource() }
+            defer { url.stopAccessingSecurityScopedResource() }
 
-        var nserror: NSError?
-        var error: Error?
+            let semaphore = DispatchSemaphore(value: 0)
 
-        fileCoordinator.coordinate(readingItemAt: url, error: &nserror) { url in
-            guard
-                let values = try? url.resourceValues(forKeys: [.nameKey, .fileSizeKey, .contentTypeKey]),
-                let size = values.fileSize,
-                size <= 50_000_000,
-                let uti = values.contentType?.identifier,
-                let data = try? Data(contentsOf: url)
-            else {
-                error = ImportError.invalidData
+            var readingError: NSError?
+
+            fileCoordinator.coordinate(readingItemAt: url, error: &readingError) { url in
+                guard
+                    let values = try? url.resourceValues(forKeys: [.fileSizeKey, .contentTypeKey]),
+                    let size = values.fileSize,
+                    size <= 50_000_000,
+                    let uti = values.contentType?.identifier,
+                    let data = try? Data(contentsOf: url)
+                else {
+                    completion(ImportError.invalidData)
+                    semaphore.signal()
+                    return
+                }
+
+                let type = displayType(of: uti)
+                let keepSourceName = type == .file
+                let sourceName = (values.name as? NSString)?.deletingPathExtension
+
+                thumbnailProvider.generateThumbnailData(url: url) { [unowned self] result in
+                    defer { semaphore.signal() }
+
+                    var thumbnailData: Data?
+                    switch result {
+                    case .success(let data):
+                        thumbnailData = data
+                    case .failure(let error):
+                        print("#\(#function): Failed to generate thumbnail, \(error)")
+                    }
+
+                    do {
+                        try storageProvider.addItem(
+                            name: keepSourceName ? sourceName : nil,
+                            displayType: type,
+                            uti: uti,
+                            itemData: data,
+                            thumbnailData: thumbnailData,
+                            boardID: boardID)
+                        completion(nil)
+                    } catch {
+                        completion(error)
+                    }
+                }
+            }
+
+            if let readingError = readingError {
+                completion(readingError)
                 return
             }
 
-            let type = displayType(of: uti)
-            let keepSourceName = type == .file
-            let sourceName = (values.name as? NSString)?.deletingPathExtension
-
-            thumbnailProvider.generateThumbnailData(url: url) { [unowned self] result in
-                var thumbnailData: Data?
-
-                switch result {
-                case .success(let data):
-                    thumbnailData = data
-                case .failure(let thumbnailError):
-                    print("#\(#function): Failed to generate thumbnail, \(thumbnailError)")
-                    error = thumbnailError
-                }
-
-                try? storageProvider.addItem(
-                    name: keepSourceName ? sourceName : nil,
-                    displayType: type,
-                    uti: uti,
-                    itemData: data,
-                    thumbnailData: thumbnailData,
-                    boardID: boardID)
-            }
-        }
-
-        if let error = error {
-            throw error
-        }
-
-        if let nserror = nserror {
-            throw nserror
+            semaphore.wait()
         }
     }
 
