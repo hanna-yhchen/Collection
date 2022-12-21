@@ -3,7 +3,8 @@ An iOS application storing files of various types and synchronizing them automat
 
 <img src="/screenshots/screenshot1.jpeg" width=20%><img src="/screenshots/screenshot2.jpeg" width=20%><img src="/screenshots/screenshot3.jpeg" width=20%><img src="/screenshots/screenshot4.jpeg" width=20%><img src="/screenshots/screenshot5.jpeg" width=20%>    
 
-(Status of submission to App Store: waiting for review)
+<a href="https://apps.apple.com/app/collection-of-inspiration/id6444243010">
+    <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg"></a>
 
 ## Features
 - Save note, images, videos, links, documents and anything else
