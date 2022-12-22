@@ -40,8 +40,6 @@ actor TaskCounter {
 }
 
 final class ItemManager {
-    static let shared = ItemManager()
-
     // MARK: - Properties
 
     private let storageProvider: StorageProvider

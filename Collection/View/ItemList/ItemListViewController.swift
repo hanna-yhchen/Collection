@@ -68,7 +68,7 @@ class ItemListViewController: UIViewController, PlaceholderViewDisplayable {
     init?(
         coder: NSCoder,
         viewModel: ItemListViewModel,
-        itemManager: ItemManager = ItemManager.shared,
+        itemManager: ItemManager = ItemManager(),
         delegate: ItemListViewControllerDelegate
     ) {
         self.viewModel = viewModel
