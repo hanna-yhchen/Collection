@@ -51,7 +51,7 @@ class ShareViewController: UIViewController {
 
         Task {
             do {
-                try await ItemManager.shared.process(attachments, isSecurityScoped: false)
+                try await ItemManager().process(attachments, isSecurityScoped: false)
             } catch {
                 print("#\(#function): Failed to process attachments: \(error)")
             }

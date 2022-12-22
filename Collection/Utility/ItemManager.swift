@@ -10,8 +10,6 @@ import DeviceKit
 import UniformTypeIdentifiers
 import UIKit
 
-typealias AudioRecord = (name: String?, url: URL, duration: TimeInterval?)
-
 enum ImportError: Error {
     case invalidData, invalidURL
     case unsupportedType
@@ -40,8 +38,6 @@ actor TaskCounter {
 }
 
 final class ItemManager {
-    static let shared = ItemManager()
-
     // MARK: - Properties
 
     private let storageProvider: StorageProvider
@@ -175,7 +171,11 @@ final class ItemManager {
                         try await processText(provider: provider, saveInto: boardID)
                         await taskCounter.decrement()
                     } else {
-                        processFile(provider: provider, saveInto: boardID, isSecurityScoped: isSecurityScoped) { error in
+                        processFile(
+                            provider: provider,
+                            saveInto: boardID,
+                            isSecurityScoped: isSecurityScoped
+                        ) { error in
                             Task {
                                 if let error = error {
                                     await errorActor.setError(error)
@@ -212,7 +212,7 @@ final class ItemManager {
             boardID: boardID)
     }
 
-    func process(_ record: AudioRecord, saveInto boardID: ObjectID) throws {
+    func process(_ record: (name: String?, url: URL, duration: TimeInterval?), saveInto boardID: ObjectID) throws {
         var nserror: NSError?
         var error: Error?
 

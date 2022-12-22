@@ -7,7 +7,6 @@
 
 import Combine
 import LinkPresentation
-import UniformTypeIdentifiers
 
 class RichLinkProvider {
     static let shared = RichLinkProvider()
@@ -18,6 +17,10 @@ class RichLinkProvider {
     enum RichLinkError: Error {
         case foundNilMetadata
     }
+
+    // MARK: - Initializer
+
+    private init() {}
 
     // MARK: - Methods
 

@@ -68,7 +68,7 @@ class ItemListViewController: UIViewController, PlaceholderViewDisplayable {
     init?(
         coder: NSCoder,
         viewModel: ItemListViewModel,
-        itemManager: ItemManager = ItemManager.shared,
+        itemManager: ItemManager = ItemManager(),
         delegate: ItemListViewControllerDelegate
     ) {
         self.viewModel = viewModel
@@ -265,7 +265,7 @@ extension ItemListViewController: ImportMethodHandling,
         didPickDocument(controller, urls: urls)
     }
 
-    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
         didPickMedia(picker, info: info)
     }
 }
