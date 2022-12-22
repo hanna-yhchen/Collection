@@ -7,7 +7,6 @@
 
 import Combine
 import LinkPresentation
-import UniformTypeIdentifiers
 
 class RichLinkProvider {
     static let shared = RichLinkProvider()

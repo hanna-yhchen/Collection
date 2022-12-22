@@ -8,6 +8,8 @@
 import AVFoundation
 import UIKit
 
+typealias AudioRecord = (name: String?, url: URL, duration: TimeInterval?)
+
 class AudioRecorderController: UIViewController {
 
     enum State {

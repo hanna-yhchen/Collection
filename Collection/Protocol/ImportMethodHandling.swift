@@ -44,7 +44,7 @@ extension ImportMethodHandling {
                     case .success(let record):
                         Task {
                             do {
-                                try await itemManager.process(record, saveInto: boardID)
+                                try itemManager.process(record, saveInto: boardID)
                             } catch {
                                 print("#\(#function): Failed to save new record, \(error)")
                             }
