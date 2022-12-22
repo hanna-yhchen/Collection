@@ -28,7 +28,7 @@ class StorageProvider {
 
     // MARK: - Properties
 
-    lazy var actor: StorageActor = {
+    private(set) lazy var actor: StorageActor = {
         #if MainApp
         return .mainApp
         #elseif ShareExtension
@@ -36,7 +36,7 @@ class StorageProvider {
         #endif
     }()
     let persistentContainer: NSPersistentCloudKitContainer
-    lazy var historyManager = StorageHistoryManager(storageProvider: self, actor: actor)
+    private(set) lazy var historyManager = StorageHistoryManager(storageProvider: self, actor: actor)
 
     // swiftlint:disable:next implicitly_unwrapped_optional
     private var _privatePersistentStore: NSPersistentStore!
@@ -54,7 +54,7 @@ class StorageProvider {
 
     // MARK: - Initializer
 
-    init() {
+    private init() {
         self.persistentContainer = NSPersistentCloudKitContainer(name: AppIdentifier.coreDataModel)
         // TODO: tackle the situation when user turn off iCloud sync
         configurePersistentContainer()

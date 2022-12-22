@@ -19,6 +19,10 @@ class RichLinkProvider {
         case foundNilMetadata
     }
 
+    // MARK: - Initializer
+
+    private init() {}
+
     // MARK: - Methods
 
     func fetchMetadata(for url: URL) -> Future<RichLink, Error> {
