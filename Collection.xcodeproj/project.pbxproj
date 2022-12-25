@@ -46,6 +46,7 @@
 		B55298A42926F03600EF3D52 /* StorageProvider+Tag.swift in Sources */ = {isa = PBXBuildFile; fileRef = B55298A32926F03600EF3D52 /* StorageProvider+Tag.swift */; };
 		B55298A62926F09F00EF3D52 /* TagColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = B55298A52926F09F00EF3D52 /* TagColor.swift */; };
 		B55298A829273A2700EF3D52 /* TagSelectorViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B55298A729273A2700EF3D52 /* TagSelectorViewController.swift */; };
+		B558C1D92958A75600856075 /* StorageProvider+Board.swift in Sources */ = {isa = PBXBuildFile; fileRef = B515D5EA29124CC400072CBC /* StorageProvider+Board.swift */; };
 		B559B724293128FB00A53D73 /* LGSideMenuController in Frameworks */ = {isa = PBXBuildFile; productRef = B559B723293128FB00A53D73 /* LGSideMenuController */; };
 		B559B7262931B6E000A53D73 /* MainFlowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B559B7252931B6E000A53D73 /* MainFlowController.swift */; };
 		B559BE542914FACF00F342C1 /* StorageHistoryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B559BE532914FACF00F342C1 /* StorageHistoryManager.swift */; };
@@ -685,6 +686,7 @@
 				B5D4BB3829409B3C00118588 /* CoreDataWrapper.swift in Sources */,
 				B523E93629164B4F00180B36 /* ShareViewController.swift in Sources */,
 				B5D6C12E29174BD00050A3E0 /* UserDefault.swift in Sources */,
+				B558C1D92958A75600856075 /* StorageProvider+Board.swift in Sources */,
 				B5D6C12D29174BC60050A3E0 /* UserDefaults+Extension.swift in Sources */,
 				B5D6C12C29174BB90050A3E0 /* StorageHistoryManager.swift in Sources */,
 				B5B64E072917BB95002183FA /* ItemManager.swift in Sources */,

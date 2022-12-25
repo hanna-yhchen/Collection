@@ -22,16 +22,6 @@ final class ItemManager {
     private let storageProvider: StorageProvider
     private let thumbnailProvider: ThumbnailProvider
 
-    private lazy var defaultBoardID: ObjectID? = {
-        guard
-            let url = URL(string: UserDefaults.defaultBoardURL),
-            let boardID = storageProvider.persistentContainer.persistentStoreCoordinator
-                .managedObjectID(forURIRepresentation: url)
-        else { return nil }
-
-        return boardID
-    }()
-
     private lazy var fileCoordinator = NSFileCoordinator()
     private lazy var queue = OperationQueue()
 
@@ -354,7 +344,7 @@ extension ItemManager {
         var boardID = boardID
 
         if boardID == nil {
-            boardID = defaultBoardID
+            boardID = storageProvider.getInboxBoardID()
         }
 
         guard let boardID = boardID else {
@@ -387,17 +377,6 @@ extension NSItemProvider: @unchecked Sendable {}
 // MARK: - NSItemProvider+async/await wrapper
 
 extension NSItemProvider {
-    func loadDataRepresentation(forTypeIdentifier typeIdentifier: String) async throws -> Data? {
-        return try await withCheckedThrowingContinuation { continuation in
-            loadDataRepresentation(forTypeIdentifier: typeIdentifier) { data, error in
-                if let error = error {
-                    continuation.resume(throwing: error)
-                } else {
-                    continuation.resume(returning: data)
-                }
-            }
-        }
-    }
     func loadObject<T>(ofClass: T.Type) async throws -> T? where T: _ObjectiveCBridgeable, T._ObjectiveCType: NSItemProviderReading {
         return try await withCheckedThrowingContinuation { continuation in
             _ = loadObject(ofClass: ofClass) { object, error in
@@ -410,6 +389,8 @@ extension NSItemProvider {
         }
     }
 }
+
+// MARK: - String+URL validation
 
 private extension String {
     // ref: https://stackoverflow.com/questions/28079123/how-to-check-validity-of-url-in-swift/
