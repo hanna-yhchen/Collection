@@ -6,7 +6,6 @@
 //
 
 import CoreData
-import DeviceKit
 import UniformTypeIdentifiers
 import UIKit
 
@@ -17,53 +16,14 @@ enum ImportError: Error {
     case unfoundDefaultBoard
 }
 
-actor ErrorActor {
-    var error: Error?
-
-    func setError(_ newError: Error) {
-        error = newError
-    }
-}
-
-actor TaskCounter {
-    var count = 0
-
-    func increment() {
-        count += 1
-    }
-
-    func decrement() {
-        count -= 1
-    }
-}
-
 final class ItemManager {
     // MARK: - Properties
 
     private let storageProvider: StorageProvider
     private let thumbnailProvider: ThumbnailProvider
 
-    private lazy var defaultBoardID: ObjectID? = {
-        guard
-            let url = URL(string: UserDefaults.defaultBoardURL),
-            let boardID = storageProvider.persistentContainer.persistentStoreCoordinator
-                .managedObjectID(forURIRepresentation: url)
-        else { return nil }
-
-        return boardID
-    }()
-
     private lazy var fileCoordinator = NSFileCoordinator()
-
     private lazy var queue = OperationQueue()
-
-    private lazy var maxTaskCount: Int = {
-        let oldDevices: [Device] = [.iPhone6s, .iPhone6sPlus, .iPhoneSE, .iPhone7, .iPhone7Plus, .iPhone8, .iPhone8Plus]
-        if Device.current.isOneOf(oldDevices) {
-            return 1
-        }
-        return 3
-    }()
 
     // MARK: - Initializers
 
@@ -107,35 +67,16 @@ final class ItemManager {
 
     func process(_ urls: [URL], saveInto boardID: ObjectID, isSecurityScoped: Bool = true) async throws {
         try await withThrowingTaskGroup(of: Void.self) { group in
-            let taskCounter = TaskCounter()
-            let errorActor = ErrorActor()
-
             for url in urls {
-                while await taskCounter.count >= maxTaskCount {
-                    try await group.next()
+                let shouldContinue = group.addTaskUnlessCancelled { [unowned self] in
+                    try Task.checkCancellation()
+                    try await processFile(url: url, saveInto: boardID, isSecurityScoped: isSecurityScoped)
                 }
 
-                await taskCounter.increment()
-
-                group.addTask { [unowned self] in
-                    processFile(url: url, saveInto: boardID, isSecurityScoped: isSecurityScoped) { error in
-                        Task {
-                            if let error = error {
-                                await errorActor.setError(error)
-                            }
-                            await taskCounter.decrement()
-                        }
-                    }
-
-                    if let error = await errorActor.error {
-                        throw error
-                    }
-                }
+                guard shouldContinue else { break }
             }
 
-            while await 0 < taskCounter.count {
-                try await group.next()
-            }
+            try await group.waitForAll()
         }
     }
 
@@ -143,57 +84,33 @@ final class ItemManager {
         let boardID = try unwrappedBoardID(of: boardID)
 
         try await withThrowingTaskGroup(of: Void.self) { group in
-            let taskCounter = TaskCounter()
-            let errorActor = ErrorActor()
-
             for provider in itemProviders {
-                while await taskCounter.count >= maxTaskCount {
-                    try await group.next()
-                }
+                let shouldContinue = group.addTaskUnlessCancelled { [unowned self] in
+                    try Task.checkCancellation()
 
-                await taskCounter.increment()
+                    print("#\(#function): start handling an item with types:", provider.registeredTypeIdentifiers)
 
-                group.addTask {[unowned self] in
-                    print("#\(#function): start handling items with types:", provider.registeredTypeIdentifiers)
                     guard
                         provider.hasItemConformingToTypeIdentifier(UTType.data.identifier),
                         provider.registeredTypeIdentifiers.contains(where: { UTType($0) != nil })
                     else {
-                        await taskCounter.decrement()
                         throw ImportError.unsupportedType
                     }
 
                     if provider.hasItemConformingToTypeIdentifier(UTType.url.identifier)
                         && !provider.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier) {
                         try await processLink(provider: provider, saveInto: boardID)
-                        await taskCounter.decrement()
                     } else if provider.hasItemConformingToTypeIdentifier(UTType.plainText.identifier) {
                         try await processText(provider: provider, saveInto: boardID)
-                        await taskCounter.decrement()
                     } else {
-                        processFile(
-                            provider: provider,
-                            saveInto: boardID,
-                            isSecurityScoped: isSecurityScoped
-                        ) { error in
-                            Task {
-                                if let error = error {
-                                    await errorActor.setError(error)
-                                }
-                                await taskCounter.decrement()
-                            }
-                        }
-                    }
-
-                    if let error = await errorActor.error {
-                        throw error
+                        try await processFile(provider: provider, saveInto: boardID, isSecurityScoped: isSecurityScoped)
                     }
                 }
+
+                guard shouldContinue else { break }
             }
 
-            while await 0 < taskCounter.count {
-                try await group.next()
-            }
+            try await group.waitForAll()
         }
     }
 
@@ -286,6 +203,18 @@ extension ItemManager {
             boardID: boardID)
     }
 
+    private func processFile(provider: NSItemProvider, saveInto boardID: ObjectID, isSecurityScoped: Bool) async throws {
+        return try await withCheckedThrowingContinuation { continuation in
+            processFile(provider: provider, saveInto: boardID, isSecurityScoped: isSecurityScoped) { error in
+                if let error = error {
+                    continuation.resume(throwing: error)
+                } else {
+                    continuation.resume()
+                }
+            }
+        }
+    }
+
     private func processFile(provider: NSItemProvider, saveInto boardID: ObjectID, isSecurityScoped: Bool, completion: @escaping (Error?) -> Void) {
         queue.addOperation {
             guard let typeIdentifier = provider.registeredTypeIdentifiers
@@ -328,6 +257,18 @@ extension ItemManager {
                 }
 
                 semaphore.wait()
+            }
+        }
+    }
+
+    private func processFile(url: URL, saveInto boardID: ObjectID, isSecurityScoped: Bool) async throws {
+        return try await withCheckedThrowingContinuation { continuation in
+            processFile(url: url, saveInto: boardID, isSecurityScoped: isSecurityScoped) { error in
+                if let error = error {
+                    continuation.resume(throwing: error)
+                } else {
+                    continuation.resume()
+                }
             }
         }
     }
@@ -403,7 +344,7 @@ extension ItemManager {
         var boardID = boardID
 
         if boardID == nil {
-            boardID = defaultBoardID
+            boardID = storageProvider.getInboxBoardID()
         }
 
         guard let boardID = boardID else {
@@ -436,17 +377,6 @@ extension NSItemProvider: @unchecked Sendable {}
 // MARK: - NSItemProvider+async/await wrapper
 
 extension NSItemProvider {
-    func loadDataRepresentation(forTypeIdentifier typeIdentifier: String) async throws -> Data? {
-        return try await withCheckedThrowingContinuation { continuation in
-            loadDataRepresentation(forTypeIdentifier: typeIdentifier) { data, error in
-                if let error = error {
-                    continuation.resume(throwing: error)
-                } else {
-                    continuation.resume(returning: data)
-                }
-            }
-        }
-    }
     func loadObject<T>(ofClass: T.Type) async throws -> T? where T: _ObjectiveCBridgeable, T._ObjectiveCType: NSItemProviderReading {
         return try await withCheckedThrowingContinuation { continuation in
             _ = loadObject(ofClass: ofClass) { object, error in
@@ -459,6 +389,8 @@ extension NSItemProvider {
         }
     }
 }
+
+// MARK: - String+URL validation
 
 private extension String {
     // ref: https://stackoverflow.com/questions/28079123/how-to-check-validity-of-url-in-swift/
