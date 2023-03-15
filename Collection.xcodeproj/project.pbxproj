@@ -68,6 +68,8 @@
 		B59BE4062923475600E50B30 /* GridCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = B59BE4042923475600E50B30 /* GridCell.swift */; };
 		B59BE4072923475600E50B30 /* GridCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = B59BE4052923475600E50B30 /* GridCell.xib */; };
 		B59BE4092923643F00E50B30 /* ItemLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = B59BE4082923643F00E50B30 /* ItemLayout.swift */; };
+		B59E90F029C20FFF002B8C9C /* Strings.swift in Sources */ = {isa = PBXBuildFile; fileRef = B59E90EF29C20FFF002B8C9C /* Strings.swift */; };
+		B59E90F129C20FFF002B8C9C /* Strings.swift in Sources */ = {isa = PBXBuildFile; fileRef = B59E90EF29C20FFF002B8C9C /* Strings.swift */; };
 		B5A298932941C409007ED048 /* FetchedResultsProviding.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5A298922941C409007ED048 /* FetchedResultsProviding.swift */; };
 		B5AEC1A92926409300AA4072 /* BoardSelectorViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5AEC1A82926409300AA4072 /* BoardSelectorViewController.swift */; };
 		B5AEC1AB29267A8800AA4072 /* BoardSelectorViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5AEC1AA29267A8800AA4072 /* BoardSelectorViewModel.swift */; };
@@ -191,6 +193,7 @@
 		B59BE4042923475600E50B30 /* GridCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GridCell.swift; sourceTree = "<group>"; };
 		B59BE4052923475600E50B30 /* GridCell.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = GridCell.xib; sourceTree = "<group>"; };
 		B59BE4082923643F00E50B30 /* ItemLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemLayout.swift; sourceTree = "<group>"; };
+		B59E90EF29C20FFF002B8C9C /* Strings.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Strings.swift; sourceTree = "<group>"; };
 		B5A298922941C409007ED048 /* FetchedResultsProviding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FetchedResultsProviding.swift; sourceTree = "<group>"; };
 		B5AEC1A82926409300AA4072 /* BoardSelectorViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardSelectorViewController.swift; sourceTree = "<group>"; };
 		B5AEC1AA29267A8800AA4072 /* BoardSelectorViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardSelectorViewModel.swift; sourceTree = "<group>"; };
@@ -410,6 +413,14 @@
 			path = TagEditor;
 			sourceTree = "<group>";
 		};
+		B59E90EE29C20FFF002B8C9C /* Generated */ = {
+			isa = PBXGroup;
+			children = (
+				B59E90EF29C20FFF002B8C9C /* Strings.swift */,
+			);
+			path = Generated;
+			sourceTree = "<group>";
+		};
 		B5AEC1AC29267A9D00AA4072 /* ItemEditor */ = {
 			isa = PBXGroup;
 			children = (
@@ -504,6 +515,7 @@
 		B5E50E15290F6E94006A7B22 /* Resource */ = {
 			isa = PBXGroup;
 			children = (
+				B59E90EE29C20FFF002B8C9C /* Generated */,
 				B5E50E05290BDF17006A7B22 /* Assets.xcassets */,
 				B5F72D2629111852007B4B06 /* Collection.entitlements */,
 			);
@@ -562,8 +574,9 @@
 				B5E50DF2290BDF16006A7B22 /* Sources */,
 				B5E50DF3290BDF16006A7B22 /* Frameworks */,
 				B5E50DF4290BDF16006A7B22 /* Resources */,
-				B5E50E10290BE038006A7B22 /* ShellScript */,
+				B5E50E10290BE038006A7B22 /* Run Script: SwiftLint */,
 				B523E94129164B4F00180B36 /* Embed Foundation Extensions */,
+				B59E90ED29C20EE6002B8C9C /* Run Script: SwiftGen */,
 			);
 			buildRules = (
 			);
@@ -652,9 +665,8 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		B5E50E10290BE038006A7B22 /* ShellScript */ = {
+		B59E90ED29C20EE6002B8C9C /* Run Script: SwiftGen */ = {
 			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
 			);
@@ -662,6 +674,25 @@
 			);
 			inputPaths = (
 			);
+			name = "Run Script: SwiftGen";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"$PROJECT_DIR/SwiftGen/bin/swiftgen\"\n";
+		};
+		B5E50E10290BE038006A7B22 /* Run Script: SwiftLint */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Run Script: SwiftLint";
 			outputFileListPaths = (
 			);
 			outputPaths = (
@@ -689,6 +720,7 @@
 				B558C1D92958A75600856075 /* StorageProvider+Board.swift in Sources */,
 				B5D6C12D29174BC60050A3E0 /* UserDefaults+Extension.swift in Sources */,
 				B5D6C12C29174BB90050A3E0 /* StorageHistoryManager.swift in Sources */,
+				B59E90F129C20FFF002B8C9C /* Strings.swift in Sources */,
 				B5B64E072917BB95002183FA /* ItemManager.swift in Sources */,
 				B5FE2E8C294B6DAF0023A8BB /* StorageProvider+Item.swift in Sources */,
 				B5B64E092917BBC6002183FA /* DateFormatter+Extension.swift in Sources */,
@@ -762,6 +794,7 @@
 				B515D5EB29124CC400072CBC /* StorageProvider+Board.swift in Sources */,
 				B515D5DF29121EE100072CBC /* BoardListViewController.swift in Sources */,
 				B573118D2913B0F000AD129F /* UserDefault.swift in Sources */,
+				B59E90F029C20FFF002B8C9C /* Strings.swift in Sources */,
 				B5AEC1A92926409300AA4072 /* BoardSelectorViewController.swift in Sources */,
 				B5D4BB372940956200118588 /* CoreDataWrapper.swift in Sources */,
 				B515D5EF291371D700072CBC /* UserDefaults+Extension.swift in Sources */,
@@ -874,6 +907,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
@@ -931,6 +965,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
