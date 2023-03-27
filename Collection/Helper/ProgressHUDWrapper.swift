@@ -13,11 +13,11 @@ enum HUD {
     }
 
     static func showProcessing() {
-        ProgressHUD.show("Processing")
+        ProgressHUD.show(Strings.Hud.processing)
     }
 
     static func showImporting() {
-        ProgressHUD.show("Importing")
+        ProgressHUD.show(Strings.Hud.importing)
     }
 
     static func showSucceeded(_ message: String? = nil) {

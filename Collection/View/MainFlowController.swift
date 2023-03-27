@@ -165,15 +165,15 @@ class MainFlowController: LGSideMenuController {
 
     func showDeletionAlert(object: ManagedObject) {
         let alert = UIAlertController(
-            title: String(format: Constant.Message.deletionTitleFormat, object.description),
-            message: String(format: Constant.Message.deletionMsgFormat, object.description),
+            title: Strings.Deletion.title(object.description),
+            message: Strings.Deletion.reconfirmation(object.description),
             preferredStyle: UIDevice.current.userInterfaceIdiom == .phone ? .actionSheet : .alert)
-        alert.addAction(UIAlertAction(title: Constant.Message.cancel, style: .cancel))
-        alert.addAction(UIAlertAction(title: Constant.Message.delete, style: .destructive) { [unowned self] _ in
+        alert.addAction(UIAlertAction(title: Strings.Common.cancel, style: .cancel))
+        alert.addAction(UIAlertAction(title: Strings.Common.delete, style: .destructive) { [unowned self] _ in
             Task {
                 do {
                     try await object.delete(context: storageProvider.persistentContainer.viewContext)
-                    HUD.showSucceeded(Constant.Message.deleted)
+                    HUD.showSucceeded(Strings.Deletion.complete)
                 } catch {
                     print("#\(#function): Failed to delete board, \(error)")
                     HUD.showFailed()
@@ -195,7 +195,7 @@ extension MainFlowController: BoardListViewControllerDelegate {
     func showNameEditorViewController(boardID: ObjectID) {
         let context = storageProvider.persistentContainer.viewContext
         guard let board = try? context.existingObject(with: boardID) as? Board else {
-            HUD.showFailed(Constant.Message.missingData)
+            HUD.showFailed(Strings.CommonError.missingData)
             return
         }
 
@@ -252,7 +252,7 @@ extension MainFlowController: ItemListViewControllerDelegate {
     func showNameEditorViewController(itemID: ObjectID) {
         let context = storageProvider.persistentContainer.viewContext
         guard let item = try? context.existingObject(with: itemID) as? Item else {
-            HUD.showFailed(Constant.Message.missingData)
+            HUD.showFailed(Strings.CommonError.missingData)
             return
         }
 
@@ -298,7 +298,7 @@ extension MainFlowController: ItemListViewControllerDelegate {
             let item = try? context.existingObject(with: itemID) as? Item,
             let board = item.board
         else {
-            HUD.showFailed(Constant.Message.missingData)
+            HUD.showFailed(Strings.CommonError.missingData)
             return
         }
 

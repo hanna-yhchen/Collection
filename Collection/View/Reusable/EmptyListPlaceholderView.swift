@@ -1,5 +1,5 @@
 //
-//  HintPlaceholderView.swift
+//  EmptyListPlaceholderView.swift
 //  Collection
 //
 //  Created by Hanna Chen on 2022/11/29.
@@ -7,16 +7,16 @@
 
 import UIKit
 
-class HintPlaceholderView: UIView {
+class EmptyListPlaceholderView: UIView {
 
     private lazy var label: UILabel = {
         let label = UILabel()
 
         let aString = NSMutableAttributedString(
-            string: "There is nothing here now\n",
+            string: Strings.EmptyListPlaceholder.title + .newLine,
             attributes: [.font: UIFont.systemFont(ofSize: 20, weight: .semibold)])
         let hintString = NSAttributedString(
-            string: "Tap the + to get started",
+            string: Strings.EmptyListPlaceholder.hint,
             attributes: [.font: UIFont.systemFont(ofSize: 14, weight: .medium)])
         aString.append(hintString)
 

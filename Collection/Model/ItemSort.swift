@@ -16,9 +16,9 @@ enum ItemSort {
     var title: String {
         switch self {
         case .creationDate:
-            return "Date created"
+            return Strings.ItemList.Sort.creationDate
         case .updateDate:
-            return "Date updated"
+            return Strings.ItemList.Sort.updateDate
         }
     }
 

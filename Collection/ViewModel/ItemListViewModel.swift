@@ -86,11 +86,15 @@ final class ItemListViewModel: NSObject, FetchedResultsProviding {
         switch scope {
         case .allItems:
             self.boardID = storageProvider.getInboxBoardID()
-            self.title = "All Items"
+            self.title = Strings.ItemList.allItems
         case .board(let boardID):
             self.boardID = boardID
             let board = try? context.existingObject(with: boardID) as? Board
-            self.title = board?.name
+            if let isInbox = board?.isInbox, isInbox {
+                self.title = Strings.Common.inbox
+            } else {
+                self.title = board?.name
+            }
         }
 
         super.init()

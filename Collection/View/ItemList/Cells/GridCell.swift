@@ -49,8 +49,6 @@ class GridCell: UICollectionViewCell, ItemCell {
         case .note:
             if let note = item.note, !note.isEmpty {
                 noteLabel.text = note
-            } else {
-                noteLabel.text = "(empty)\n"
             }
             iconImageView.image = nil
         default:

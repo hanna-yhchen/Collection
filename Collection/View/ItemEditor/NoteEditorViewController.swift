@@ -40,9 +40,11 @@ class NoteEditorViewController: UIViewController {
     // MARK: - Private
 
     private func configureHierarchy() {
+        titleTextField.placeholder = Strings.NoteEditor.TitleTextField.placeholder
         titleTextField.text = viewModel.name
         noteTextView.text = viewModel.note
         sheetTitleLabel.text = viewModel.scenario.title
+        placeholderLabel.text = Strings.NoteEditor.NoteTextView.placeholder
         placeholderLabel.isHidden = !viewModel.note.isEmpty
     }
 
@@ -71,11 +73,11 @@ class NoteEditorViewController: UIViewController {
 
     private func showUnsavedChangesAlert() {
         let alert = UIAlertController(
-            title: "Unsaved Changes",
-            message: "You have unsaved changes. Are you sure you want to leave this page and discard your changes?",
+            title: Strings.NoteEditor.UnsavedChanges.title,
+            message: Strings.NoteEditor.UnsavedChanges.warning,
             preferredStyle: UIDevice.current.userInterfaceIdiom == .phone ? .actionSheet : .alert)
-        alert.addAction(UIAlertAction(title: "Stay", style: .cancel))
-        alert.addAction(UIAlertAction(title: "Discard", style: .destructive) {[unowned self] _ in
+        alert.addAction(UIAlertAction(title: Strings.NoteEditor.UnsavedChanges.stay, style: .cancel))
+        alert.addAction(UIAlertAction(title: Strings.NoteEditor.UnsavedChanges.discard, style: .destructive) {[unowned self] _ in
             dismiss(animated: true)
         })
         present(alert, animated: true)

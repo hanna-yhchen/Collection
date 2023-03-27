@@ -16,9 +16,9 @@ final class NoteEditorViewModel {
         var title: String {
             switch self {
             case .create:
-                return "New note"
+                return Strings.NoteEditor.Title.create
             case .update:
-                return "Edit note"
+                return Strings.NoteEditor.Title.edit
             }
         }
     }
@@ -28,8 +28,8 @@ final class NoteEditorViewModel {
     private let itemManager: ItemManager
     let scenario: Scenario
 
-    @Published var name = ""
-    @Published var note = ""
+    @Published var name: String = .empty
+    @Published var note: String = .empty
 
     private(set) lazy var canSave = Publishers.CombineLatest($name, $note)
         .map { !($0.isEmpty && $1.isEmpty) }
@@ -54,8 +54,8 @@ final class NoteEditorViewModel {
 
         switch scenario {
         case .update(let item):
-            self.name = item.name ?? ""
-            self.note = item.note ?? ""
+            self.name = item.name ?? .empty
+            self.note = item.note ?? .empty
         default:
             break
         }

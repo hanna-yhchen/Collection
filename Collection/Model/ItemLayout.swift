@@ -50,11 +50,11 @@ enum ItemLayout: Int, CaseIterable {
     var title: String {
         switch self {
         case .largeCard:
-            return "Details"
+            return Strings.ItemList.Layout.Title.details
         case .smallCard:
-            return "Summary"
+            return Strings.ItemList.Layout.Title.summary
         case .grid:
-            return "Grid"
+            return Strings.ItemList.Layout.Title.grid
         }
     }
 

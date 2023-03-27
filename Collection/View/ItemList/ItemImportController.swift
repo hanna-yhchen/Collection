@@ -10,6 +10,7 @@ import UIKit
 
 class ItemImportController: UIViewController {
 
+    @IBOutlet var titleLabel: UILabel!
     @IBOutlet var collectionView: UICollectionView!
 
     lazy var selectMethod = PassthroughSubject<ImportMethod, Never>()
@@ -45,6 +46,7 @@ class ItemImportController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
+        titleLabel.text = Strings.ItemImport.title
         configureCollectionView()
         configureSheetPresentation()
     }

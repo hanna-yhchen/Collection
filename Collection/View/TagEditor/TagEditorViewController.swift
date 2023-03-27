@@ -48,8 +48,10 @@ class TagEditorViewController: UIViewController {
 
     private func configureHierarchy() {
         colorTagButtons.sort { $0.tag < $1.tag }
+        saveButton.setTitle(Strings.TagEditor.SaveButton.title, for: .normal)
         saveButton.isEnabled = false
         titleLabel.text = viewModel.scenario.title
+        nameTextField.placeholder = Strings.TagEditor.NameTextField.placeholder
         nameTextField.text = viewModel.scenario.tagName
         selectedColorIndex = viewModel.scenario.tagColorIndex ?? 0
     }

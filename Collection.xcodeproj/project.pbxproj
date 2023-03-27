@@ -79,11 +79,12 @@
 		B5B64E072917BB95002183FA /* ItemManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5B64E052917A52A002183FA /* ItemManager.swift */; };
 		B5B64E082917BBA0002183FA /* ThumbnailProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = B50E7C042910B32B0027B56A /* ThumbnailProvider.swift */; };
 		B5B64E092917BBC6002183FA /* DateFormatter+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = B52203F629101C7100F2224B /* DateFormatter+Extension.swift */; };
-		B5C40F722935F05000AB2C8B /* HintPlaceholderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5C40F712935F05000AB2C8B /* HintPlaceholderView.swift */; };
+		B5C40F722935F05000AB2C8B /* EmptyListPlaceholderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5C40F712935F05000AB2C8B /* EmptyListPlaceholderView.swift */; };
 		B5C40F752935F80700AB2C8B /* PlaceholderViewDisplayable.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5C40F742935F80700AB2C8B /* PlaceholderViewDisplayable.swift */; };
 		B5D4BB3529407D3100118588 /* ItemListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5D4BB3429407D3100118588 /* ItemListViewModel.swift */; };
 		B5D4BB372940956200118588 /* CoreDataWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5D4BB362940956200118588 /* CoreDataWrapper.swift */; };
 		B5D4BB3829409B3C00118588 /* CoreDataWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5D4BB362940956200118588 /* CoreDataWrapper.swift */; };
+		B5D5B90529CDF4E900DFE1B1 /* String+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5D5B90429CDF4E900DFE1B1 /* String+Extension.swift */; };
 		B5D6C12B29174BA90050A3E0 /* StorageProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5E50E17290F72F2006A7B22 /* StorageProvider.swift */; };
 		B5D6C12C29174BB90050A3E0 /* StorageHistoryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B559BE532914FACF00F342C1 /* StorageHistoryManager.swift */; };
 		B5D6C12D29174BC60050A3E0 /* UserDefaults+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = B515D5EE291371D700072CBC /* UserDefaults+Extension.swift */; };
@@ -202,10 +203,11 @@
 		B5AEC1A82926409300AA4072 /* BoardSelectorViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardSelectorViewController.swift; sourceTree = "<group>"; };
 		B5AEC1AA29267A8800AA4072 /* BoardSelectorViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardSelectorViewModel.swift; sourceTree = "<group>"; };
 		B5B64E052917A52A002183FA /* ItemManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemManager.swift; sourceTree = "<group>"; };
-		B5C40F712935F05000AB2C8B /* HintPlaceholderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HintPlaceholderView.swift; sourceTree = "<group>"; };
+		B5C40F712935F05000AB2C8B /* EmptyListPlaceholderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptyListPlaceholderView.swift; sourceTree = "<group>"; };
 		B5C40F742935F80700AB2C8B /* PlaceholderViewDisplayable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceholderViewDisplayable.swift; sourceTree = "<group>"; };
 		B5D4BB3429407D3100118588 /* ItemListViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemListViewModel.swift; sourceTree = "<group>"; };
 		B5D4BB362940956200118588 /* CoreDataWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataWrapper.swift; sourceTree = "<group>"; };
+		B5D5B90429CDF4E900DFE1B1 /* String+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Extension.swift"; sourceTree = "<group>"; };
 		B5D6C12A2916ACAF0050A3E0 /* ShareExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ShareExtension.entitlements; sourceTree = "<group>"; };
 		B5DE8846291E2556009B0957 /* SmallCardCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmallCardCell.swift; sourceTree = "<group>"; };
 		B5DE8847291E2556009B0957 /* SmallCardCell.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = SmallCardCell.xib; sourceTree = "<group>"; };
@@ -355,6 +357,7 @@
 				B52203F629101C7100F2224B /* DateFormatter+Extension.swift */,
 				B5136DAA29246793009F26F3 /* Item+Extension.swift */,
 				B51656B629385D7500965F3B /* NSNotification+Extension.swift */,
+				B5D5B90429CDF4E900DFE1B1 /* String+Extension.swift */,
 				B52203F4290FCA2200F2224B /* UICollectionViewCell+Extension.swift */,
 				B538E9E52910277300DF5DEB /* UIStoryboard+Extension.swift */,
 				B50E8F72291BB14900E64E36 /* UITextField+Extension.swift */,
@@ -437,7 +440,7 @@
 		B5C40F732935F05800AB2C8B /* Reusable */ = {
 			isa = PBXGroup;
 			children = (
-				B5C40F712935F05000AB2C8B /* HintPlaceholderView.swift */,
+				B5C40F712935F05000AB2C8B /* EmptyListPlaceholderView.swift */,
 			);
 			path = Reusable;
 			sourceTree = "<group>";
@@ -765,7 +768,7 @@
 				B55B1388292164D200607345 /* ImportMethodCell.swift in Sources */,
 				B59B050B29358984003B913C /* TagEditorViewModel.swift in Sources */,
 				B50E0A8C2922372300E00432 /* PreviewItem.swift in Sources */,
-				B5C40F722935F05000AB2C8B /* HintPlaceholderView.swift in Sources */,
+				B5C40F722935F05000AB2C8B /* EmptyListPlaceholderView.swift in Sources */,
 				B57F94E7293265EB00696E8E /* SideMenuViewController.swift in Sources */,
 				B5E50E1A290F7A31006A7B22 /* CoreDataHelper.swift in Sources */,
 				B5DEA41E291CC8900068CFE0 /* AudioRecorderController.swift in Sources */,
@@ -801,6 +804,7 @@
 				B5E50E18290F72F2006A7B22 /* StorageProvider.swift in Sources */,
 				B5C40F752935F80700AB2C8B /* PlaceholderViewDisplayable.swift in Sources */,
 				B5FE2E812949B26C0023A8BB /* BoardListViewModel.swift in Sources */,
+				B5D5B90529CDF4E900DFE1B1 /* String+Extension.swift in Sources */,
 				B515D5EB29124CC400072CBC /* StorageProvider+Board.swift in Sources */,
 				B515D5DF29121EE100072CBC /* BoardListViewController.swift in Sources */,
 				B573118D2913B0F000AD129F /* UserDefault.swift in Sources */,

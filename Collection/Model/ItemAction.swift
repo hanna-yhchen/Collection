@@ -17,15 +17,15 @@ enum ItemAction: Int, CaseIterable, TitleProvidable {
     var title: String {
         switch self {
         case .rename:
-            return "Rename"
+            return Strings.Common.rename
         case .tags:
-            return "Tags"
+            return Strings.Common.tags
         case .move:
-            return "Move to"
+            return Strings.Common.move
         case .copy:
-            return "Duplicate to"
+            return Strings.Common.copy
         case .delete:
-            return "Delete"
+            return Strings.Common.delete
         }
     }
 }

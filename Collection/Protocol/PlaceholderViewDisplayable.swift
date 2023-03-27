@@ -9,7 +9,7 @@ import UIKit
 
 protocol PlaceholderViewDisplayable: UIViewController {
     var isShowingPlaceholder: Bool { get set }
-    var placeholderView: HintPlaceholderView? { get set }
+    var placeholderView: EmptyListPlaceholderView? { get set }
 }
 
 extension PlaceholderViewDisplayable {
@@ -18,7 +18,7 @@ extension PlaceholderViewDisplayable {
         isShowingPlaceholder.toggle()
 
         DispatchQueue.main.async { [self] in
-            let placeholderView = HintPlaceholderView()
+            let placeholderView = EmptyListPlaceholderView()
             view.addSubview(placeholderView)
             placeholderView.translatesAutoresizingMaskIntoConstraints = false
             NSLayoutConstraint.activate([

@@ -310,6 +310,7 @@
                         <outlet property="resetButton" destination="uo4-Rm-pMC" id="qhP-BN-pCj"/>
                         <outlet property="saveButton" destination="Asw-yT-d89" id="xJE-jI-NSF"/>
                         <outlet property="timerLebel" destination="DAF-kD-vj0" id="NVL-7B-rbi"/>
+                        <outlet property="titleLabel" destination="KgB-MA-wzY" id="6oP-60-Pgj"/>
                         <outlet property="titleTextField" destination="ckR-tq-uJq" id="EpA-uK-6dT"/>
                     </connections>
                 </viewController>
@@ -575,6 +576,7 @@
                     <size key="freeformSize" width="390" height="399"/>
                     <connections>
                         <outlet property="collectionView" destination="hhq-Ht-Z9d" id="Rfx-bC-xcq"/>
+                        <outlet property="titleLabel" destination="FeJ-Q1-LxL" id="ZPV-12-A3t"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="JSL-iS-AYO" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
@@ -821,7 +823,7 @@
     </scenes>
     <resources>
         <image name="arrow.backward" catalog="system" width="128" height="95"/>
-        <image name="plus" catalog="system" width="128" height="113"/>
+        <image name="plus" catalog="system" width="32" height="32"/>
         <image name="plus.circle.fill" catalog="system" width="128" height="123"/>
         <image name="record.circle" catalog="system" width="128" height="123"/>
         <image name="square.and.pencil" catalog="system" width="128" height="113"/>

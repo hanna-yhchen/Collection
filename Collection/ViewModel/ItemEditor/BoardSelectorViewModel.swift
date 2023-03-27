@@ -17,9 +17,9 @@ final class BoardSelectorViewModel {
         var title: String {
             switch self {
             case .copy:
-                return "Duplicate to..."
+                return Strings.BoardSelector.Title.copy
             case .move:
-                return "Move to..."
+                return Strings.BoardSelector.Title.move
             }
         }
     }

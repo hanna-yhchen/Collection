@@ -44,14 +44,14 @@ class BoardCell: UICollectionViewCell, ContextMenuActionSendable {
         objectID = board.objectID
 
         boardNameLabel.text = board.name
-        itemCountLabel.text = "\(board.itemCount) items"
+        itemCountLabel.text = Strings.BoardCell.items(Int(board.itemCount))
 
-        var shareStatus = ""
+        let shareStatus: String
 
         if !board.ownerName.isEmpty {
-            shareStatus = "Shared (\(board.ownerName))"
+            shareStatus = Strings.BoardCell.sharedByOwner(board.ownerName)
         } else {
-            shareStatus = "Private"
+            shareStatus = Strings.BoardCell.private
         }
 
         shareStatusLabel.text = shareStatus

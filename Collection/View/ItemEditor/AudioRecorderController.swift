@@ -32,6 +32,8 @@ class AudioRecorderController: UIViewController {
         }
     }
 
+
+    @IBOutlet var titleLabel: UILabel!
     @IBOutlet var titleTextField: UITextField!
     @IBOutlet var timerLebel: UILabel!
     @IBOutlet var recordButton: UIButton!
@@ -79,7 +81,10 @@ class AudioRecorderController: UIViewController {
     // MARK: - Private
 
     private func configure() {
+        titleLabel.text = Strings.AudioRecorder.sheetTitle
+        titleTextField.placeholder = Strings.AudioRecorder.TitleTextField.placeholder
         saveButton.isEnabled = false
+        resetButton.setTitle(Strings.Common.reset, for: .normal)
         resetButton.isEnabled = false
         resetTimerLabel()
 

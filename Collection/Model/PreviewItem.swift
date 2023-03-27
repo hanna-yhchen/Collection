@@ -16,6 +16,6 @@ class PreviewItem: NSObject, QLPreviewItem {
     init(objectID: ObjectID, previewItemURL: URL?, previewItemTitle: String?) {
         self.objectID = objectID
         self.previewItemURL = previewItemURL
-        self.previewItemTitle = previewItemTitle ?? ""
+        self.previewItemTitle = previewItemTitle ?? .empty
     }
 }

@@ -52,14 +52,14 @@ class TagSelectorViewController: UIViewController {
 
     private func configureHierarchy() {
         navigationController?.isNavigationBarHidden = true
-        titleLabel.text = "Tags in \(viewModel.boardName())"
+        titleLabel.text = Strings.TagSelector.title(viewModel.boardName)
 
         editButton.configurationUpdateHandler = { [unowned self] button in
             var config = button.configuration
             config?.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 0)
             config?.titleAlignment = .trailing
             config?.attributedTitle = AttributedString(
-                isEditingTags ? "Done" : "Edit",
+                isEditingTags ? Strings.Common.done : Strings.Common.edit,
                 attributes: AttributeContainer([.font: UIFont.systemFont(ofSize: 17, weight: .semibold)])
             )
             config?.baseForegroundColor = .systemIndigo

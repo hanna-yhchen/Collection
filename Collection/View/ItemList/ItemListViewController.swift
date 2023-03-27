@@ -31,7 +31,7 @@ class ItemListViewController: UIViewController, PlaceholderViewDisplayable {
 
     private lazy var collectionView = ItemCollectionView(frame: view.bounds, traits: view.traitCollection)
 
-    var placeholderView: HintPlaceholderView?
+    var placeholderView: EmptyListPlaceholderView?
     var isShowingPlaceholder = false
 
     @IBOutlet var plusButton: UIButton!
@@ -186,7 +186,7 @@ class ItemListViewController: UIViewController, PlaceholderViewDisplayable {
             let fileURL = try viewModel.temporaryFileURL(of: item)
 
             guard QLPreviewController.canPreview(fileURL as QLPreviewItem) else {
-                HUD.showFailed(Constant.Message.unsupportedFileTypeForPreview)
+                HUD.showFailed(Strings.CommonError.unsupportedFileTypeForPreview)
                 return
             }
 

@@ -148,5 +148,9 @@ extension CKShare {
 // MARK: - Default Board
 
 extension Board {
+    // TODO: replace using `isInbox` instead
     static let inboxBoardName = "Inbox"
+    var isInbox: Bool {
+        self.name == "Inbox"
+    }
 }

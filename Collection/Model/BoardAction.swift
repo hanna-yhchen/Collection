@@ -15,11 +15,11 @@ enum BoardAction: Int, CaseIterable, TitleProvidable {
     var title: String {
         switch self {
         case .rename:
-            return "Rename"
+            return Strings.Common.rename
         case .share:
-            return "Share"
+            return Strings.Common.share
         case .delete:
-            return "Delete"
+            return Strings.Common.delete
         }
     }
 }

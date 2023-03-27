@@ -30,9 +30,9 @@ struct ManagedObject {
     var description: String {
         switch entity {
         case .board:
-            return "board"
+            return Strings.Common.board
         case .item:
-            return "item"
+            return Strings.Common.item
         }
     }
 

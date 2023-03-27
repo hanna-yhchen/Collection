@@ -58,7 +58,7 @@ class NameEditorViewController: UIViewController {
     // MARK: - Actions
 
     @IBAction func saveButtonTapped() {
-        newNameSubject.send(nameTextField.text ?? "")
+        newNameSubject.send(nameTextField.text ?? .empty)
     }
 
     @IBAction func closeButtonTapped() {
@@ -68,6 +68,7 @@ class NameEditorViewController: UIViewController {
     // MARK: - Private
 
     private func configureUI() {
+        nameTextField.placeholder = Strings.NameEditor.placeholder
         nameTextField.text = originalName
         view.backgroundColor = .clear
 

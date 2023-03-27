@@ -71,7 +71,7 @@ final class OptionMenuProvider: NSObject {
         return baseChildMenu.replacingChildren(items)
     }
 
-    private var typeMenu: UIMenu { UIMenu(title: "Types", options: [.singleSelection], children: typeItems) }
+    private var typeMenu: UIMenu { UIMenu(title: Strings.ItemList.Filter.types, options: [.singleSelection], children: typeItems) }
     private var typeItems: [UIAction] {
         let items = DisplayType.allCases.map { type in
             let action = UIAction(
@@ -94,7 +94,7 @@ final class OptionMenuProvider: NSObject {
         let tagItems = tags.map { (tag: Tag) in
             let tintColor = TagColor(rawValue: tag.color)?.color ?? .label
             let action = UIAction(
-                title: tag.name ?? "",
+                title: tag.name ?? .empty,
                 image: UIImage(systemName: "tag.fill")?.withTintColor(tintColor, renderingMode: .alwaysOriginal)
             ) { [unowned self] _ in
                 didSelectTagID(tag.objectID)
@@ -103,10 +103,10 @@ final class OptionMenuProvider: NSObject {
             return action
         }
 
-        return UIMenu(title: "Tags", children: tagItems)
+        return UIMenu(title: Strings.Common.tags, children: tagItems)
     }
 
-    private lazy var resetItem = UIAction(title: "Reset filters", discoverabilityTitle: "") { [unowned self] _ in
+    private lazy var resetItem = UIAction(title: Strings.Common.reset, discoverabilityTitle: .empty) { [unowned self] _ in
         selectedTagIDs = []
         selectedType = nil
         updateMenu()

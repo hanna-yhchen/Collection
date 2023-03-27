@@ -38,17 +38,17 @@ enum DisplayType: Int16, CaseIterable {
     var title: String {
         switch self {
         case .image:
-            return "Image"
+            return Strings.DisplayType.Title.image
         case .video:
-            return "Video"
+            return Strings.DisplayType.Title.video
         case .audio:
-            return "Audio"
+            return Strings.DisplayType.Title.audio
         case .note:
-            return "Notes"
+            return Strings.DisplayType.Title.note
         case .link:
-            return "Link"
+            return Strings.DisplayType.Title.link
         case .file:
-            return "File"
+            return Strings.DisplayType.Title.file
         }
     }
 

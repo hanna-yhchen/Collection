@@ -38,18 +38,18 @@ class SideMenuViewController: UIViewController {
 
     private lazy var menuItems = [
         SideMenuItem(
-            title: "All Items",
+            title: Strings.SideMenu.allItems,
             destination: .itemList(.allItems),
             icon: UIImage(named: "fluid-rectangle")),
         SideMenuItem(
-            title: "Inbox",
+            title: Strings.SideMenu.inbox,
             destination: .itemList(.board(storageProvider.getInboxBoardID())),
             icon: UIImage(systemName: "tray")),
         boardMenu,
     ]
 
     private lazy var boardMenu = SideMenuItem(
-        title: "Boards",
+        title: Strings.SideMenu.boards,
         destination: .boardList,
         icon: UIImage(systemName: "square.stack.3d.up"))
 
@@ -57,7 +57,7 @@ class SideMenuViewController: UIViewController {
 
     private lazy var boardFetcher: NSFetchedResultsController<Board> = {
         let fetchRequest = Board.fetchRequest()
-        fetchRequest.predicate = NSPredicate(format: "%K != %@", #keyPath(Board.name), "Inbox")
+        fetchRequest.predicate = NSPredicate(format: "%K != %@", #keyPath(Board.name), Board.inboxBoardName)
         fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \Board.sortOrder, ascending: false)]
 
         let controller = NSFetchedResultsController(

@@ -17,9 +17,9 @@ final class TagEditorViewModel {
         var title: String {
             switch self {
             case .create:
-                return "New Tag"
+                return Strings.TagEditor.Title.create
             case .update:
-                return "Edit Tag"
+                return Strings.TagEditor.Title.edit
             }
         }
 
@@ -49,7 +49,7 @@ final class TagEditorViewModel {
     private let storageProvider: StorageProvider
     private let context: NSManagedObjectContext
 
-    @Published var tagName = ""
+    @Published var tagName: String = .empty
     var selectedColorIndex = 0
 
     private(set) lazy var canSave = $tagName
@@ -65,7 +65,7 @@ final class TagEditorViewModel {
         self.storageProvider = storageProvider
         self.context = context
         self.scenario = scenario
-        self.tagName = scenario.tagName ?? ""
+        self.tagName = scenario.tagName ?? .empty
     }
 
     // MARK: - Methods

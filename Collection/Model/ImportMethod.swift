@@ -18,17 +18,17 @@ enum ImportMethod: Int, CaseIterable {
     var title: String {
         switch self {
         case .paste:
-            return "Paste"
+            return Strings.ItemImport.Method.paste
         case .photos:
-            return "Photo Library"
+            return Strings.ItemImport.Method.photos
         case .camera:
-            return "Camera"
+            return Strings.ItemImport.Method.camera
         case .files:
-            return "Files"
+            return Strings.ItemImport.Method.files
         case .note:
-            return "Note"
+            return Strings.ItemImport.Method.note
         case .audioRecorder:
-            return "Voice"
+            return Strings.ItemImport.Method.audioRecorder
         }
     }
 

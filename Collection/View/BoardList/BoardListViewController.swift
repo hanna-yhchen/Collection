@@ -18,7 +18,7 @@ protocol BoardListViewControllerDelegate: AnyObject {
 class BoardListViewController: UIViewController, PlaceholderViewDisplayable {
 
     @IBOutlet var collectionView: UICollectionView!
-    var placeholderView: HintPlaceholderView?
+    var placeholderView: EmptyListPlaceholderView?
 
     var isShowingPlaceholder = false
 
@@ -60,13 +60,13 @@ class BoardListViewController: UIViewController, PlaceholderViewDisplayable {
     // MARK: - Actions
 
     @IBAction func addButtonTapped() {
-        let alert = UIAlertController(title: "New board", message: "", preferredStyle: .alert)
+        let alert = UIAlertController(title: Strings.BoardList.NewBoard.title, message: nil, preferredStyle: .alert)
 
         alert.addTextField { textField in
-            textField.placeholder = "Please enter a name for the new board."
+            textField.placeholder = Strings.BoardList.NewBoard.prompt
         }
 
-        alert.addAction(UIAlertAction(title: "Create", style: .default) { [unowned self] _ in
+        alert.addAction(UIAlertAction(title: Strings.BoardList.NewBoard.create, style: .default) { [unowned self] _ in
             HUD.show()
 
             guard
@@ -77,8 +77,8 @@ class BoardListViewController: UIViewController, PlaceholderViewDisplayable {
                 return
             }
 
-            guard !name.isEmpty, name != "Inbox" else {
-                HUD.showFailed("Invalid name")
+            guard !name.isEmpty, name != Board.inboxBoardName else {
+                HUD.showFailed(Strings.BoardList.NewBoard.invalidName)
                 return
             }
 
@@ -90,7 +90,7 @@ class BoardListViewController: UIViewController, PlaceholderViewDisplayable {
             }
         })
 
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        alert.addAction(UIAlertAction(title: Strings.Common.cancel, style: .cancel))
 
         present(alert, animated: true)
     }
@@ -111,7 +111,7 @@ class BoardListViewController: UIViewController, PlaceholderViewDisplayable {
     }
 
     private func configureHierarchy() {
-        title = "Boards"
+        title = Strings.BoardList.title
         navigationController?.navigationBar.prefersLargeTitles = true
 
         collectionView.collectionViewLayout = createCardLayout()

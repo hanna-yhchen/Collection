@@ -78,8 +78,6 @@ class SmallCardCell: UICollectionViewCell, ItemCell, ItemActionSendable {
         case .note:
             if let note = item.note, !note.isEmpty {
                 noteLabel.text = note
-            } else {
-                noteLabel.text = "(empty)"
             }
             noteStackView.isHidden = false
             iconImageView.image = nil

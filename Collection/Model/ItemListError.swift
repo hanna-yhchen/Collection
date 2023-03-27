@@ -14,9 +14,9 @@ enum ItemListError: Error {
     var message: String {
         switch self {
         case .missingFileInformation:
-            return "Missing information of the item"
+            return Strings.ItemList.Error.missingFileInformation
         case .failedWritingToTempFile:
-            return "Unable to read the file"
+            return Strings.ItemList.Error.failedWritingToTempFile
         }
     }
 }

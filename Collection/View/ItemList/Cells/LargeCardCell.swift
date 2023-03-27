@@ -58,10 +58,11 @@ class LargeCardCell: UICollectionViewCell, ItemCell, ItemActionSendable {
         iconImageView.image = item.type.icon
 
         if let creationDate = item.creationDate, let updateDate = item.updateDate {
-            creationDateLabel.text = "Created at "
-                + DateFormatter.hyphenatedDateTimeFormatter.string(from: creationDate)
-            updateDateLabel.text = "Updated on "
-                + DateFormatter.hyphenatedDateTimeFormatter.string(from: updateDate)
+            let formattedCreationDate = DateFormatter.hyphenatedDateTimeFormatter.string(from: creationDate)
+            creationDateLabel.text = Strings.LargeCardCell.creationDateDescription(formattedCreationDate)
+
+            let formattedUpdateDate = DateFormatter.hyphenatedDateTimeFormatter.string(from: updateDate)
+            updateDateLabel.text = Strings.LargeCardCell.updateDateDescription(formattedUpdateDate)
         }
 
         if let tags = item.tags, let sortedTags = tags.sortedArray(
@@ -77,8 +78,6 @@ class LargeCardCell: UICollectionViewCell, ItemCell, ItemActionSendable {
         case .note:
             if let note = item.note, !note.isEmpty {
                 noteLabel.text = note
-            } else {
-                noteLabel.text = "(empty)"
             }
             noteStackView.isHidden = false
             iconImageView.image = nil

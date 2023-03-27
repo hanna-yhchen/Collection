@@ -37,7 +37,7 @@ extension ContextMenuActionSendable {
                 sendAction(menuItem)
             }
 
-            if menuItem.title == "Delete" {
+            if menuItem.title == Strings.Common.delete {
                 action.attributes = .destructive
             }
             return action

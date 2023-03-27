@@ -37,6 +37,18 @@ final class TagSelectorViewModel: NSObject {
         return controller
     }()
 
+    var boardName: String {
+        guard let board = try? context.existingObject(with: boardID) as? Board else {
+            fatalError("#\(#function): Failed to retrieve board object by objectID")
+        }
+
+        if board.isInbox {
+            return Strings.Common.inbox
+        }
+
+        return board.name ?? Strings.Common.untitledBoard
+    }
+
     var isEditing = false
 
     lazy var createTagFooterTap = PassthroughSubject<Void, Never>()
@@ -90,7 +102,7 @@ final class TagSelectorViewModel: NSObject {
             elementKind: UICollectionView.elementKindSectionFooter
         ) { [unowned self] footer, _, _ in
             var content = UIListContentConfiguration.plainFooter()
-            content.text = "Create new tag"
+            content.text = Strings.TagSelector.create
             content.textProperties.font = .systemFont(ofSize: 18, weight: .semibold)
             content.textProperties.color = .label
             content.image = UIImage(systemName: "plus")
@@ -123,11 +135,6 @@ final class TagSelectorViewModel: NSObject {
         }
 
         self.dataSource = dataSource
-    }
-
-    func boardName() -> String {
-        let board = try? context.existingObject(with: boardID) as? Board
-        return board?.name ?? ""
     }
 
     func fetchTags() {
