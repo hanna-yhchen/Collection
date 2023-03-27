@@ -14,6 +14,7 @@ An iOS application storing files of various types and synchronizing them automat
 - Filter or sort your items to browse them easily
 - Synchronize and share your boards through iCloud
 - Support both light and dark mode
+- Localization for Traditional Chinese and English
 
 ## Technologies
 - MVVM Architecture
@@ -27,6 +28,7 @@ An iOS application storing files of various types and synchronizing them automat
 - Quick Look Thumbnailing
 - GCD + Swift Concurrency (async/await)
 - Swift Package Manager
+- SwiftGen
 
 ## Contact
 Hanna Chen<br>
