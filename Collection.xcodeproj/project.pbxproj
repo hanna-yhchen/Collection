@@ -68,6 +68,8 @@
 		B59BE4062923475600E50B30 /* GridCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = B59BE4042923475600E50B30 /* GridCell.swift */; };
 		B59BE4072923475600E50B30 /* GridCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = B59BE4052923475600E50B30 /* GridCell.xib */; };
 		B59BE4092923643F00E50B30 /* ItemLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = B59BE4082923643F00E50B30 /* ItemLayout.swift */; };
+		B59E90DE29C07FA6002B8C9C /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = B59E90E129C07FA6002B8C9C /* Localizable.strings */; };
+		B59E90DF29C07FA6002B8C9C /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = B59E90E129C07FA6002B8C9C /* Localizable.strings */; };
 		B59E90F029C20FFF002B8C9C /* Strings.swift in Sources */ = {isa = PBXBuildFile; fileRef = B59E90EF29C20FFF002B8C9C /* Strings.swift */; };
 		B59E90F129C20FFF002B8C9C /* Strings.swift in Sources */ = {isa = PBXBuildFile; fileRef = B59E90EF29C20FFF002B8C9C /* Strings.swift */; };
 		B5A298932941C409007ED048 /* FetchedResultsProviding.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5A298922941C409007ED048 /* FetchedResultsProviding.swift */; };
@@ -193,6 +195,8 @@
 		B59BE4042923475600E50B30 /* GridCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GridCell.swift; sourceTree = "<group>"; };
 		B59BE4052923475600E50B30 /* GridCell.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = GridCell.xib; sourceTree = "<group>"; };
 		B59BE4082923643F00E50B30 /* ItemLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemLayout.swift; sourceTree = "<group>"; };
+		B59E90E029C07FA6002B8C9C /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		B59E90E929C0800A002B8C9C /* zh-Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		B59E90EF29C20FFF002B8C9C /* Strings.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Strings.swift; sourceTree = "<group>"; };
 		B5A298922941C409007ED048 /* FetchedResultsProviding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FetchedResultsProviding.swift; sourceTree = "<group>"; };
 		B5AEC1A82926409300AA4072 /* BoardSelectorViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardSelectorViewController.swift; sourceTree = "<group>"; };
@@ -518,6 +522,7 @@
 				B59E90EE29C20FFF002B8C9C /* Generated */,
 				B5E50E05290BDF17006A7B22 /* Assets.xcassets */,
 				B5F72D2629111852007B4B06 /* Collection.entitlements */,
+				B59E90E129C07FA6002B8C9C /* Localizable.strings */,
 			);
 			path = Resource;
 			sourceTree = "<group>";
@@ -619,6 +624,7 @@
 			knownRegions = (
 				en,
 				Base,
+				"zh-Hant",
 			);
 			mainGroup = B5E50DED290BDF16006A7B22;
 			packageReferences = (
@@ -643,6 +649,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				B5D90E65291D652800BB59F9 /* Assets.xcassets in Resources */,
+				B59E90DF29C07FA6002B8C9C /* Localizable.strings in Resources */,
 				B523E93929164B4F00180B36 /* MainInterface.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -655,6 +662,7 @@
 				B5E50E06290BDF17006A7B22 /* Assets.xcassets in Resources */,
 				B515D5E92912215400072CBC /* BoardCell.xib in Resources */,
 				B5DE8849291E2556009B0957 /* SmallCardCell.xib in Resources */,
+				B59E90DE29C07FA6002B8C9C /* Localizable.strings in Resources */,
 				B5E50E01290BDF16006A7B22 /* Main.storyboard in Resources */,
 				B59BE4072923475600E50B30 /* GridCell.xib in Resources */,
 				B55B1389292164D200607345 /* ImportMethodCell.xib in Resources */,
@@ -667,6 +675,7 @@
 /* Begin PBXShellScriptBuildPhase section */
 		B59E90ED29C20EE6002B8C9C /* Run Script: SwiftGen */ = {
 			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
 			);
@@ -685,6 +694,7 @@
 		};
 		B5E50E10290BE038006A7B22 /* Run Script: SwiftLint */ = {
 			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
 			);
@@ -822,6 +832,15 @@
 				B523E93829164B4F00180B36 /* Base */,
 			);
 			name = MainInterface.storyboard;
+			sourceTree = "<group>";
+		};
+		B59E90E129C07FA6002B8C9C /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				B59E90E029C07FA6002B8C9C /* en */,
+				B59E90E929C0800A002B8C9C /* zh-Hant */,
+			);
+			name = Localizable.strings;
 			sourceTree = "<group>";
 		};
 		B5E50DFF290BDF16006A7B22 /* Main.storyboard */ = {

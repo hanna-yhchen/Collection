@@ -1,0 +1,95 @@
+"Common.done" = "Done";
+"Common.share" = "Share";
+"Common.rename" = "Rename";
+"Common.edit" = "Edit";
+"Common.delete" = "Delete";
+"Common.cancel" = "Cancel";
+"Common.untitledBoard" = "Untitled Board";
+"Common.tags" = "Tags";
+"Common.move" = "Move to";
+"Common.copy" = "Duplicate to";
+"Common.board" = "board";
+"Common.item" = "item";
+"Common.reset" = "Reset";
+"Common.inbox" = "Inbox";
+
+"CommonError.missingData" = "Missing data";
+"CommonError.unsupportedFileTypeForPreview" = "Preview of this file type is not supported";
+
+"Deletion.title" = "Delete the %@";
+"Deletion.reconfirmation" = "Are you sure you want to delete this %@ permanently?";
+"Deletion.complete" = "Deleted";
+
+"HUD.processing" = "Processing";
+"HUD.importing" = "Importing";
+
+"SideMenu.allItems" = "All Items";
+"SideMenu.inbox" = "Inbox";
+"SideMenu.boards" = "Boards";
+
+"ItemList.allItems" = "All Items";
+"ItemList.Error.missingFileInformation" = "Missing information of the item";
+"ItemList.Error.failedWritingToTempFile" = "Unable to read the file";
+"ItemList.Sort.creationDate" = "Date created";
+"ItemList.Sort.updateDate" = "Date updated";
+"ItemList.Filter.types" = "Types";
+
+"ItemImport.title" = "Add item";
+"ItemImport.Method.paste" = "Paste";
+"ItemImport.Method.photos" = "Photo Library";
+"ItemImport.Method.camera" = "Camera";
+"ItemImport.Method.files" = "Files";
+"ItemImport.Method.note" = "Note";
+"ItemImport.Method.audioRecorder" = "Voice";
+
+"ItemList.Layout.Title.details" = "Details";
+"ItemList.Layout.Title.summary" = "Summary";
+"ItemList.Layout.Title.grid" = "Grid";
+
+"LargeCardCell.creationDateDescription" = "Created at %@";
+"LargeCardCell.updateDateDescription" = "Updated on %@";
+
+"BoardSelector.Title.move" = "Move to...";
+"BoardSelector.Title.copy" = "Duplicate to...";
+
+"NoteEditor.Title.create" = "New note";
+"NoteEditor.Title.edit" ="Edit note";
+"NoteEditor.TitleTextField.placeholder" = "Add a name";
+"NoteEditor.NoteTextView.placeholder" = "Type something...";
+"NoteEditor.UnsavedChanges.title" = "Unsaved Changes";
+"NoteEditor.UnsavedChanges.warning" = "You have unsaved changes. Are you sure you want to leave this page and discard your changes?";
+"NoteEditor.UnsavedChanges.stay" = "Stay";
+"NoteEditor.UnsavedChanges.discard" = "Discard";
+
+"NameEditor.placeholder" = "Add a name";
+
+"AudioRecorder.sheetTitle" = "New Voice Memo";
+"AudioRecorder.TitleTextField.placeholder" = "Add a name";
+
+"TagSelector.title" = "Tags in %@";
+"TagSelector.create" = "Create new tag";
+
+"TagEditor.Title.create" = "New Tag";
+"TagEditor.Title.edit" = "Edit Tag";
+"TagEditor.SaveButton.title" = "Save";
+"TagEditor.NameTextField.placeholder" = "Add a name";
+
+"BoardList.title" = "Boards";
+"BoardList.NewBoard.title" = "New board";
+"BoardList.NewBoard.prompt" = "Please enter a name for the new board.";
+"BoardList.NewBoard.create" = "Create";
+"BoardList.NewBoard.invalidName" = "Invalid name";
+
+"BoardCell.items" = "%ld items";
+"BoardCell.sharedByOwner" = "Shared (%@)";
+"BoardCell.private" = "Private";
+
+"EmptyListPlaceholder.title" = "There is nothing here now";
+"EmptyListPlaceholder.hint" = "Tap the + to get started";
+
+"DisplayType.Title.image" = "Image";
+"DisplayType.Title.video" = "Video";
+"DisplayType.Title.audio" = "Audio";
+"DisplayType.Title.note" = "Notes";
+"DisplayType.Title.link" = "Link";
+"DisplayType.Title.file" = "File";

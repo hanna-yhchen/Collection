@@ -1,0 +1,95 @@
+"Common.done" = "完成";
+"Common.share" = "分享";
+"Common.rename" = "重新命名";
+"Common.edit" = "編輯";
+"Common.delete" = "刪除";
+"Common.cancel" = "取消";
+"Common.untitledBoard" = "未命名收藏板";
+"Common.tags" = "標籤";
+"Common.move" = "移動";
+"Common.copy" = "拷貝";
+"Common.board" = "收藏板";
+"Common.item" = "項目";
+"Common.reset" = "重置";
+"Common.inbox" = "收件箱";
+
+"CommonError.missingData" = "數據遺失";
+"CommonError.unsupportedFileTypeForPreview" = "尚未支援預覽此檔案類型";
+
+"Deletion.title" = "刪除%@";
+"Deletion.reconfirmation" = "確定要永久刪除此%@嗎?";
+"Deletion.complete" = "已刪除";
+
+"HUD.processing" = "處理中";
+"HUD.importing" = "導入中";
+
+"SideMenu.allItems" = "所有項目";
+"SideMenu.inbox" = "收件箱";
+"SideMenu.boards" = "收藏板";
+
+"ItemList.allItems" = "所有項目";
+"ItemList.Error.missingFileInformation" = "檔案資訊遺失";
+"ItemList.Error.failedWritingToTempFile" = "無法開啟檔案";
+"ItemList.Sort.creationDate" = "加入日期";
+"ItemList.Sort.updateDate" = "最後修改";
+"ItemList.Filter.types" = "類型";
+
+"ItemImport.title" = "新增項目";
+"ItemImport.Method.paste" = "貼上";
+"ItemImport.Method.photos" = "照片圖庫";
+"ItemImport.Method.camera" = "相機";
+"ItemImport.Method.files" = "檔案";
+"ItemImport.Method.note" = "筆記";
+"ItemImport.Method.audioRecorder" = "語音錄製";
+
+"ItemList.Layout.Title.details" = "細節";
+"ItemList.Layout.Title.summary" = "摘要";
+"ItemList.Layout.Title.grid" = "格狀";
+
+"LargeCardCell.creationDateDescription" = "加入於 %@";
+"LargeCardCell.updateDateDescription" = "最後修改於 %@";
+
+"BoardSelector.Title.move" = "移動到...";
+"BoardSelector.Title.copy" = "拷貝到...";
+
+"NoteEditor.Title.create" = "建立新筆記";
+"NoteEditor.Title.edit" ="編輯筆記";
+"NoteEditor.TitleTextField.placeholder" = "輸入標題";
+"NoteEditor.NoteTextView.placeholder" = "寫點什麼⋯⋯";
+"NoteEditor.UnsavedChanges.title" = "尚未儲存的更動";
+"NoteEditor.UnsavedChanges.warning" = "有更動尚未儲存，請問您確定要捨棄更動並且離開嗎？";
+"NoteEditor.UnsavedChanges.stay" = "繼續編輯";
+"NoteEditor.UnsavedChanges.discard" = "捨棄";
+
+"NameEditor.placeholder" = "輸入名稱";
+
+"AudioRecorder.title" = "新的語音錄製";
+"AudioRecorder.TitleTextField.placeholder" = "輸入名稱";
+
+"TagSelector.title" = "在%@中的標籤";
+"TagSelector.create" = "建立新標籤";
+
+"TagEditor.Title.create" = "建立標籤";
+"TagEditor.Title.edit" = "編輯標籤";
+"TagEditor.SaveButton.title" = "儲存";
+"TagEditor.NameTextField.placeholder" = "輸入標籤名稱";
+
+"BoardList.title" = "收藏板";
+"BoardList.NewBoard.title" = "建立收藏板";
+"BoardList.NewBoard.prompt" = "請為新的收藏板命名。";
+"BoardList.NewBoard.create" = "建立";
+"BoardList.NewBoard.invalidName" = "無效的名稱";
+
+"BoardCell.items" = "%ld個項目";
+"BoardCell.sharedByOwner" = "已分享 (%@)";
+"BoardCell.private" = "私人";
+
+"EmptyListPlaceholder.title" = "這裡現在空無一物";
+"EmptyListPlaceholder.hint" = "請點擊 + 開始";
+
+"DisplayType.Title.image" = "圖像";
+"DisplayType.Title.video" = "影片";
+"DisplayType.Title.audio" = "音訊";
+"DisplayType.Title.note" = "筆記";
+"DisplayType.Title.link" = "超連結";
+"DisplayType.Title.file" = "檔案";
